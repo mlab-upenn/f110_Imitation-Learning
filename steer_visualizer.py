@@ -1,12 +1,12 @@
-import os, cv2, math, sys
+import os, cv2, math, sys, json
 import pandas as pd 
-abs_path = "/home/dhruvkar/datasets/f110_dataset"
 
 class SteerVisualizer(object):
     """
     Set of methods that allow you to visualize the F110's Driving Behaviour
     """
     def __init__(self):
+        self.abs_path = json.load(open("params.txt"))["abs_path"]
         self.text_count = 0
         self.frame_name = 'f110 Steer Visualizer'
         cv2.namedWindow(self.frame_name, cv2.WINDOW_NORMAL)
@@ -16,6 +16,9 @@ class SteerVisualizer(object):
         Function that logs text to the top left, automatically positioning it as you log more text
         """
         self.text_count += 1
+
+        #fix scalar to not have -0.0 as a value
+        scalar = float(scalar) if float(scalar) != -0.0 else 0.0
 
         #TEXT PARAMETERS
         color = (255, 255, 255)
@@ -62,13 +65,12 @@ class SteerVisualizer(object):
         cv2.imshow(self.frame_name, frame)
         cv2.waitKey(10)
 
-    def vis_from_path(self, abs_path, csv_file_path, pred_angle=False):
+    def vis_from_path(self, pred_angle=False):
         """
         Visualize a sequence of steering angles
-        abs_path: abs path to folder containing dashcam images
-        csv_file_path: abs path to csv file w/ format in "data_exploration.ipynb" 
         pred_angle: True if csv_file has final column with predicted steering angles
         """
+        csv_file_path = self.abs_path + '/data.csv'
         df = pd.read_csv(csv_file_path)
         num_rows = len(df)
         for i in range(num_rows):
@@ -76,15 +78,14 @@ class SteerVisualizer(object):
             img_name, angle, speed, pred = df.iloc[i, 0], -1.0 * df.iloc[i, 1], -1.0 * df.iloc[i, 2], None
             if pred_angle:
                 pred = df.iloc[i, 3]
-            frame = cv2.imread(abs_path + '/' + img_name) 
+            frame = cv2.imread(self.abs_path + '/' + img_name) 
 
             #visualize this frame
             self.vis_frame(frame, angle, speed, pred)
 
 def main():
-    csv_file_path = abs_path + "/data.csv"
     steer_vis = SteerVisualizer()
-    steer_vis.vis_from_path(abs_path, csv_file_path)
+    steer_vis.vis_from_path()
 
 if __name__ == '__main__':
     main()
