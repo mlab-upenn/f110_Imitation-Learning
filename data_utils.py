@@ -33,7 +33,7 @@ class Data_Utils(object):
 
 def main():
     du = Data_Utils()
-    du.show_steer_angle_hist(w_matplotlib=True)
+    du.show_steer_angle_hist()
 
 if __name__ == '__main__':
     main()
