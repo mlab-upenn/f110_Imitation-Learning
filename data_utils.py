@@ -15,13 +15,17 @@ class Data_Utils(object):
         self.steer_df = pd.read_csv(csv_file_path)
 
     def show_steer_angle_hist(self, w_matplotlib=False):
+        """
+        Shows a histogram illustrating distribution of steering angles
+        w_matplotlib: boolean to trigger plotting with matplotlib. will otherwise plot to bash with bashplotlib
+        """
         angle_column = self.steer_df.iloc[:, 1].values
         num_bins = 20
         if(w_matplotlib):
-            #Plots with matplotlib
+            #save plot with matplotlib
             plt.hist(angle_column, num_bins, color='green')
             plt.title("Distribution of steering angles (rads)")
-            plt.show()
+            plt.savefig('steer_hist.png')
         else:
             #Plots in bash terminal
             num_bins = 20
@@ -29,7 +33,7 @@ class Data_Utils(object):
 
 def main():
     du = Data_Utils()
-    du.show_steer_angle_hist()
+    du.show_steer_angle_hist(w_matplotlib=True)
 
 if __name__ == '__main__':
     main()
