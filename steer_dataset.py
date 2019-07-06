@@ -7,7 +7,7 @@ class SteerDataset(Dataset):
     """
     Steer Dataset: Returns cropped image from dashcam + steering angle
     """
-    def __init__(self, transforms):
+    def __init__(self, transforms=None):
         """
         transforms (callable, optional): Optional transforms applied on samples
         """
