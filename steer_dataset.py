@@ -1,4 +1,5 @@
 import os, torch, json, cv2
+import numpy as np
 from torch.utils.data import Dataset
 from torchvision import transforms, utils
 import pandas as pd
@@ -21,17 +22,17 @@ class SteerDataset(Dataset):
     
     def __getitem__(self, idx):
         """
-        Returns tuple (cropped_image(Tensor, C x H x W), steering angle (float))
+        Returns tuple (cropped_image(Tensor, C x H x W), steering angle (float 1x1 tensor))
         """
         img_name, angle = self.steer_df.iloc[idx, 0], self.steer_df.iloc[idx, 1]
         cv_img = cv2.imread(self.abs_path + '/' + img_name)
-        
+        angle = np.array([angle])
         #cropping image + turning to tensor
         cv_crop = cv_img[200:, :, :]
-        img_tensor = torch.from_nummpy(cv_crop) #size (H x W x C)
+        img_tensor, angle = torch.from_numpy(cv_crop).float(), torch.from_numpy(angle).float()#size (H x W x C)
         img_tensor = img_tensor.permute(2, 0, 1)#size (C x H x W)
 
         if self.transforms:
             img_tensor = self.transforms(img_tensor)
 
-        return (img_tensor, float(angle))
+        return (img_tensor, angle)

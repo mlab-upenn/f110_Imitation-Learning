@@ -2,6 +2,7 @@ import os, torch, pdb
 import torch.nn as nn
 import numpy as np 
 import torchvision
+#240 x 680  -> 64 x 28 x 73
 
 class NVIDIA_ConvNet(nn.Module):
     """
@@ -18,7 +19,7 @@ class NVIDIA_ConvNet(nn.Module):
         )
         
         self.fc = nn.Sequential(
-            nn.Linear(247616, 1000), 
+            nn.Linear(64*28*73, 1000), 
             nn.Linear(1000, 1164), 
             nn.Linear(1164, 100), 
             nn.Linear(100, 50),
@@ -29,11 +30,9 @@ class NVIDIA_ConvNet(nn.Module):
     def forward(self, x):
         """
         x: tensor of shape C x H x W
-        return: float
+        return: 1-tensor
         """
         out = self.conv(x)
-        pdb.set_trace()
-        out = out.reshape(-1, 1)
+        out = out.view(out.size(0), -1)
         out = self.fc(out)
-        out = float(out.item())
         return out
