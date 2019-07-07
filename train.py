@@ -12,24 +12,28 @@ def loss_pass(net, loss, loader, epoch, optimizer, train=True):
     """
     Performs loss pass over all inputs in this epoch
     """
-
     if not train:
         torch.set_grad_enabled(False)
-        total_epoch_loss = 0
-        for i, data in enumerate(loader):
-            img_tensor, angle_true = data
-        
-            #Classic train loop
-            optimizer.zero_grad()
-            angle_pred = net(img_tensor)
-            loss_tensor = loss(angle_pred, angle_true)
-            if train:
-                loss_tensor.backward()
-                optimizer.step()
-            logger.info("loss:{}".format(loss_tensor.item()))
-            total_epoch_loss += loss_tensor.item()
+        logger.info("STARTING VALIDATION EPOCH")
+    else:
+        logger.info("STARTING TRAINING EPOCH")
+    total_epoch_loss = 0
+    for i, data in enumerate(loader):
+        img_tensor, angle_true = data
+        #Classic train loop
+        optimizer.zero_grad()
+        angle_pred = net(img_tensor)
+        loss_tensor = loss(angle_pred, angle_true)
+        if train:
+            loss_tensor.backward()
+            optimizer.step()
+        logger.info("loss:{}".format(loss_tensor.item()))
+        total_epoch_loss += loss_tensor.item()
     if not train:
         torch.set_grad_enabled(True)
+        logger.info("ENDED VALIDATION EPOCH")
+    else:
+        logger.info("ENDED TRAINING EPOCH")
     return total_epoch_loss
 
 def train(net, num_epochs, optimizer, loss_func, train_loader, valid_loader):
@@ -37,6 +41,8 @@ def train(net, num_epochs, optimizer, loss_func, train_loader, valid_loader):
         logger.info("Starting epoch: {}".format(epoch))
         train_epoch_loss = loss_pass(net, loss_func, train_loader, epoch, optimizer, train=True)
         valid_epoch_loss = loss_pass(net, loss_func, valid_epoch_loss, epoch, optimizer, train=False)
+        logger.info("TRAIN LOSS{}".format(train_epoch_loss))
+        logger.info("VALIDATION LOSS{}".format(valid_epoch_loss))
 
 def main():
     #Set random seeds
