@@ -64,7 +64,7 @@ def main():
     #Make Dataloaders
     dutils = Data_Utils()
     train_dataloader, valid_dataloader = dutils.get_dataloaders(batch_size)
-
+    #TRAIN!
     train(net, num_epochs, optimizer, loss_func, train_dataloader, valid_dataloader)
 
 if __name__ == "__main__":
