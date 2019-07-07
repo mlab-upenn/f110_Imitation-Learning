@@ -37,6 +37,7 @@ def loss_pass(net, loss, loader, epoch, optimizer, train=True):
     return total_epoch_loss
 
 def train(net, num_epochs, optimizer, loss_func, train_loader, valid_loader):
+    writer = SummaryWriter("__tblogs")
     for epoch in range(0, num_epochs):
         print("Starting epoch: {}".format(epoch))
         train_epoch_loss = loss_pass(net, loss_func, train_loader, epoch, optimizer, train=True)
@@ -44,7 +45,10 @@ def train(net, num_epochs, optimizer, loss_func, train_loader, valid_loader):
         print("----------------EPOCH{}STATS:".format(epoch))
         print("TRAIN LOSS:{}".format(train_epoch_loss))
         print("VALIDATION LOSS:{}".format(valid_epoch_loss))
-
+        print("----------------------------")
+        writer.add_scalar('Train Loss', train_epoch_loss)
+        writer.add_scalar('Valid Loss', valid_epoch_loss)
+    writer.close()
 def main():
     #Set random seeds
     seed = 6582
@@ -58,7 +62,7 @@ def main():
     net = NVIDIA_ConvNet().to(device)
     loss_func = nn.functional.mse_loss
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
-    num_epochs = 1000
+    num_epochs = 1
     batch_size = 64
     
     #Make Dataloaders
