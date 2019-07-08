@@ -1,1 +1,4 @@
-{"abs_path": "/home/dhruvkar/datasets/f110_dataset"}
+{
+    "abs_path": "/home/dhruvkar/datasets/f110_dataset",
+    "log_path": "/home/dhruvkar/Desktop/Robotics/deeprl/avfone/__runs"
+}

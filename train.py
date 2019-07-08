@@ -1,4 +1,4 @@
-import os, torch, logging, random, pdb
+import os, torch, logging, random, pdb, json
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
@@ -10,6 +10,9 @@ from datetime import datetime
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
 now = datetime.now()
 date_time = now.strftime("_%H:%M:%S_%m-%d-%Y")
+log_path = json.load(open("params.txt"))["log_path"]
+num_logs = len(os.listdir(log_path))
+prefix = str(num_logs) + date_time
 
 def loss_pass(net, loss, loader, epoch, optimizer, train=True):
     """
@@ -41,10 +44,10 @@ def loss_pass(net, loss, loader, epoch, optimizer, train=True):
     return total_epoch_loss
 
 def train(net, num_epochs, optimizer, loss_func, train_loader, valid_loader):
-    global date_time
+    global prefix
     best_train_loss = float('inf')
     best_valid_loss = float('inf')
-    writer = SummaryWriter("__runs/" + str(date_time) + '/')
+    writer = SummaryWriter("__runs/" + prefix + '/')
     for epoch in range(0, num_epochs):
         print("Starting epoch: {}".format(epoch))
         train_epoch_loss = loss_pass(net, loss_func, train_loader, epoch, optimizer, train=True)
@@ -58,9 +61,9 @@ def train(net, num_epochs, optimizer, loss_func, train_loader, valid_loader):
         writer.add_scalar('Train Loss', train_epoch_loss, epoch)
         writer.add_scalar('Valid Loss', valid_epoch_loss, epoch)
         if best_train_loss > train_epoch_loss:
-            torch.save(net.state_dict(), "__runs/" + str(date_time) + '/best_train_model')
+            torch.save(net.state_dict(), "__runs/" + prefix + '/best_train_model')
         if best_valid_loss > valid_epoch_loss:
-            torch.save(net.state_dict(), "__runs/" + str(date_time) + '/best_valid_model')
+            torch.save(net.state_dict(), "__runs/" + prefix + '/best_valid_model')
     writer.close()
 
 def main():
