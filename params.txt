@@ -1,12 +1,12 @@
 {
-    "abs_path": "/home/dhruvkar/datasets/f110_dataset",
-    "log_path": "/home/dhruvkar/Desktop/Robotics/deeprl/avfone/__runs"
-    "left_cam": True
-    "right_cam": True
-    "front_cam": False
-    "left_camera_topic": ""
-    "right_camera_topic": ""
-    "front_camera_topic": ""
-    "left_offset": ""
-    "right_offset": ""
+    "abs_path": "/home/nvidia/catkin_ws/src/f110_Imitation-Learning/trial1",
+    "log_path": "/home/dhruvkar/Desktop/Robotics/deeprl/avfone/__runs",
+    "left_cam": false,
+    "right_cam": false,
+    "front_cam": true,
+    "left_camera": "/cameraLeft/usb_cam2/image_raw/compressed",
+    "right_camera": "/cameraRight/usb_cam1/image_raw/compressed",
+    "front_camera": "/usb_cam/image_raw/compressed",
+    "left_offset": 0.2,
+    "right_offset":0.2
 }
