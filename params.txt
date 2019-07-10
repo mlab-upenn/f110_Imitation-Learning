@@ -1,4 +1,12 @@
 {
     "abs_path": "/home/dhruvkar/datasets/f110_dataset",
     "log_path": "/home/dhruvkar/Desktop/Robotics/deeprl/avfone/__runs"
+    "left_cam": True
+    "right_cam": True
+    "front_cam": False
+    "left_camera_topic": ""
+    "right_camera_topic": ""
+    "front_camera_topic": ""
+    "left_offset": ""
+    "right_offset": ""
 }
