@@ -1,4 +1,4 @@
-import os, torch, cv2, csv, math, pdb
+import os, torch, cv2, csv, math, pdb, shutils
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -165,7 +165,6 @@ class Data_Utils(object):
         fpath = self.abs_path + foldername + '/'
         old_df = pd.read_csv(fpath + 'data.csv')
         new_df = pd.DataFrame(columns=old_df.columns.values)
-
         for i in range(len(old_df)):
             old_row = old_df.iloc[i]
             img_name, angle = old_row[0], old_row[1]
@@ -180,7 +179,21 @@ class Data_Utils(object):
         old_df.append(new_df)
         os.system('rm ' + fpath + 'data.csv')
         old_df.to_csv(fpath + 'data.csv', index=False)
-        
+    
+    def combine_image_folders(self, folder_list):
+        final_dest = self.params['final_dest']
+        for folder in folder_list:
+            data = folder + '/data.csv'
+            df = pd.read_csv(data)
+            image_names = df.iloc[:,0]
+            [shutil.move(os.path.join(folder,file), final_dest) for file in image_names]
+
+    def combine_csvs(self, folder_list):
+        df = pd.concat([pd.read_csv(f+'/data.csv') for f in folder_list])
+        path= os.path.join(self.params['final_dest'] , 'data.csv')
+        df.to_csv(path)
+        self.combine_image_folders(folder_list)
+
 def main():
     du = Data_Utils()
     du.augment_dataset('main_left')
