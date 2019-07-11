@@ -71,34 +71,34 @@ class DataGenerate(object):
         self.cv_front_img = self.bridge.compressed_imgmsg_to_cv2(data)
 
     def driveCallBack(self,data):
-	    """
-	    @brief      Upon recieving new drive message store left/right/front with the steering angle and offset  
-	    """
+        """
+        @brief      Upon recieving new drive message store left/right/front with the steering angle and offset  
+        """
 
         #Ackermann messages give left as +ve and right as -ve. Storing steering angle as negative of that to maintain convention
         # Convention left -ve and right +ve
         steering_angle = - data.drive.steering_angle
-	    if self.params['left_cam']:
-		    cv2.imwrite(os.path.join(self.left_folder, "image_left%06i.jpg" % self.count), self.cv_left_img)
-		    self.left_csv.write('%s, %f, %f\n'%(("image_left%06i.jpg" % self.count),(steering_angle - self.params['left_offset']),data.drive.speed))
-	    if self.params['right_cam']:
-		    cv2.imwrite(os.path.join(self.right_folder, "image_right%06i.jpg" % self.count), self.cv_right_img)
-		    self.right_csv.write('%s, %f, %f\n'%(("image_right%06i.jpg" % self.count),(steering_angle + self.params['right_offset']),data.drive.speed))
-	    if self.params['front_cam']:
-		    cv2.imwrite(os.path.join(self.front_folder, "image_front%06i.jpg" % self.count), self.cv_front_img)
-		    self.front_csv.write('%s, %f, %f\n'%(("image_front%06i.jpg" % self.count),(steering_angle),data.drive.speed))
-	    self.count += 1
+        if self.params['left_cam']:
+            cv2.imwrite(os.path.join(self.left_folder, "image_left%06i.jpg" % self.count), self.cv_left_img)
+            self.left_csv.write('%s, %f, %f\n'%(("image_left%06i.jpg" % self.count),(steering_angle - self.params['left_offset']),data.drive.speed))
+        if self.params['right_cam']:
+            cv2.imwrite(os.path.join(self.right_folder, "image_right%06i.jpg" % self.count), self.cv_right_img)
+            self.right_csv.write('%s, %f, %f\n'%(("image_right%06i.jpg" % self.count),(steering_angle + self.params['right_offset']),data.drive.speed))
+        if self.params['front_cam']:
+            cv2.imwrite(os.path.join(self.front_folder, "image_front%06i.jpg" % self.count), self.cv_front_img)
+            self.front_csv.write('%s, %f, %f\n'%(("image_front%06i.jpg" % self.count),(steering_angle),data.drive.speed))
+        self.count += 1
 
 
     def listener(self):
         rospy.init_node('drive_logger', anonymous=True)
         rospy.Subscriber('/vesc/low_level/ackermann_cmd_mux/output', AckermannDriveStamped, self.driveCallBack)
         if self.params['left_cam']:
-	        rospy.Subscriber(self.params['left_camera'], CompressedImage, self.cameraLeftCallback)
+            rospy.Subscriber(self.params['left_camera'], CompressedImage, self.cameraLeftCallback)
         if self.params['right_cam']:
-	        rospy.Subscriber(self.params['right_camera'], CompressedImage, self.cameraRightCallback)
+            rospy.Subscriber(self.params['right_camera'], CompressedImage, self.cameraRightCallback)
         if self.params['front_cam']:
-	        rospy.Subscriber(self.params['front_camera'], CompressedImage, self.cameraFrontCallback)
+            rospy.Subscriber(self.params['front_camera'], CompressedImage, self.cameraFrontCallback)
         rospy.spin()
 
 if __name__=='__main__':
