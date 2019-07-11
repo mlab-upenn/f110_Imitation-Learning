@@ -1,4 +1,4 @@
-import os, torch, cv2
+import os, torch, cv2, csv, math, pdb, shutils
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,6 +6,7 @@ from bashplotlib.histogram import plot_hist
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
 import json
+device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
 
 class SteerDataset(Dataset):
     """
@@ -17,7 +18,7 @@ class SteerDataset(Dataset):
         """
         super(SteerDataset, self).__init__()
         self.abs_path = json.load(open("params.txt"))["abs_path"] 
-        self.steer_df = pd.read_csv(self.abs_path + "/data.csv")
+        self.steer_df = pd.read_csv(self.abs_path + "main/data.csv")
         self.transforms = transforms
         self.dutils = Data_Utils()
     
@@ -30,10 +31,9 @@ class SteerDataset(Dataset):
         """
         img_name, angle = self.steer_df.iloc[idx, 0], self.steer_df.iloc[idx, 1]
         cv_img = cv2.imread(self.abs_path + '/' + img_name)
-        angle = np.array([angle])
-        angle = torch.from_numpy(angle).float()
-        #cropping image + turning to tensor
-        img_tensor = self.dutils.cv2_to_croppedtensor(cv_img)
+        #preprocess img & label
+        img_tensor, label = self.dutils.preprocess_img(cv_img, angle, use_for='train')
+
         if self.transforms:
             img_tensor = self.transforms(img_tensor)
 
@@ -45,15 +45,14 @@ class Data_Utils(object):
     """
     def __init__(self):
         self.abs_path = json.load(open("params.txt"))["abs_path"]
-        csv_file_path = self.abs_path + "/data.csv"
-        self.steer_df = pd.read_csv(csv_file_path)
 
-    def show_steer_angle_hist(self, w_matplotlib=False):
+    def show_steer_angle_hist(self, foldername, w_matplotlib=False):
         """
         Shows a histogram illustrating distribution of steering angles
         w_matplotlib: boolean to trigger plotting with matplotlib. will otherwise plot to bash with bashplotlib
         """
-        angle_column = self.steer_df.iloc[:, 1].values
+        steer_df = pd.read_csv(self.abs_path + foldername + '/data.csv')
+        angle_column = steer_df.iloc[:, 1].values
         num_bins = 20
         if(w_matplotlib):
             #save plot with matplotlib
@@ -88,13 +87,99 @@ class Data_Utils(object):
 
         return train_dataloader, valid_dataloader
     
-    def cv2_to_croppedtensor(self, cv_img):
-        #cropping image + turning to tensor
+    def is_valid_img(self, cv_img, label):
+        """
+        A series of checks to ensure that an image label pair is valid
+        cv_img: img from cv2
+        label: float representing angle
+        """
+        #stupid check to see if the picture is exceptionally dark
+        if (np.mean(cv_img) == 0):
+            return False
+        return True
+
+    def preprocess_img(self, cv_img, label=None, use_for='vis'):
+        """
+        Alter img_label pair for training AND inference AND visualization
+        cv_img: img from cv2
+        label: float representing angle
+        use_for = use for 'infer', 'train', 'vis'
+        Returns an image tensor or cv image
+        """
+        cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
+        if label:
+            label = label * 180.0/math.pi
+
+        if use_for=='vis':
+            return cv_img, label
+
+        if label:
+            #fix label (turn to 1-Tensor)
+            label_tensor = np.array([label])
+            label_tensor = torch.from_numpy(label_tensor)
+
+        #fix image
         cv_crop = cv_img[200:, :, :]
         img_tensor = torch.from_numpy(cv_crop).float()#size (H x W x C)
         img_tensor = img_tensor.permute(2, 0, 1)#size (C x H x W)
-        return img_tensor
+        return img_tensor, label_tensor
+    
+    def preprocess_dataset(self, orig_foldername, new_foldername):
+        """
+        Make a new dataset from data in orig_foldername and convert to new_foldername (WARNING: will overwrite folder)
+        """
+        nf_path = self.abs_path + new_foldername + '/'
+        of_path = self.abs_path + orig_foldername + '/'
+        old_df = pd.read_csv(of_path + 'data.csv')
+        
+        #make new folder & overrwitr
+        if os.path.exists(nf_path):
+            os.system('rm -r ' + nf_path)
+        os.mkdir(nf_path)
+        #set up new csv file/dataframe
+        col_names = old_df.columns.values
+        new_df = pd.DataFrame(columns=col_names)
 
+        for i in range(len(old_df)):
+            old_row = old_df.iloc[i]
+            img_name, angle = old_row[0], old_row[1]
+            old_img = cv2.imread(of_path + img_name)
+            if(self.is_valid_img(old_img, angle)):
+                new_img, new_angle = self.preprocess_img(old_img, angle, use_for='vis')
+                cv2.imwrite(nf_path + img_name, new_img)
+                new_row = old_row.copy()
+                new_row[1] = new_angle
+                new_df = new_df.append(new_row.copy())
+        new_df.to_csv(nf_path + 'data.csv', index=False)
+
+    def augment_img(self, cv_img, label):
+        #for now just flip the image and the label
+        cv_img = cv2.flip(cv_img, 1)
+        label = label * -1.0
+        return cv_img, label
+
+    def augment_dataset(self, foldername='main'):
+        """
+        Read from a folder and add to its dataset
+        """
+        fpath = self.abs_path + foldername + '/'
+        old_df = pd.read_csv(fpath + 'data.csv')
+        new_df = pd.DataFrame(columns=old_df.columns.values)
+        for i in range(len(old_df)):
+            old_row = old_df.iloc[i]
+            img_name, angle = old_row[0], old_row[1]
+            old_img = cv2.imread(fpath + img_name)
+            new_img, new_angle = self.augment_img(old_img, angle)
+            new_img_name = 'aug_' + img_name
+            cv2.imwrite(fpath + new_img_name, new_img)
+            new_row = old_row.copy()
+            new_row[0] = new_img_name
+            new_row[1] = new_angle
+            new_df = new_df.append(new_row.copy())
+        old_df.append(new_df)
+        os.system('rm ' + fpath + 'data.csv')
+        old_df.to_csv(fpath + 'data.csv', index=False)
+    
     def combine_image_folders(self, folder_list):
         final_dest = self.params['final_dest']
         for folder in folder_list:
@@ -109,11 +194,9 @@ class Data_Utils(object):
         df.to_csv(path)
         self.combine_image_folders(folder_list)
 
-
-
 def main():
     du = Data_Utils()
-    du.show_steer_angle_hist()
+    du.augment_dataset('main_left')
 
 if __name__ == '__main__':
     main()

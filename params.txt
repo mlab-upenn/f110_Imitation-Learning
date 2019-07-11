@@ -1,5 +1,5 @@
 {
-    "abs_path": "/home/nvidia/catkin_ws/src/f110_Imitation-Learning/trial1",
+    "abs_path": "/home/dhruvkar/datasets/trial1/",
     "log_path": "/home/dhruvkar/Desktop/Robotics/deeprl/avfone/__runs",
     "final_dest": "/home/nvidia/catkin_ws/src/f110_Imitation-Learning/main"
     "left_cam": false,
