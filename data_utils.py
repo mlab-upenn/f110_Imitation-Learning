@@ -95,6 +95,13 @@ class Data_Utils(object):
         img_tensor = img_tensor.permute(2, 0, 1)#size (C x H x W)
         return img_tensor
 
+
+    def combine_csvs(self, folder_list):
+        df = pd.concat([pd.read_csv(f+'/data.csv') for f in folder_list])
+        path= os.path.join(self.abs_path , 'merged.csv')
+        df.to_csv(path)
+
+
 def main():
     du = Data_Utils()
     du.show_steer_angle_hist()
