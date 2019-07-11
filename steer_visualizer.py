@@ -70,9 +70,10 @@ class SteerVisualizer(object):
         cv2.imshow(self.frame_name, frame)
         cv2.waitKey(10)
 
-    def vis_from_path(self, pred_angle=False):
+    def vis_from_path(self, foldername, pred_angle=False):
         """
         Visualize a sequence of steering angles from a csv file
+        foldername: Folder to visualize from 
         pred_angle: True if csv_file has final column with predicted steering angles
         """
         csv_file_path = self.abs_path + '/data.csv'
@@ -84,6 +85,7 @@ class SteerVisualizer(object):
             if pred_angle:
                 pred = df.iloc[i, 3]
             frame = cv2.imread(self.abs_path + '/' + img_name) 
+            frame, angle = self.dutils.preprocess_img(frame, angle, use_for='vis')
 
             #visualize this frame
             self.vis_frame(frame, angle, speed, pred)
@@ -112,7 +114,7 @@ class SteerVisualizer(object):
         for i in range(num_rows):
             img_name, angle, speed = df.iloc[i, 0], self.flip_sign * df.iloc[i, 1], -1.0 * df.iloc[i, 2]
             frame = cv2.imread(self.abs_path + '/' + img_name) 
-            ts_frame = self.dutils.cv2_to_croppedtensor(frame)
+            ts_frame, _ = self.dutils.preprocess_img(frame, label=None, use_for='vis')
             ts_frame = ts_frame[None]
 
             #use net to get predicted angle
