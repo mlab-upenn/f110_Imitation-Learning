@@ -6,6 +6,7 @@ from bashplotlib.histogram import plot_hist
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
 import json
+device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
 
 class SteerDataset(Dataset):
     """
@@ -33,7 +34,7 @@ class SteerDataset(Dataset):
         angle = np.array([angle])
         angle = torch.from_numpy(angle).float()
         #cropping image + turning to tensor
-        img_tensor = self.dutils.cv2_to_croppedtensor(cv_img)
+        img_tensor = self.dutils.preprocess_img(cv_img)
         if self.transforms:
             img_tensor = self.transforms(img_tensor)
 
@@ -47,8 +48,7 @@ class Data_Utils(object):
         self.abs_path = json.load(open("params.txt"))["abs_path"]
         csv_file_path = self.abs_path + "/data.csv"
         self.steer_df = pd.read_csv(csv_file_path)
-
-    def show_steer_angle_hist(self, w_matplotlib=False):
+def show_steer_angle_hist(self, w_matplotlib=False):
         """
         Shows a histogram illustrating distribution of steering angles
         w_matplotlib: boolean to trigger plotting with matplotlib. will otherwise plot to bash with bashplotlib
@@ -88,12 +88,40 @@ class Data_Utils(object):
 
         return train_dataloader, valid_dataloader
     
-    def cv2_to_croppedtensor(self, cv_img):
-        #cropping image + turning to tensor
+    def is_valid_img(self, cv_img, label):
+        """
+        A series of checks to ensure that an image label pair is valid
+        cv_img: img from cv2
+        label: float representing angle
+        """
+        #stupid check to see if the picture is exceptionally dark
+        if (np.mean(cv_img) == 0):
+            return False
+        return True
+
+    def preprocess_img(self, cv_img, label, use_for='visualization'):
+        """
+        Alter img_label pair for training AND inference AND visualization
+        cv_img: img from cv2
+        label: float representing angle
+        use_for = use for 'infer', 'train', 'vis'
+        Returns an image tensor or cv image
+        """
+        cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
+
+        if use_for=='visualization':
+            return cv_img
+
         cv_crop = cv_img[200:, :, :]
         img_tensor = torch.from_numpy(cv_crop).float()#size (H x W x C)
         img_tensor = img_tensor.permute(2, 0, 1)#size (C x H x W)
         return img_tensor
+    
+    def preprocess_dataset(self, orig_foldername, new_foldername):
+        """
+        Make a new dataset 
+        """
+        
 
 def main():
     du = Data_Utils()

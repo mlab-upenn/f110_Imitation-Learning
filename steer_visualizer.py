@@ -14,7 +14,7 @@ class SteerVisualizer(object):
         self.frame_name = 'f110 Steer Visualizer'
         cv2.namedWindow(self.frame_name, cv2.WINDOW_NORMAL)
         self.dutils = Data_Utils()
-        self.flip_sign = -1.0
+        self.flip_sign = 1.0
 
     def log_textdata(self, frame, scalar, label=""):
         """
