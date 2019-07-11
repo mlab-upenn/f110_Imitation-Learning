@@ -78,13 +78,13 @@ class DataGenerate(object):
         now = rospy.get_rostime()      
         time= now.to_sec() + (now.to_nsec()/10**9)
         if self.params['left_cam']:
-            cv2.imwrite(os.path.join(self.left_folder, "image_left%06i.jpg" % self.count), self.cv_left_img)
+            cv2.imwrite("image_left%06i.jpg" % self.count, self.cv_left_img)
             self.left_csv.write('%s, %f, %f, %f\n'%(("image_left%06i.jpg" % self.count),(steering_angle - self.params['left_offset']),data.drive.speed,time))
         if self.params['right_cam']:
-            cv2.imwrite(os.path.join(self.right_folder, "image_right%06i.jpg" % self.count), self.cv_right_img)
+            cv2.imwrite("image_right%06i.jpg" % self.count, self.cv_right_img)
             self.right_csv.write('%s, %f, %f, %f\n'%(("image_right%06i.jpg" % self.count),(steering_angle - self.params['right_offset']),data.drive.speed,time))
         if self.params['front_cam']:
-            cv2.imwrite(os.path.join(self.front_folder, "image_front%06i.jpg" % self.count), self.cv_front_img)
+            cv2.imwrite("image_front%06i.jpg" % self.count, self.cv_front_img)
             self.front_csv.write('%s, %f, %f,%f\n'%(("image_front%06i.jpg" % self.count),(steering_angle),data.drive.speed,time))
         self.count += 1
 

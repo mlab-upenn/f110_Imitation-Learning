@@ -95,11 +95,20 @@ class Data_Utils(object):
         img_tensor = img_tensor.permute(2, 0, 1)#size (C x H x W)
         return img_tensor
 
+    def combine_image_folders(self, folder_list):
+        final_dest = self.params['final_dest']
+        for folder in folder_list:
+            data = folder + '/data.csv'
+            df = pd.read_csv(data)
+            image_names = df.iloc[:,0]
+            [shutil.move(os.path.join(folder,file), final_dest) for file in image_names]
 
     def combine_csvs(self, folder_list):
         df = pd.concat([pd.read_csv(f+'/data.csv') for f in folder_list])
-        path= os.path.join(self.abs_path , 'merged.csv')
+        path= os.path.join(self.params['final_dest'] , 'data.csv')
         df.to_csv(path)
+        self.combine_image_folders(folder_list)
+
 
 
 def main():
