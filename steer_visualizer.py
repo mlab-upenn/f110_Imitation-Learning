@@ -103,7 +103,7 @@ class SteerVisualizer(object):
         log_folders = os.listdir(self.log_path)
         log_folders.sort()
         foldername = log_folders[idx]
-        model_path_name = self.log_path + '/' + foldername + '/best_' + model_type + '_model'
+        model_path_name = self.log_path + foldername + '/best_' + model_type + '_model'
 
         #actually build the model
         net = NVIDIA_ConvNet()
