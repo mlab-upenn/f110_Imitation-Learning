@@ -1,4 +1,4 @@
-import os, torch, cv2, csv, math, pdb, shutils
+import os, torch, cv2, csv, math, pdb, shutil
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,7 +30,7 @@ class SteerDataset(Dataset):
         Returns tuple (cropped_image(Tensor, C x H x W), steering angle (float 1x1 tensor))
         """
         img_name, angle = self.steer_df.iloc[idx, 0], self.steer_df.iloc[idx, 1]
-        cv_img = cv2.imread(self.abs_path + '/' + img_name)
+        cv_img = cv2.imread(self.abs_path + 'main/' + img_name)
         #preprocess img & label
         img_tensor, label = self.dutils.preprocess_img(cv_img, angle, use_for='train')
 
@@ -44,7 +44,8 @@ class Data_Utils(object):
     Fun & Useful functions for dealing with Steer Data
     """
     def __init__(self):
-        self.abs_path = json.load(open("params.txt"))["abs_path"]
+        self.params = json.load(open("params.txt"))
+        self.abs_path = self.params["abs_path"]
 
     def show_steer_angle_hist(self, foldername, w_matplotlib=False):
         """
@@ -107,12 +108,12 @@ class Data_Utils(object):
         Returns an image tensor or cv image
         """
         cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
-        if label:
-            label = label * 180.0/math.pi
 
         if use_for=='vis':
+            label = label * 180.0/math.pi
             return cv_img, label
 
+        label_tensor = label
         if label:
             #fix label (turn to 1-Tensor)
             label_tensor = np.array([label])
@@ -132,8 +133,8 @@ class Data_Utils(object):
         of_path = self.abs_path + orig_foldername + '/'
         old_df = pd.read_csv(of_path + 'data.csv')
         
-        #make new folder & overrwitr
-        if os.path.exists(nf_path):
+        #make new folder & overrwite
+        if os.path.exists(nf_path) and nf_path != of_path:
             os.system('rm -r ' + nf_path)
         os.mkdir(nf_path)
         #set up new csv file/dataframe
@@ -183,20 +184,27 @@ class Data_Utils(object):
     def combine_image_folders(self, folder_list):
         final_dest = self.params['final_dest']
         for folder in folder_list:
-            data = folder + '/data.csv'
+            data = self.abs_path + folder + '/data.csv'
             df = pd.read_csv(data)
+            print(data, len(df))
             image_names = df.iloc[:,0]
-            [shutil.move(os.path.join(folder,file), final_dest) for file in image_names]
+            [shutil.copy(os.path.join(self.abs_path + folder,file), final_dest) for file in image_names]
 
     def combine_csvs(self, folder_list):
-        df = pd.concat([pd.read_csv(f+'/data.csv') for f in folder_list])
-        path= os.path.join(self.params['final_dest'] , 'data.csv')
-        df.to_csv(path)
+        df = pd.concat([pd.read_csv(self.abs_path + f+'/data.csv') for f in folder_list])
+
+        if os.path.exists(self.params['final_dest']):
+            os.system('rm -r ' + self.params['final_dest'])
+        os.mkdir(self.params['final_dest'])
+
+        path = os.path.join(self.params['final_dest'] , 'data.csv')
+        df.to_csv(path, index=False)
+
         self.combine_image_folders(folder_list)
 
 def main():
     du = Data_Utils()
-    du.augment_dataset('main_left')
-
+    # du.preprocess_dataset('front_folder', 'main_front')
+    du.combine_csvs(['main_front', 'main_left', 'main_right'])
 if __name__ == '__main__':
     main()

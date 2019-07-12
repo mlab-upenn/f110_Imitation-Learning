@@ -26,7 +26,7 @@ def loss_pass(net, loss, loader, epoch, optimizer, train=True):
     total_epoch_loss = 0
     for i, data in enumerate(loader):
         img_tensor, angle_true = data
-        img_tensor, angle_true = img_tensor.to(device), angle_true.to(device)
+        img_tensor, angle_true = img_tensor.to(device), angle_true.float().to(device)
         #Classic train loop
         optimizer.zero_grad()
         angle_pred = net(img_tensor)
@@ -85,6 +85,7 @@ def main():
     #Make Dataloaders
     dutils = Data_Utils()
     train_dataloader, valid_dataloader = dutils.get_dataloaders(batch_size)
+
     #TRAIN!
     train(net, num_epochs, optimizer, loss_func, train_dataloader, valid_dataloader)
 
