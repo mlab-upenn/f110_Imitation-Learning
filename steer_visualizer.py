@@ -51,24 +51,27 @@ class SteerVisualizer(object):
         #reset text_count
         self.text_count = 0
 
+        #convert angle to degrees
+        angle_rad = angle * math.pi/180.0
+
         #log text data in the top left
-        self.log_textdata(frame, angle, label="angle:")
+        self.log_textdata(frame, angle_rad, label="angle:")
         self.log_textdata(frame, speed, label="speed:")
         if pred is not None:
             self.log_textdata(frame, pred, label="pred_angle:")
 
         #BIG steering graphic
-        cx, cy, r = 320, 520, 80
+        cx, cy, r = 240, 640, 80
         cv2.circle(frame, (cx, cy), r, (255, 255, 255), 2)
 
         #SMALL steering point graphic
-        self.vis_steer_point(frame, angle, cx, cy, r, size=10, color=(32, 165, 218))
+        self.vis_steer_point(frame, angle_rad, cx, cy, r, size=10, color=(32, 165, 218))
         if pred is not None:
             self.vis_steer_point(frame, pred, cx, cy, r, size=5, color=(0, 0, 0))
 
         #display image
         cv2.imshow(self.frame_name, frame)
-        cv2.waitKey(10)
+        cv2.waitKey(100)
 
     def vis_from_path(self, foldername, pred_angle=False):
         """
@@ -76,7 +79,7 @@ class SteerVisualizer(object):
         foldername: Folder to visualize from 
         pred_angle: True if csv_file has final column with predicted steering angles
         """
-        csv_file_path = self.abs_path + '/data.csv'
+        csv_file_path = self.abs_path + foldername + '/data.csv'
         df = pd.read_csv(csv_file_path)
         num_rows = len(df)
         for i in range(num_rows):
@@ -84,7 +87,7 @@ class SteerVisualizer(object):
             img_name, angle, speed, pred = df.iloc[i, 0], self.flip_sign * df.iloc[i, 1], -1.0 * df.iloc[i, 2], None
             if pred_angle:
                 pred = df.iloc[i, 3]
-            frame = cv2.imread(self.abs_path + '/' + img_name) 
+            frame = cv2.imread(self.abs_path + foldername + '/' + img_name) 
             frame, angle = self.dutils.preprocess_img(frame, angle, use_for='vis')
 
             #visualize this frame
@@ -108,7 +111,7 @@ class SteerVisualizer(object):
         net.eval()
 
         #usual csv crap to get img_name, angle, etc.
-        csv_file_path = self.abs_path + '/data.csv'
+        csv_file_path = self.abs_path + 'main/data.csv'
         df = pd.read_csv(csv_file_path)
         num_rows = len(df)
         for i in range(num_rows):
@@ -125,7 +128,7 @@ class SteerVisualizer(object):
 
 def main():
     steer_vis = SteerVisualizer()
-    steer_vis.vis_from_model()
+    steer_vis.vis_from_path('front_folder')
 
 if __name__ == '__main__':
     main()
