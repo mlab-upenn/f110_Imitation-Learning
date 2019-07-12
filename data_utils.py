@@ -107,23 +107,34 @@ class Data_Utils(object):
         use_for = use for 'infer', 'train', 'vis'
         Returns an image tensor or cv image
         """
-        cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
-
-        if use_for=='vis':
-            label = label * 180.0/math.pi
+        if use_for == 'vis':
+            cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
+            if label:
+                label = label * 180.0/math.pi
             return cv_img, label
 
-        label_tensor = label
-        if label:
-            #fix label (turn to 1-Tensor)
-            label_tensor = np.array([label])
-            label_tensor = torch.from_numpy(label_tensor)
+        elif use_for == 'infer':
+            cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
 
-        #fix image
-        cv_crop = cv_img[200:, :, :]
-        img_tensor = torch.from_numpy(cv_crop).float()#size (H x W x C)
-        img_tensor = img_tensor.permute(2, 0, 1)#size (C x H x W)
-        return img_tensor, label_tensor
+            #fix image & convert to tensor
+            cv_crop = cv_img[200:, :, :]
+            img_tensor = torch.from_numpy(cv_crop).float()#size (H x W x C)
+            img_tensor = img_tensor.permute(2, 0, 1)#size (C x H x W)
+            return cv_img, label
+        
+        elif use_for == 'train':
+            label_tensor = label
+            if label:
+                #fix label (turn to 1-Tensor)
+                label_tensor = np.array([label])
+                label_tensor = torch.from_numpy(label_tensor)
+            #fix image & convert to tensor
+            cv_crop = cv_img[200:, :, :]
+            img_tensor = torch.from_numpy(cv_crop).float()#size (H x W x C)
+            img_tensor = img_tensor.permute(2, 0, 1)#size (C x H x W)
+            return img_tensor, label_tensor
+        else:
+            return None, None
     
     def preprocess_dataset(self, orig_foldername, new_foldername):
         """
