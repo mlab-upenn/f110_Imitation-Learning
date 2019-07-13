@@ -124,8 +124,8 @@ class Data_Utils(object):
             #use 'whicham' to alter the labels 
             cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
 
-            steer_offset = 0.15
-            if label:
+            steer_offset = 0.2
+            if label is not None:
                 if whichcam == 'left':
                     label += steer_offset
 
@@ -138,6 +138,23 @@ class Data_Utils(object):
                 label = label * 180.0/math.pi
 
             return cv_img, label
+
+        elif use_for == 'vispath':
+            #vispath does exactly what vis does but doesn't convert angles to degrees
+            cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
+
+            steer_offset = 0.2
+            if label is not None:
+                if whichcam == 'left':
+                    label += steer_offset
+
+                elif whichcam == 'right':
+                    label -= steer_offset
+
+                elif whichcam == 'front':
+                    label = label
+
+            return cv_img, label 
 
         elif use_for == 'infer':
             #We don't need or have the labels for inference, but make sure to get the inputs images to look like they do in training
@@ -190,10 +207,11 @@ class Data_Utils(object):
             img_name, angle = old_row[0], old_row[1]
             old_img = cv2.imread(of_path + img_name)
             if(self.is_valid_img(old_img, angle)):
-                new_img, new_angle = self.preprocess_img(old_img, angle, use_for='vis', whichcam='front')
+                new_img, new_angle = self.preprocess_img(old_img, angle, use_for='vis', whichcam=whichcam)
                 cv2.imwrite(nf_path + img_name, new_img)
                 new_row = old_row.copy()
                 new_row[1] = new_angle
+                print(whichcam, new_angle)
                 new_df = new_df.append(new_row.copy())
         new_df.to_csv(nf_path + 'data.csv', index=False)
 
@@ -232,16 +250,16 @@ class Data_Utils(object):
             df = pd.read_csv(data)
             print(data, len(df))
             image_names = df.iloc[:,0]
-            [shutil.copy(os.path.join(self.abs_path + folder,file), final_dest) for file in image_names]
+            [shutil.copy(os.path.join(self.abs_path + folder,file), self.abs_path + final_dest) for file in image_names]
 
     def combine_csvs(self, folder_list):
         df = pd.concat([pd.read_csv(self.abs_path + f+'/data.csv') for f in folder_list])
 
-        if os.path.exists(self.params['final_dest']):
-            os.system('rm -r ' + self.params['final_dest'])
-        os.mkdir(self.params['final_dest'])
+        if os.path.exists(self.abs_path + self.params['final_dest']):
+            os.system('rm -r ' + self.abs_path + self.params['final_dest'])
+        os.mkdir(self.abs_path + self.params['final_dest'])
 
-        path = os.path.join(self.params['final_dest'] , 'data.csv')
+        path = os.path.join(self.abs_path + self.params['final_dest'] , 'data.csv')
         df.to_csv(path, index=False)
 
         self.combine_image_folders(folder_list)

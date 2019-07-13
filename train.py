@@ -79,8 +79,8 @@ def main():
     net = NVIDIA_ConvNet().to(device)
     loss_func = nn.functional.mse_loss
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
-    num_epochs = 1000
-    batch_size = 64
+    num_epochs = 300
+    batch_size = 128
     
     #Make Dataloaders
     dutils = Data_Utils()
