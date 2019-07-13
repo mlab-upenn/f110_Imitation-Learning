@@ -6,6 +6,7 @@ from bashplotlib.histogram import plot_hist
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
 import json
+import torch
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
 
 class SteerDataset(Dataset):
