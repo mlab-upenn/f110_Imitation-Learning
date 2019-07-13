@@ -111,13 +111,13 @@ class SteerVisualizer(object):
         net.eval()
 
         #usual csv crap to get img_name, angle, etc.
-        csv_file_path = self.abs_path + 'main/data.csv'
+        csv_file_path = self.abs_path + 'front_folder/data.csv'
         df = pd.read_csv(csv_file_path)
         num_rows = len(df)
         for i in range(num_rows):
             img_name, angle, speed = df.iloc[i, 0], self.flip_sign * df.iloc[i, 1], -1.0 * df.iloc[i, 2]
             frame = cv2.imread(self.abs_path + '/' + img_name) 
-            ts_frame, _ = self.dutils.preprocess_img(frame, label=None, use_for='vis')
+            ts_frame, _ = self.dutils.preprocess_img(frame, label=None, use_for='infer')
             ts_frame = ts_frame[None]
 
             #use net to get predicted angle
@@ -128,7 +128,8 @@ class SteerVisualizer(object):
 
 def main():
     steer_vis = SteerVisualizer()
-    steer_vis.vis_from_path('front_folder')
+    #steer_vis.vis_from_path('front_folder')
+    steer_vis.vis_from_model()
 
 if __name__ == '__main__':
     main()

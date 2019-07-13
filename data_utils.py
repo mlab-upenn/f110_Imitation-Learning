@@ -6,6 +6,7 @@ from bashplotlib.histogram import plot_hist
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
 import json
+import torch
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
 
 class SteerDataset(Dataset):
@@ -114,13 +115,13 @@ class Data_Utils(object):
             return cv_img, label
 
         elif use_for == 'infer':
-            cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
+            #cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
 
             #fix image & convert to tensor
             cv_crop = cv_img[200:, :, :]
             img_tensor = torch.from_numpy(cv_crop).float()#size (H x W x C)
             img_tensor = img_tensor.permute(2, 0, 1)#size (C x H x W)
-            return cv_img, label
+            return img_tensor, label
         
         elif use_for == 'train':
             label_tensor = label
