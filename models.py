@@ -33,4 +33,4 @@ class NVIDIA_ConvNet(nn.Module):
         out = self.conv(x)
         out = out.view(out.size(0), -1)
         out = self.fc(out)
-        return torch.squeeze(out)
+        return out
