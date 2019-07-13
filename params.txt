@@ -1,7 +1,7 @@
 {
     "abs_path": "/home/dhruvkar/datasets/trial1/",
     "log_path": "/home/dhruvkar/Desktop/Robotics/deeprl/avfone/__runs",
-    "final_dest": "/home/dhruvkar/datasets/trial1/main/",
+    "final_dest": "main",
     "left_cam": false,
     "right_cam": false,
     "front_cam": true,

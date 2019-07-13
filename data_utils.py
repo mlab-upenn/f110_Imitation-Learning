@@ -17,8 +17,10 @@ class SteerDataset(Dataset):
         transforms (callable, optional): Optional transforms applied on samples
         """
         super(SteerDataset, self).__init__()
-        self.abs_path = json.load(open("params.txt"))["abs_path"] 
-        self.steer_df = pd.read_csv(self.abs_path + "main/data.csv")
+        self.params = json.load(open("params.txt"))
+        self.abs_path = self.params["abs_path"] 
+        dfpath = self.abs_path + self.params["final_dest"] + "/data.csv"
+        self.steer_df = pd.read_csv(dfpath)
         self.transforms = transforms
         self.dutils = Data_Utils()
     
@@ -30,7 +32,9 @@ class SteerDataset(Dataset):
         Returns tuple (cropped_image(Tensor, C x H x W), steering angle (float 1x1 tensor))
         """
         img_name, angle = self.steer_df.iloc[idx, 0], self.steer_df.iloc[idx, 1]
-        cv_img = cv2.imread(self.abs_path + 'main/' + img_name)
+        framepath = self.abs_path + self.params["final_dest"] + '/' + img_name
+        cv_img = cv2.imread(framepath)
+
         #preprocess img & label
         img_tensor, label = self.dutils.preprocess_img(cv_img, angle, use_for='train')
 
@@ -113,23 +117,22 @@ class Data_Utils(object):
             cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
 
             steer_offset = 0.15
-            if whichcam == 'left':
-                label += steer_offset
-
-            elif whichcam == 'right':
-                label -= steer_offset
-
-            elif whichcam == 'front':
-                label = label
-
             if label:
+                if whichcam == 'left':
+                    label += steer_offset
+
+                elif whichcam == 'right':
+                    label -= steer_offset
+
+                elif whichcam == 'front':
+                    label = label
+
                 label = label * 180.0/math.pi
 
             return cv_img, label
 
         elif use_for == 'infer':
             #We don't need or have the labels for inference, but make sure to get the inputs images to look like they do in training
-
             cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
 
             #fix image & convert to tensor
@@ -137,10 +140,12 @@ class Data_Utils(object):
             img_tensor = torch.from_numpy(cv_crop).float()#size (H x W x C)
             img_tensor = img_tensor.permute(2, 0, 1)#size (C x H x W)
             return img_tensor, label
-        
+
         elif use_for == 'train':
-            #we're training on label=degrees & rotated images
+
+            #we're training on label=degrees & rotated images, assume everything is fixed 
             label_tensor = label
+
             if label:
                 #fix label (turn to 1-Tensor)
                 label_tensor = np.array([label])
@@ -151,6 +156,7 @@ class Data_Utils(object):
             img_tensor = torch.from_numpy(cv_crop).float()#size (H x W x C)
             img_tensor = img_tensor.permute(2, 0, 1)#size (C x H x W)
             return img_tensor, label_tensor
+
         else:
             return None, None
     
