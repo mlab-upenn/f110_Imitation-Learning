@@ -1,4 +1,4 @@
-import os, cv2, math, sys, json, torch
+import os, cv2, math, sys, json, torch, pdb
 from data_utils import Data_Utils
 from models import NVIDIA_ConvNet
 import pandas as pd 
@@ -8,8 +8,9 @@ class SteerVisualizer(object):
     Set of methods that allow you to visualize the F110's Driving Behaviour
     """
     def __init__(self):
-        self.abs_path = json.load(open("params.txt"))["abs_path"]
-        self.log_path = json.load(open("params.txt"))["log_path"]
+        self.params = json.load(open("params.txt"))
+        self.abs_path = self.params["abs_path"]
+        self.log_path = self.params["log_path"]
         self.text_count = 0
         self.frame_name = 'f110 Steer Visualizer'
         cv2.namedWindow(self.frame_name, cv2.WINDOW_NORMAL)
@@ -51,13 +52,15 @@ class SteerVisualizer(object):
         #reset text_count
         self.text_count = 0
 
-        #convert angle to degrees
+        #convert angle to radians
         angle_rad = angle * math.pi/180.0
+
 
         #log text data in the top left
         self.log_textdata(frame, angle_rad, label="angle:")
         self.log_textdata(frame, speed, label="speed:")
         if pred is not None:
+            pred_angle = pred * math.pi/180.0
             self.log_textdata(frame, pred, label="pred_angle:")
 
         #BIG steering graphic
@@ -71,9 +74,9 @@ class SteerVisualizer(object):
 
         #display image
         cv2.imshow(self.frame_name, frame)
-        cv2.waitKey(100)
+        cv2.waitKey(10)
 
-    def vis_from_path(self, foldername, pred_angle=False):
+    def vis_from_path(self, foldername, pred_angle=False, whichcam=None):
         """
         Visualize a sequence of steering angles from a csv file
         foldername: Folder to visualize from 
@@ -88,7 +91,7 @@ class SteerVisualizer(object):
             if pred_angle:
                 pred = df.iloc[i, 3]
             frame = cv2.imread(self.abs_path + foldername + '/' + img_name) 
-            frame, angle = self.dutils.preprocess_img(frame, angle, use_for='vis')
+            frame, angle = self.dutils.preprocess_img(frame, angle, use_for='vis', whichcam=whichcam)
 
             #visualize this frame
             self.vis_frame(frame, angle, speed, pred)
@@ -103,7 +106,7 @@ class SteerVisualizer(object):
         log_folders = os.listdir(self.log_path)
         log_folders.sort()
         foldername = log_folders[idx]
-        model_path_name = self.log_path + foldername + '/best_' + model_type + '_model'
+        model_path_name = os.path.join(self.log_path, foldername) + '/best_' + model_type + '_model'
 
         #actually build the model
         net = NVIDIA_ConvNet()
@@ -111,12 +114,15 @@ class SteerVisualizer(object):
         net.eval()
 
         #usual csv crap to get img_name, angle, etc.
-        csv_file_path = self.abs_path + 'front_folder/data.csv'
+        csv_file_path = self.abs_path + 'front_folder' + '/data.csv'
+
         df = pd.read_csv(csv_file_path)
         num_rows = len(df)
         for i in range(num_rows):
             img_name, angle, speed = df.iloc[i, 0], self.flip_sign * df.iloc[i, 1], -1.0 * df.iloc[i, 2]
-            frame = cv2.imread(self.abs_path + '/' + img_name) 
+            framepath = self.abs_path + 'front_folder' + '/' + img_name
+            frame = cv2.imread(framepath) 
+
             ts_frame, _ = self.dutils.preprocess_img(frame, label=None, use_for='infer')
             ts_frame = ts_frame[None]
 
@@ -128,8 +134,8 @@ class SteerVisualizer(object):
 
 def main():
     steer_vis = SteerVisualizer()
-    #steer_vis.vis_from_path('front_folder')
-    steer_vis.vis_from_model()
+    # steer_vis.vis_from_path('right_folder', whichcam='right')
+    steer_vis.vis_from_model(model_type='train', idx=-1)
 
 if __name__ == '__main__':
     main()

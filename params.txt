@@ -1,4 +1,5 @@
 {
+
     "abs_path": "/home/nvidia/catkin_ws/src/f110_Imitation-Learning/trial1/",
     "log_path": "/home/nvidia/__runs/",
     "final_dest": "/home/dhruvkar/datasets/trial1/main/",
