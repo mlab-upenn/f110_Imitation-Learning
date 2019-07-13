@@ -2,7 +2,6 @@ import os, torch, pdb
 import torch.nn as nn
 import numpy as np 
 import torchvision
-#240 x 680  -> 64 x 28 x 73
 
 class NVIDIA_ConvNet(nn.Module):
     """
@@ -34,4 +33,4 @@ class NVIDIA_ConvNet(nn.Module):
         out = self.conv(x)
         out = out.view(out.size(0), -1)
         out = self.fc(out)
-        return out
+        return torch.squeeze(out)
