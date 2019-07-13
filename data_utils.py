@@ -99,7 +99,7 @@ class Data_Utils(object):
             return False
         return True
 
-    def preprocess_img(self, cv_img, label=None, use_for='vis'):
+    def preprocess_img(self, cv_img, label=None, use_for='vis', whichcam=None):
         """
         Alter img_label pair for training AND inference AND visualization
         cv_img: img from cv2
@@ -108,26 +108,44 @@ class Data_Utils(object):
         Returns an image tensor or cv image
         """
         if use_for == 'vis':
+            #vis fixes the dataset to make them look like what they should look like for training
+            #use 'whicham' to alter the labels 
             cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
+
+            steer_offset = 0.15
+            if whichcam == 'left':
+                label += steer_offset
+
+            elif whichcam == 'right':
+                label -= steer_offset
+
+            elif whichcam == 'front':
+                label = label
+
             if label:
                 label = label * 180.0/math.pi
+
             return cv_img, label
 
         elif use_for == 'infer':
+            #We don't need or have the labels for inference, but make sure to get the inputs images to look like they do in training
+
             cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
 
             #fix image & convert to tensor
             cv_crop = cv_img[200:, :, :]
             img_tensor = torch.from_numpy(cv_crop).float()#size (H x W x C)
             img_tensor = img_tensor.permute(2, 0, 1)#size (C x H x W)
-            return cv_img, label
+            return img_tensor, label
         
         elif use_for == 'train':
+            #we're training on label=degrees & rotated images
             label_tensor = label
             if label:
                 #fix label (turn to 1-Tensor)
                 label_tensor = np.array([label])
                 label_tensor = torch.from_numpy(label_tensor)
+
             #fix image & convert to tensor
             cv_crop = cv_img[200:, :, :]
             img_tensor = torch.from_numpy(cv_crop).float()#size (H x W x C)
@@ -136,7 +154,8 @@ class Data_Utils(object):
         else:
             return None, None
     
-    def preprocess_dataset(self, orig_foldername, new_foldername):
+
+    def preprocess_dataset(self, orig_foldername, new_foldername, whichcam):
         """
         Make a new dataset from data in orig_foldername and convert to new_foldername (WARNING: will overwrite folder)
         """
@@ -148,6 +167,7 @@ class Data_Utils(object):
         if os.path.exists(nf_path) and nf_path != of_path:
             os.system('rm -r ' + nf_path)
         os.mkdir(nf_path)
+
         #set up new csv file/dataframe
         col_names = old_df.columns.values
         new_df = pd.DataFrame(columns=col_names)
@@ -157,7 +177,7 @@ class Data_Utils(object):
             img_name, angle = old_row[0], old_row[1]
             old_img = cv2.imread(of_path + img_name)
             if(self.is_valid_img(old_img, angle)):
-                new_img, new_angle = self.preprocess_img(old_img, angle, use_for='vis')
+                new_img, new_angle = self.preprocess_img(old_img, angle, use_for='vis', whichcam='front')
                 cv2.imwrite(nf_path + img_name, new_img)
                 new_row = old_row.copy()
                 new_row[1] = new_angle
@@ -215,7 +235,10 @@ class Data_Utils(object):
 
 def main():
     du = Data_Utils()
-    # du.preprocess_dataset('front_folder', 'main_front')
+    du.preprocess_dataset('front_folder', 'main_front', whichcam='front')
+    du.preprocess_dataset('left_folder', 'main_left', whichcam='left')
+    du.preprocess_dataset('right_folder', 'main_right', whichcam='right')
     du.combine_csvs(['main_front', 'main_left', 'main_right'])
+
 if __name__ == '__main__':
     main()

@@ -71,9 +71,9 @@ class SteerVisualizer(object):
 
         #display image
         cv2.imshow(self.frame_name, frame)
-        cv2.waitKey(100)
+        cv2.waitKey(10)
 
-    def vis_from_path(self, foldername, pred_angle=False):
+    def vis_from_path(self, foldername, pred_angle=False, whichcam=None):
         """
         Visualize a sequence of steering angles from a csv file
         foldername: Folder to visualize from 
@@ -88,7 +88,7 @@ class SteerVisualizer(object):
             if pred_angle:
                 pred = df.iloc[i, 3]
             frame = cv2.imread(self.abs_path + foldername + '/' + img_name) 
-            frame, angle = self.dutils.preprocess_img(frame, angle, use_for='vis')
+            frame, angle = self.dutils.preprocess_img(frame, angle, use_for='vis', whichcam=whichcam)
 
             #visualize this frame
             self.vis_frame(frame, angle, speed, pred)
@@ -128,7 +128,7 @@ class SteerVisualizer(object):
 
 def main():
     steer_vis = SteerVisualizer()
-    steer_vis.vis_from_path('front_folder')
+    steer_vis.vis_from_path('right_folder', whichcam='right')
 
 if __name__ == '__main__':
     main()
