@@ -74,15 +74,15 @@ class DataGenerate(object):
 
         #Ackermann messages give left as +ve and right as -ve. Storing steering angle as negative of that to maintain convention
         # Convention left -ve and right +ve
-        steering_angle = - data.drive.steering_angle  
+        steering_angle = -1.0*data.drive.steering_angle  
         now = rospy.get_rostime()      
         time= now.to_sec() + (now.to_nsec()/10**9)
         if self.params['left_cam']:
             cv2.imwrite("image_left%06i.jpg" % self.count, self.cv_left_img)
-            self.left_csv.write('%s, %f, %f, %f\n'%(("image_left%06i.jpg" % self.count),(steering_angle - self.params['left_offset']),data.drive.speed,time))
+            self.left_csv.write('%s, %f, %f, %f\n'%(("image_left%06i.jpg" % self.count),(steering_angle),data.drive.speed,time))
         if self.params['right_cam']:
             cv2.imwrite("image_right%06i.jpg" % self.count, self.cv_right_img)
-            self.right_csv.write('%s, %f, %f, %f\n'%(("image_right%06i.jpg" % self.count),(steering_angle - self.params['right_offset']),data.drive.speed,time))
+            self.right_csv.write('%s, %f, %f, %f\n'%(("image_right%06i.jpg" % self.count),(steering_angle),data.drive.speed,time))
         if self.params['front_cam']:
             cv2.imwrite("image_front%06i.jpg" % self.count, self.cv_front_img)
             self.front_csv.write('%s, %f, %f,%f\n'%(("image_front%06i.jpg" % self.count),(steering_angle),data.drive.speed,time))

@@ -115,12 +115,14 @@ class SteerVisualizer(object):
 
         #usual csv crap to get img_name, angle, etc.
         csv_file_path = self.abs_path + 'front_folder' + '/data.csv'
+
         df = pd.read_csv(csv_file_path)
         num_rows = len(df)
         for i in range(num_rows):
             img_name, angle, speed = df.iloc[i, 0], self.flip_sign * df.iloc[i, 1], -1.0 * df.iloc[i, 2]
             framepath = self.abs_path + 'front_folder' + '/' + img_name
             frame = cv2.imread(framepath) 
+
             ts_frame, _ = self.dutils.preprocess_img(frame, label=None, use_for='infer')
             ts_frame = ts_frame[None]
 
