@@ -1,13 +1,17 @@
 {
-    "abs_path": "/home/dhruvkar/datasets/trial1/",
-    "log_path": "/home/dhruvkar/Desktop/Robotics/deeprl/avfone/__runs",
-    "final_dest": "/home/dhruvkar/datasets/trial1/main/",
+    "abs_path": "/home/mlab-train/datasets/trial1/",
+    "log_path": "/home/mlab-train/Desktop/deeprl/avfone/__runs",
+    "final_dest": "main",
     "left_cam": false,
     "right_cam": false,
     "front_cam": true,
     "left_camera": "/cameraLeft/usb_cam2/image_raw/compressed",
     "right_camera": "/cameraRight/usb_cam1/image_raw/compressed",
-    "front_camera": "/usb_cam/image_raw/compressed",
+    "front_camera": "/cameraRight/usb_cam1/image_raw/compressed",
     "left_offset": 0.2,
-    "right_offset":0.2
+    "right_offset":0.2,
+    "speed_thr": "2.0",
+    "angle_remove": "0.0",
+    "threshold_speed": true,
+    "filter_angle": "true"
 }
