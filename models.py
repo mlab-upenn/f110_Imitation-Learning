@@ -2,7 +2,6 @@ import os, torch, pdb
 import torch.nn as nn
 import numpy as np 
 import torchvision
-#240 x 680  -> 64 x 28 x 73
 
 class NVIDIA_ConvNet(nn.Module):
     """
@@ -19,7 +18,7 @@ class NVIDIA_ConvNet(nn.Module):
         )
         
         self.fc = nn.Sequential(
-            nn.Linear(64*28*73, 1164), 
+            nn.Linear(64*48*53, 1164), 
             nn.Linear(1164, 100), 
             nn.Linear(100, 50),
             nn.Linear(50, 10), 

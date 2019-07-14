@@ -6,6 +6,7 @@ from bashplotlib.histogram import plot_hist
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
 import json
+import torch
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
 
 class SteerDataset(Dataset):
@@ -17,8 +18,10 @@ class SteerDataset(Dataset):
         transforms (callable, optional): Optional transforms applied on samples
         """
         super(SteerDataset, self).__init__()
-        self.abs_path = json.load(open("params.txt"))["abs_path"] 
-        self.steer_df = pd.read_csv(self.abs_path + "main/data.csv")
+        self.params = json.load(open("params.txt"))
+        self.abs_path = self.params["abs_path"] 
+        dfpath = self.abs_path + self.params["final_dest"] + "/data.csv"
+        self.steer_df = pd.read_csv(dfpath)
         self.transforms = transforms
         self.dutils = Data_Utils()
     
@@ -30,14 +33,23 @@ class SteerDataset(Dataset):
         Returns tuple (cropped_image(Tensor, C x H x W), steering angle (float 1x1 tensor))
         """
         img_name, angle = self.steer_df.iloc[idx, 0], self.steer_df.iloc[idx, 1]
-        cv_img = cv2.imread(self.abs_path + 'main/' + img_name)
+        framepath = self.abs_path + self.params["final_dest"] + '/' + img_name
+        cv_img = cv2.imread(framepath)
+        # cv2.imshow('EXAMPLE', cv_img)
+        # cv2.waitKey(0)
+
         #preprocess img & label
-        img_tensor, label = self.dutils.preprocess_img(cv_img, angle, use_for='train')
+        img_tensor, label_tensor = self.dutils.preprocess_img(cv_img, angle, use_for='train')
 
         if self.transforms:
             img_tensor = self.transforms(img_tensor)
+        
+        # print('CV_IMAGE SHAPE', cv_img.shape)
+        # print('IMG TENSOR SHAPE', img_tensor.size())
+        # print('label_tensor', label_tensor)
+        # print('angle', angle)
 
-        return (img_tensor, angle)
+        return (img_tensor, label_tensor)
 
 class Data_Utils(object):
     """
@@ -99,7 +111,7 @@ class Data_Utils(object):
             return False
         return True
 
-    def preprocess_img(self, cv_img, label=None, use_for='vis'):
+    def preprocess_img(self, cv_img, label=None, use_for='vis', whichcam=None):
         """
         Alter img_label pair for training AND inference AND visualization
         cv_img: img from cv2
@@ -108,35 +120,72 @@ class Data_Utils(object):
         Returns an image tensor or cv image
         """
         if use_for == 'vis':
+            #vis fixes the dataset to make them look like what they should look like for training
+            #use 'whicham' to alter the labels 
             cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
-            if label:
+
+            steer_offset = 0.2
+            if label is not None:
+                if whichcam == 'left':
+                    label += steer_offset
+
+                elif whichcam == 'right':
+                    label -= steer_offset
+
+                elif whichcam == 'front':
+                    label = label
+
                 label = label * 180.0/math.pi
+
             return cv_img, label
+
+        elif use_for == 'vispath':
+            #vispath does exactly what vis does but doesn't convert angles to degrees
+            cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
+
+            steer_offset = 0.2
+            if label is not None:
+                if whichcam == 'left':
+                    label += steer_offset
+
+                elif whichcam == 'right':
+                    label -= steer_offset
+
+                elif whichcam == 'front':
+                    label = label
+
+            return cv_img, label 
 
         elif use_for == 'infer':
+            #We don't need or have the labels for inference, but make sure to get the inputs images to look like they do in training
             cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_CLOCKWISE)
 
             #fix image & convert to tensor
             cv_crop = cv_img[200:, :, :]
             img_tensor = torch.from_numpy(cv_crop).float()#size (H x W x C)
             img_tensor = img_tensor.permute(2, 0, 1)#size (C x H x W)
-            return cv_img, label
-        
+            return img_tensor, label
+
         elif use_for == 'train':
-            label_tensor = label
-            if label:
-                #fix label (turn to 1-Tensor)
-                label_tensor = np.array([label])
-                label_tensor = torch.from_numpy(label_tensor)
+
+            #we're training on label=degrees & rotated images, assume everything is fixed 
+
+            #fix label (turn to 1-Tensor)
+            label_tensor = np.array([label])
+            label_tensor = torch.from_numpy(label_tensor)
+
             #fix image & convert to tensor
             cv_crop = cv_img[200:, :, :]
             img_tensor = torch.from_numpy(cv_crop).float()#size (H x W x C)
             img_tensor = img_tensor.permute(2, 0, 1)#size (C x H x W)
+            
             return img_tensor, label_tensor
+
         else:
             return None, None
     
-    def preprocess_dataset(self, orig_foldername, new_foldername):
+
+    def preprocess_dataset(self, orig_foldername, new_foldername, whichcam):
         """
         Make a new dataset from data in orig_foldername and convert to new_foldername (WARNING: will overwrite folder)
         """
@@ -148,6 +197,7 @@ class Data_Utils(object):
         if os.path.exists(nf_path) and nf_path != of_path:
             os.system('rm -r ' + nf_path)
         os.mkdir(nf_path)
+
         #set up new csv file/dataframe
         col_names = old_df.columns.values
         new_df = pd.DataFrame(columns=col_names)
@@ -157,10 +207,11 @@ class Data_Utils(object):
             img_name, angle = old_row[0], old_row[1]
             old_img = cv2.imread(of_path + img_name)
             if(self.is_valid_img(old_img, angle)):
-                new_img, new_angle = self.preprocess_img(old_img, angle, use_for='vis')
+                new_img, new_angle = self.preprocess_img(old_img, angle, use_for='vis', whichcam=whichcam)
                 cv2.imwrite(nf_path + img_name, new_img)
                 new_row = old_row.copy()
                 new_row[1] = new_angle
+                print(whichcam, new_angle)
                 new_df = new_df.append(new_row.copy())
         new_df.to_csv(nf_path + 'data.csv', index=False)
 
@@ -199,23 +250,26 @@ class Data_Utils(object):
             df = pd.read_csv(data)
             print(data, len(df))
             image_names = df.iloc[:,0]
-            [shutil.copy(os.path.join(self.abs_path + folder,file), final_dest) for file in image_names]
+            [shutil.copy(os.path.join(self.abs_path + folder,file), self.abs_path + final_dest) for file in image_names]
 
     def combine_csvs(self, folder_list):
         df = pd.concat([pd.read_csv(self.abs_path + f+'/data.csv') for f in folder_list])
 
-        if os.path.exists(self.params['final_dest']):
-            os.system('rm -r ' + self.params['final_dest'])
-        os.mkdir(self.params['final_dest'])
+        if os.path.exists(self.abs_path + self.params['final_dest']):
+            os.system('rm -r ' + self.abs_path + self.params['final_dest'])
+        os.mkdir(self.abs_path + self.params['final_dest'])
 
-        path = os.path.join(self.params['final_dest'] , 'data.csv')
+        path = os.path.join(self.abs_path + self.params['final_dest'] , 'data.csv')
         df.to_csv(path, index=False)
 
         self.combine_image_folders(folder_list)
 
 def main():
     du = Data_Utils()
-    # du.preprocess_dataset('front_folder', 'main_front')
+    du.preprocess_dataset('front_folder', 'main_front', whichcam='front')
+    du.preprocess_dataset('left_folder', 'main_left', whichcam='left')
+    du.preprocess_dataset('right_folder', 'main_right', whichcam='right')
     du.combine_csvs(['main_front', 'main_left', 'main_right'])
+
 if __name__ == '__main__':
     main()
