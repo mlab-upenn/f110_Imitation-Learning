@@ -62,11 +62,17 @@ class Stepper(object):
 
             #data resides in raw data at the start of the session
             ver_path = os.path.join(self.params_dict["abs_path"], self.sess_loc)
+            print("VER_PATH:", ver_path)
+
             self.B_VER(ver_path, dlist)
             self.dlist = dlist
-            
-            #
-            
+            print("PASSED B_VER")
+            print("dlist", str(self.dlist))
+        
+            #Initialize Metrics Visualizer
+            self.vis = Metric_Visualizer(self.sess_id)
+            vis.log_init(dlist, self.sess_loc)
+
        elif insn_type == "preprocess":
             pass
 
