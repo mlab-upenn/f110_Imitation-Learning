@@ -1,4 +1,5 @@
 import os, json, pdb, cv2, math
+import numpy as np
 from functools import partial
 import pandas as pd
 
@@ -10,6 +11,18 @@ def cropVertical(args, img, metrics_row):
         return img[cropStart:, :, :], metrics_row
     elif cropEnd > 0:
         return img[cropStart:cropEnd, :, :], metrics_row
+
+def rot90(args, img, metrics_row):
+    assert (len(args) == 1),"Incorrect sized argument to rot90"
+    direction = args[0]
+    if direction == 'clockwise':
+        new_img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+
+    elif direction == 'anticlockwise':
+        #TODO: DO ANTICLOCKWISE
+        pass
+
+    return new_img, metrics_row
 
 def radOffset(args, img, metrics_row):
     assert (len(args) == 1), "Incorrect sized argument to radOffset"
@@ -40,6 +53,8 @@ class Data_Utils(object):
             p = partial(rad2deg, args)
         elif fname == 'radOffset':
             p = partial(radOffset, args)
+        elif fname == 'rot90':
+            p = partial(rot90, args)
         else:
             raise Exception('{fname} is not in the list of functions')
         return p
@@ -88,7 +103,47 @@ class Data_Utils(object):
             #write image and append to new_df
             new_img_path = os.path.join(destpath, img_name)
             cv2.imwrite(new_img_path, new_img)
-            new_df.append(new_row)
+            new_df = new_df.append(new_row)
         
-        newcsvpath = os.path.join(sourcepath, "data.csv")
-        new_df.to_csv(newcsvpath)
+        newcsvpath = os.path.join(destpath, "data.csv")
+        new_df.to_csv(newcsvpath, index_label=False, index=False)
+    
+    def create_preview_folder(self, sourcepath, destpath):
+        #make directories to destpath
+        os.makedirs(destpath)
+
+        #set up new csv file/dataframe
+        csvpath = os.path.join(sourcepath, "data.csv")
+        old_df = pd.read_csv(csvpath)
+        col_names = old_df.columns.values
+        new_df = pd.DataFrame(columns=col_names)
+
+        for i in range(50):
+            #get old_image and old_row
+            old_row = old_df.iloc[i]
+            img_name = old_row[0]
+            img_path = os.path.join(sourcepath, img_name)
+            old_img = cv2.imread(img_path)
+
+            new_img_path = os.path.join(destpath, img_name)
+            cv2.imwrite(new_img_path, old_img)
+            new_df = new_df.append(old_row)
+
+        #add max steering angle and minimum steering angle
+        angle_column = old_df.iloc[:, 1].values
+        max_idx = np.argmax(angle_column)
+        min_idx = np.argmin(angle_column)
+        max_row = old_df.iloc[max_idx]
+        min_row = old_df.iloc[min_idx]
+        max_img_name = max_row[0]
+        max_img_path = os.path.join(sourcepath, max_img_name)
+        max_img = cv2.imread(max_img_path)
+        cv2.imwrite(os.path.join(destpath, max_img_name), max_img)
+        new_df = new_df.append(max_row)
+        min_img_name = min_row[0]
+        min_img_path = os.path.join(sourcepath, min_img_name)
+        min_img = cv2.imread(min_img_path) 
+        cv2.imwrite(os.path.join(destpath, min_img_name), min_img)
+        new_df = new_df.append(min_row)
+        newcsvpath = os.path.join(destpath, "data.csv")
+        new_df.to_csv(newcsvpath, index_label=False, index=False)

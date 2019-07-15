@@ -62,11 +62,12 @@ class Metric_Visualizer(object):
 
         if show_steer:
             #Big Steering Graphic
-            h, w = frame.shape
-            cx, cy, r = h, int(w/2), 80
+            h, w, c = frame.shape
+            cx, cy, r = int(w/2), h, 80
+            cv2.circle(frame, (cx, cy), r, (255, 255, 255), 2)
 
             #SMALL steering point graphic (angle must be in radians)
-            self.vis_steer_point(frame, angle, cx, cy, r, size=10, color=(32, 165, 218))
+            self.vis_steer_point(frame, angle, cx, cy, r, size=10, color=(218, 165, 32))
             if pred is not None:
                 self.vis_steer_point(frame, pred, cx, cy, r, size=5, color=(0, 0, 0))
 

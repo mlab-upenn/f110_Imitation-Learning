@@ -88,11 +88,19 @@ class Stepper(object):
 
             if self.params_dict["preview"]:
                 new_sess_loc = os.path.join(self.params_dict["abs_path"], self.params_dict["sess"], str(self.sess_id))
-                self.dutils()
-        
+                new_dlist = []
+                for folder in dlist:
+                    new_folder = "preview_" + str(len(os.listdir(new_sess_loc))) + folder
+                    sourcepath = os.path.join(self.params_dict["abs_path"], self.sess_loc, folder)
+                    destpath = os.path.join(self.params_dict["abs_path"], new_sess_loc, new_folder)
+                    self.dutils.create_preview_folder(sourcepath, destpath)
+                    new_dlist.append(new_folder)
+                self.sess_loc = new_sess_loc
+                self.dlist = new_dlist
+            
             #Initialize Metrics Visualizer
             self.vis = Metric_Visualizer(self.sess_id, self.writer)
-            self.vis.log_init(dlist, self.sess_loc)
+            self.vis.log_init(self.dlist, self.sess_loc)
 
             #increment step
             self.curr_step += 1
@@ -127,7 +135,7 @@ class Stepper(object):
 
         elif insn_type == "train":
             pass
-    
+
     def preprocess(self, sess_loc, new_sess_loc, dlist, funclist):
         new_dlist = []
         for i, folder in enumerate(dlist):
