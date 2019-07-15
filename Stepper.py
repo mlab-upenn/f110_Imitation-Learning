@@ -2,6 +2,7 @@ import os, json, glob, pdb, cv2
 import pandas as pd
 from tensorboardX import SummaryWriter
 from Metric_Visualizer import Metric_Visualizer
+from Data_Utils import Data_Utils
 
 class Stepper(object):
     """
@@ -14,6 +15,7 @@ class Stepper(object):
         self.sess_loc = self.params_dict["raw_data"] #running folder of data for this session (start at raw data, update after preprocessing)
         self.dlist = None #running list of folders to operate on 
         self.vis = None #Metric Visualizer
+        self.dutils = Data_Utils()
 
         #Get Session ID
         sess_path = os.path.join(self.params_dict["abs_path"], self.params_dict["sess"])
@@ -72,14 +74,13 @@ class Stepper(object):
 
         #case over insn_types
         if insn_type == "init":
-            assert (self.curr_step == 0 and self.dlist is None), "Step Error: init instruction can only be called once at the start"
+            assert(self.curr_step == 0 and self.dlist is None), "Step Error: init instruction can only be called once at the start"
 
             dlist = curr_dict["dlist"]
 
             #data resides in raw data at the start of the session
             ver_path = os.path.join(self.params_dict["abs_path"], self.sess_loc)
             print("VER_PATH:", ver_path)
-
             self.B_VER(ver_path, dlist)
             self.dlist = dlist
             print("PASSED B_VER")
@@ -89,8 +90,24 @@ class Stepper(object):
             self.vis = Metric_Visualizer(self.sess_id, self.writer)
             self.vis.log_init(dlist, self.sess_loc)
 
+            #increment step
+            self.curr_step += 1
+
         elif insn_type == "preprocess":
-            pass
+            assert(self.curr_step > 0 and self.dlist is not None), "Step Error: Must call init before preprocess"
+
+            ver_path = os.path.join(self.params_dict["abs_path"], self.sess_loc)
+            print("VER_PATH:", ver_path) 
+            self.B_VER(ver_path, self.dlist)
+            print("PASSED B_VER")
+            
+            #Change session location to inside the current runs folder
+            new_sess_loc = os.path.join(self.params_dict["abs_path"], self.params_dict["sess"], str(self.sess_id))
+            print("NEW_SESS_LOC:", new_sess_loc)
+
+            funclist = curr_dict["funclist"]
+            new_dlist = self.preprocess(self.sess_loc, new_sess_loc, self.dlist, funclist)
+            
 
         elif insn_type == "augment":
             pass
@@ -100,6 +117,20 @@ class Stepper(object):
 
         elif insn_type == "train":
             pass
+    
+    def preprocess(self, sess_loc, new_sess_loc, dlist, funclist):
+        for i, folder in enumerate(dlist):
+            print("PREPROCESSING:", folder)
+            new_folder = "preprocess_" + str(len(os.listdir(new_sess_loc))) + folder
+            sourcepath = os.path.join(self.params_dict["abs_path"], sess_loc, folder)
+            destpath = os.path.join(self.params_dict["abs_path"], new_sess_loc, new_folder)
+            print("SOURCEPATH:", sourcepath)
+            print("DESTPATH:", destpath)
+            
+            #get list of transforms & call preprocess_dataset
+            tf_list = funclist[i]
+            self.dutils.preprocess_folder(sourcepath, destpath, tf_list)
+        return dlist
 
 s = Stepper()
 s.step()

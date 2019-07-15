@@ -16,15 +16,15 @@
             "type":"preprocess",
             "funclist":
             [
-                [{"F":"cropHorizontal", "args":[200, -1]}, 
+                [{"F":"cropVertical", "args":[200, -1]}, 
                 {"F":"radOffset", "args":[-0.15]},
                 {"F":"rad2deg", "args":[]}],
 
-                [{"F":"cropHorizontal", "args":[200, -1]}, 
+                [{"F":"cropVertical", "args":[200, -1]}, 
                 {"F":"radOffset", "args":[0.15]},
                 {"F":"rad2deg", "args":[]}],
 
-                [{"F":"cropHorizontal", "args":[200, -1]}, 
+                [{"F":"cropVertical", "args":[200, -1]}, 
                 {"F":"rad2deg", "args":[]}]
 
             ]
