@@ -1,4 +1,5 @@
 import os, cv2, math, sys, json, torch, pdb
+import numpy as np
 import matplotlib.pyplot as plt
 import moviepy.editor as mpy
 from data_utils import Data_Utils
@@ -82,6 +83,21 @@ class Metric_Visualizer(object):
 
         self.writer.add_video(stepname, framebuffer, global_step= idx, as_np_framebuffer=True)
 
+    def _get_image_size(self, dpath, df):
+        img_name_0 = df.iloc[0, 0]
+        framepath = os.path.join(dpath, img_name_0)
+        frame_0 = cv2.imread(framepath)
+        h, w, c = frame_0.shape
+        return h, w
+
+    def _deg_or_rad(self, dpath, df):
+        #crappy but effective way to figure out if i'm dealing with degrees or radians
+        angle_column = df.iloc[:, 1].values
+        max_angle = np.max(angle_column)
+        if max_angle > 0.4:
+            return 'deg'
+        return 'rad'
+
     def plot_anglehist(self, dpath, tag, idx):
         csvpath = os.path.join(dpath, "data.csv")
         df = pd.read_csv(csvpath) 
@@ -93,7 +109,8 @@ class Metric_Visualizer(object):
         df = pd.read_csv(csvpath)
         h, w = self._get_image_size(dpath, df)
         angle_unit = self._deg_or_rad(dpath, df)
-
+        text = f"Shape:({h}, {w}), AngleUnits:{angle_unit}"
+        
     def log_init(self, dlist, sess_loc):
         sess_path = os.path.join(self.params_dict["abs_path"], sess_loc)
         tag = f"Step-{0}"
@@ -102,3 +119,4 @@ class Metric_Visualizer(object):
             self.vid_from_path(dpath, tag, i) 
             self.plot_anglehist(dpath, tag, i)
             self.log_tbtext(dpath, tag, i)
+    
