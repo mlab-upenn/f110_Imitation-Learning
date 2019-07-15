@@ -17,21 +17,36 @@
             "funclist":
             [
                 [{"F":"cropVertical", "args":[200, -1]}, 
-                {"F":"radOffset", "args":[-0.15]},
-                {"F":"rad2deg", "args":[]}],
-
-                [{"F":"cropVertical", "args":[200, -1]}, 
                 {"F":"radOffset", "args":[0.15]},
-                {"F":"rad2deg", "args":[]}],
+                {"F":"rad2deg", "args":[]}
+                ],
 
-                [{"F":"cropVertical", "args":[200, -1]}, 
-                {"F":"rad2deg", "args":[]}]
+                [
+                {"F":"cropVertical", "args":[200, -1]}, 
+                {"F":"radOffset", "args":[-0.15]},
+                {"F":"rad2deg", "args":[]}
+                ],
 
+                [
+                {"F":"cropVertical", "args":[200, -1]}, 
+                {"F":"rad2deg", "args":[]}
+                ]
             ]
         },
         {
             "type":"augment",
-            "auglist":[]
+            "auglist":
+            [
+                [
+                    {"F":"flipNonZero"}
+                ],
+                [
+                    {"F":"flipNonZero"}
+                ],
+                [
+                    {"F":"flipNonZero"}
+                ]
+            ]
         }
     ]
 }

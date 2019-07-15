@@ -107,7 +107,6 @@ class Stepper(object):
 
             funclist = curr_dict["funclist"]
             new_dlist = self.preprocess(self.sess_loc, new_sess_loc, self.dlist, funclist)
-            
 
         elif insn_type == "augment":
             pass

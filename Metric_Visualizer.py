@@ -121,7 +121,7 @@ class Metric_Visualizer(object):
         df = pd.read_csv(csvpath)
         h, w = self._get_image_size(dpath, df)
         angle_unit = self._deg_or_rad(dpath, df)
-        text = f"Folder:{folder}--Shape:({h}, {w})---AngleUnits:{angle_unit}---NumImages:{len(df)}"
+        text = f"Folder:{folder} ||| Shape:({h}, {w}) ||| AngleUnits:{angle_unit} ||| NumImages:{len(df)}"
         self.writer.add_text(tag, text, global_step=idx)
         
     def log_init(self, dlist, sess_loc):
