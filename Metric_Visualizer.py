@@ -42,7 +42,13 @@ class Metric_Visualizer(object):
         #draw text on frame
         text = label + '%.3f'%(float(scalar))
         cv2.putText(frame, text, (cx, cy), font, font_size, color, font_thickness)
-
+    
+    def _convert_to_rads(self, angle, dpath, df):
+        units = self._deg_or_rad(dpath, df)
+        if units == 'deg':
+            return angle * math.pi/180.0
+        return angle
+        
     def vis_frame(self, frame, angle, speed, timestamp, pred=None, show_steer=False):
         """
         Vis an image w/ text info log + steering_angle_graphic & display it 
@@ -76,6 +82,8 @@ class Metric_Visualizer(object):
         for i in range(num_rows):
             if i % 3 == 0:
                 img_name, angle, speed, timestamp = df.iloc[i, 0], df.iloc[i, 1], df.iloc[i, 2], df.iloc[i, 3]
+                #only convert angle before visualizing
+                angle = self._convert_to_rads(angle, dpath, df)
                 framepath = os.path.join(dpath, img_name)
                 frame = cv2.imread(framepath)
                 self.vis_frame(frame, angle, speed, timestamp)
