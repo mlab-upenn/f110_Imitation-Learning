@@ -110,14 +110,19 @@ class Metric_Visualizer(object):
         csvpath = os.path.join(dpath, "data.csv")
         df = pd.read_csv(csvpath) 
         angle_column = df.iloc[:, 1].values
-        self.writer.add_histogram(tag, angle_column, global_step=idx)
+        num_bins = 20
+        #save plot w/ matplotlib
+        fig = plt.figure()
+        plt.hist(angle_column, num_bins, color='green')
+        self.writer.add_figure(tag, fig, global_step=idx)
 
-    def log_tbtext(self, dpath, tag, idx):
+    def log_tbtext(self, dpath, tag, idx, folder):
         csvpath = os.path.join(dpath, "data.csv")
         df = pd.read_csv(csvpath)
         h, w = self._get_image_size(dpath, df)
         angle_unit = self._deg_or_rad(dpath, df)
-        text = f"Shape:({h}, {w}), AngleUnits:{angle_unit}"
+        text = f"Folder:{folder}--Shape:({h}, {w})---AngleUnits:{angle_unit}---NumImages:{len(df)}"
+        self.writer.add_text(tag, text, global_step=idx)
         
     def log_init(self, dlist, sess_loc):
         sess_path = os.path.join(self.params_dict["abs_path"], sess_loc)
@@ -126,5 +131,4 @@ class Metric_Visualizer(object):
             dpath = os.path.join(sess_path, folder) #where jpgs & csv is
             self.vid_from_path(dpath, tag, i) 
             self.plot_anglehist(dpath, tag, i)
-            self.log_tbtext(dpath, tag, i)
-    
+            self.log_tbtext(dpath, tag, i, folder) 
