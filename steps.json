@@ -1,19 +1,37 @@
 {
-    "steps":
+    "params":
     {
-        "0": 
+        "abs_path":"/home/dhruvkar/datasets/avfone",
+        "raw_data":"raw_data",
+        "sess":"runs",
+        "preview":false
+    },
+    "steps":
+    [
         {
+            "type":"init",
             "dlist":["f1_left_folder", "f1_right_folder", "f1_front_folder"]
         },
-        "1":
         {
             "type":"preprocess",
-            "funclist":["cropVertical(200, -1), rad2deg()"]
+            "funclist":
+            [
+                [{"F":"cropHorizontal", "args":[200, -1]}, 
+                {"F":"radOffset", "args":[-0.15]},
+                {"F":"rad2deg", "args":[]}],
+
+                [{"F":"cropHorizontal", "args":[200, -1]}, 
+                {"F":"radOffset", "args":[0.15]},
+                {"F":"rad2deg", "args":[]}],
+
+                [{"F":"cropHorizontal", "args":[200, -1]}, 
+                {"F":"rad2deg", "args":[]}]
+
+            ]
         },
-        "2":
         {
             "type":"augment",
             "auglist":[]
         }
-    }
+    ]
 }
