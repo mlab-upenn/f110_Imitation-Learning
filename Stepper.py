@@ -1,6 +1,7 @@
-import os, json, glob
+import os, json, glob, pdb, cv2
 import pandas as pd
-import Metric_Visualizer
+from tensorboardX import SummaryWriter
+from Metric_Visualizer import Metric_Visualizer
 
 class Stepper(object):
     """
@@ -17,13 +18,15 @@ class Stepper(object):
         #Get Session ID
         sess_path = os.path.join(self.params_dict["abs_path"], self.params_dict["sess"])
         if not os.path.exists(sess_path):
-            os.mkdirs(sess_path)
+            os.makedirs(sess_path)
         self.sess_id = len(os.listdir(sess_path))
         print("SESSION PATH:", sess_path)
-        print("SESSION ID:", sess_id)
+        print("SESSION ID:", self.sess_id)
         
-        #kick off the steps
-        self.step()
+        #Create SummaryWriter for tensorboard that updates frequently
+        logdir = os.path.join(self.params_dict["abs_path"], self.params_dict["sess"], str(self.sess_id), "logs")
+        print("LOGDIR", logdir)
+        self.writer = SummaryWriter(logdir=logdir)
     
     def B_VER(self, ver_path, dlist):
         """
@@ -33,19 +36,32 @@ class Stepper(object):
         for folder in dlist:
             dpath = os.path.join(ver_path, folder)
             #Ensure folder exists
-            assert(os.path.exists(dpath)) F"B_VER Error: Folder {folder} cannot be found in {ver_path}"
+            assert(os.path.exists(dpath)),f"B_VER Error: Folder {folder} cannot be found in {ver_path}"
             
             csvpath  = os.path.join(dpath, 'data.csv')
             #Check for data.csv
-            assert(os.path.isfile(csvpath)) F"B_VER Error: data.csv could not be found in {dpath}"
+            assert(os.path.isfile(csvpath)),f"B_VER Error: data.csv could not be found in {dpath}"
 
             #Verify 4 columns in csv
             df = pd.read_csv(csvpath)
-            assert(len(df.columns) == 4) F"B_VER Error: Need four columns in data.csv in {csvpath}"
+            assert(len(df.columns) == 4),f"B_VER Error: Need four columns in data.csv in {csvpath}"
 
             #The number of jpg files in this directory should equal num rows
             num_jpgs = len(glob.glob1(dpath, "*.jpg"))
-            assert(len(df) == num_jpgs) F"B_VER Error: num_jpgs in {dpath} must = num_rows in data.csv"
+            assert(len(df) == num_jpgs),F"B_VER Error: num_jpgs in {dpath} must = num_rows in data.csv"
+
+            #Index the first 20 and last 20, and ensure that those images exist
+            for i in range(20):
+                img_name = df.iloc[i, 0]
+                framepath = os.path.join(dpath, img_name)
+                frame = cv2.imread(framepath)
+                assert(os.path.isfile(framepath)), F"B_VER Error: frame {framepath} is not a path, but is in the csv"
+
+            for i in range(20):
+                img_name = df.iloc[-i, 0]
+                framepath = os.path.join(dpath, img_name)
+                frame = cv2.imread(framepath)
+                assert(os.path.isfile(framepath)), F"B_VER Error: frame {framepath} is not a path, but is in the csv"
 
     def step(self):
         """
@@ -70,10 +86,10 @@ class Stepper(object):
             print("dlist", str(self.dlist))
         
             #Initialize Metrics Visualizer
-            self.vis = Metric_Visualizer(self.sess_id)
-            vis.log_init(dlist, self.sess_loc)
+            self.vis = Metric_Visualizer(self.sess_id, self.writer)
+            self.vis.log_init(dlist, self.sess_loc)
 
-       elif insn_type == "preprocess":
+        elif insn_type == "preprocess":
             pass
 
         elif insn_type == "augment":
@@ -84,3 +100,7 @@ class Stepper(object):
 
         elif insn_type == "train":
             pass
+
+s = Stepper()
+s.step()
+s.writer.close()

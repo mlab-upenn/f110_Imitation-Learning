@@ -10,7 +10,7 @@
     [
         {
             "type":"init",
-            "dlist":["f1_left_folder", "f1_right_folder", "f1_front_folder"]
+            "dlist":["lr1_left_folder", "lr1_right_folder", "f1_front_folder"]
         },
         {
             "type":"preprocess",
