@@ -45,17 +45,17 @@ class DataGenerate(object):
     def setup(self):
         if self.params['left_cam']:
             self.left_folder = os.path.join(self.params['abs_path'], '%s_left_folder'%(self.folder))
-            csv_file = os.path.join(self.params['abs_path'],'left_folder','data.csv')
+            csv_file = os.path.join(self.params['abs_path'],'%s_left_folder'%(self.folder),'data.csv')
             self.left_csv = self.open_csv(csv_file,self.left_folder)
 
         if self.params['right_cam']: 
             self.right_folder = os.path.join(self.params['abs_path'], '%s_right_folder'%(self.folder))
-            csv_file = os.path.join(self.params['abs_path'],'right_folder','data.csv')
+            csv_file = os.path.join(self.params['abs_path'],'%s_right_folder'%(self.folder),'data.csv')
             self.right_csv = self.open_csv(csv_file,self.right_folder)              
 
         if self.params['front_cam']: 
             self.front_folder = os.path.join(self.params['abs_path'], '%s_front_folder'%(self.folder))
-            csv_file = os.path.join(self.params['abs_path'],'front_folder','data.csv')
+            csv_file = os.path.join(self.params['abs_path'],'%s_front_folder'%(self.folder),'data.csv')
             self.front_csv = self.open_csv(csv_file,  self.front_folder)                 
         
 
@@ -75,32 +75,35 @@ class DataGenerate(object):
 
         #Ackermann messages give left as +ve and right as -ve. Storing steering angle as negative of that to maintain convention
         # Convention left -ve and right +ve
-        steering_angle = -1.0*data.drive.steering_angle
         write_flag = False
+        steer_flag = True
+        drive_flag = True
         if self.params['threshold_speed']:
-            if data.drive.speed > self.params['threshold_speed']:
-                write_flag = True
+            if (data.drive.speed < self.params['speed_thr']):
+                drive_flag = False
         if self.params['filter_angle']:
             if data.drive.steering_angle == self.params['angle_remove']:
-                write_flag = False
+                steer_flag = False
             else: 
-                write_flag = True
-
+                steer_flag = True
+        write_flag = drive_flag & steer_flag
         if write_flag:
+            print("Saving frame %d"%(self.count))
             self.writeToFile(data)
 
 
     def writeToFile(self, data):
+        steering_angle = -1.0*data.drive.steering_angle
         now = rospy.get_rostime()      
         time= now.to_sec() + (now.to_nsec()/10**9)
         if self.params['left_cam']:
-            cv2.imwrite("image_left%06i.jpg" % self.count, self.cv_left_img)
+            cv2.imwrite(os.path.join(self.left_folder,"image_left%06i.jpg" % self.count), self.cv_left_img)
             self.left_csv.write('%s, %f, %f, %f\n'%(("image_left%06i.jpg" % self.count),(steering_angle),data.drive.speed,time))
         if self.params['right_cam']:
-            cv2.imwrite("image_right%06i.jpg" % self.count, self.cv_right_img)
+            cv2.imwrite(os.path.join(self.right_folder,"image_right%06i.jpg" % self.count), self.cv_right_img)
             self.right_csv.write('%s, %f, %f, %f\n'%(("image_right%06i.jpg" % self.count),(steering_angle),data.drive.speed,time))
         if self.params['front_cam']:
-            cv2.imwrite("image_front%06i.jpg" % self.count, self.cv_front_img)
+            cv2.imwrite(os.path.join(self.front_folder,"image_front%06i.jpg" % self.count), self.cv_front_img)
             self.front_csv.write('%s, %f, %f,%f\n'%(("image_front%06i.jpg" % self.count),(steering_angle),data.drive.speed,time))
         self.count += 1
 
@@ -123,5 +126,5 @@ if __name__=='__main__':
     parser.add_argument("foldername", help="provide the name of the foler")
     args = parser.parse_args()
     print('%s_front_folder'%(args.foldername))
-    # dG = DataGenerate(args.foldername)
-    # dG.listener()
+    dG = DataGenerate(args.foldername)
+    dG.listener()
