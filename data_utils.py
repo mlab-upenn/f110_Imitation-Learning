@@ -9,48 +9,6 @@ import json
 import torch
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
 
-class SteerDataset(Dataset):
-    """
-    Steer Dataset: Returns cropped image from dashcam + steering angle
-    """
-    def __init__(self, transforms=None):
-        """
-        transforms (callable, optional): Optional transforms applied on samples
-        """
-        super(SteerDataset, self).__init__()
-        self.params = json.load(open("params.txt"))
-        self.abs_path = self.params["abs_path"] 
-        dfpath = self.abs_path + self.params["final_dest"] + "/data.csv"
-        self.steer_df = pd.read_csv(dfpath)
-        self.transforms = transforms
-        self.dutils = Data_Utils()
-    
-    def __len__(self):
-        return len(self.steer_df)
-    
-    def __getitem__(self, idx):
-        """
-        Returns tuple (cropped_image(Tensor, C x H x W), steering angle (float 1x1 tensor))
-        """
-        img_name, angle = self.steer_df.iloc[idx, 0], self.steer_df.iloc[idx, 1]
-        framepath = self.abs_path + self.params["final_dest"] + '/' + img_name
-        cv_img = cv2.imread(framepath)
-        # cv2.imshow('EXAMPLE', cv_img)
-        # cv2.waitKey(0)
-
-        #preprocess img & label
-        img_tensor, label_tensor = self.dutils.preprocess_img(cv_img, angle, use_for='train')
-
-        if self.transforms:
-            img_tensor = self.transforms(img_tensor)
-        
-        # print('CV_IMAGE SHAPE', cv_img.shape)
-        # print('IMG TENSOR SHAPE', img_tensor.size())
-        # print('label_tensor', label_tensor)
-        # print('angle', angle)
-
-        return (img_tensor, label_tensor)
-
 class Data_Utils(object):
     """
     Fun & Useful functions for dealing with Steer Data
@@ -263,13 +221,14 @@ class Data_Utils(object):
         df.to_csv(path, index=False)
 
         self.combine_image_folders(folder_list)
-
+        
 def main():
     du = Data_Utils()
     du.preprocess_dataset('front_folder', 'main_front', whichcam='front')
     du.preprocess_dataset('left_folder', 'main_left', whichcam='left')
     du.preprocess_dataset('right_folder', 'main_right', whichcam='right')
     du.combine_csvs(['main_front', 'main_left', 'main_right'])
-
+    du.show_steer_angle_hist(foldername='main', w_matplotlib=True)
+    
 if __name__ == '__main__':
     main()

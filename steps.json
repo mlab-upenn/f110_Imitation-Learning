@@ -1,0 +1,19 @@
+{
+    "steps":
+    {
+        "0": 
+        {
+            "dlist":["f1_left_folder", "f1_right_folder", "f1_front_folder"]
+        },
+        "1":
+        {
+            "type":"preprocess",
+            "funclist":["cropVertical(200, -1), rad2deg()"]
+        },
+        "2":
+        {
+            "type":"augment",
+            "auglist":[]
+        }
+    }
+}
