@@ -1,4 +1,5 @@
 import os, cv2, math, sys, json, torch, pdb
+import matplotlib.pyplot as plt
 import moviepy.editor as mpy
 from data_utils import Data_Utils
 import pandas as pd 
@@ -81,15 +82,19 @@ class Metric_Visualizer(object):
 
         self.writer.add_video(stepname, framebuffer, global_step= idx, as_np_framebuffer=True)
 
-    def plot_timesteps(dpath, tag, i):
-        """
-        Plot timesteps
-        """
+    def plot_anglehist(self, dpath, tag, idx):
+        pass
+
+    def plot_anglevstime(self, dpath, tag, idx):
+        csvpath = os.path.join(dpath, "data.csv")
+        df = pd.read_csv(csvpath)
+        
+
+    def plot_timesteps(self, dpath, tag, idx):
         csvpath = os.path.join(dpath, "data.csv")
         df = pd.read_csv(csvpath)
         num_rows = len(df)
-        for i in range(num_rows):
-            self.writer.add_scalar()
+        timesteps = df.iloc[:, 3].values
 
     def log_init(self, dlist, sess_loc):
         sess_path = os.path.join(self.params_dict["abs_path"], sess_loc)
@@ -98,5 +103,5 @@ class Metric_Visualizer(object):
             dpath = os.path.join(sess_path, folder) #where jpgs & csv is
             self.vid_from_path(dpath, tag, i) 
             self.plot_timesteps(dpath, tag, i)
-            self.plot_steer_vs_time(dpath, tag, i)
-            self.plot_steer_hist(dpath, tag, i)
+            self.plot_anglevstime(dpath, tag, i)
+            self.plot_anglehist(dpath, tag, i)
