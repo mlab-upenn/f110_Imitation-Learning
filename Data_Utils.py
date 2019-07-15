@@ -1,4 +1,4 @@
-import os, json, pdb, cv2
+import os, json, pdb, cv2, math
 from functools import partial
 import pandas as pd
 
@@ -24,6 +24,7 @@ def rad2deg(args, img, metrics_row):
     new_metrics_row = metrics_row.copy()
     angle_rad = metrics_row[1]
     new_metrics_row[1] = angle_rad * 180.0/math.pi
+    return img, new_metrics_row
 
 class Data_Utils(object):
     """
@@ -38,7 +39,7 @@ class Data_Utils(object):
         elif fname == 'rad2deg':
             p = partial(rad2deg, args)
         elif fname == 'radOffset':
-            p = partial(radOffset)
+            p = partial(radOffset, args)
         else:
             raise Exception('{fname} is not in the list of functions')
         return p
@@ -89,5 +90,5 @@ class Data_Utils(object):
             cv2.imwrite(new_img_path, new_img)
             new_df.append(new_row)
         
-        newcsvpath = os.path.join(new_img_path)
+        newcsvpath = os.path.join(sourcepath, "data.csv")
         new_df.to_csv(newcsvpath)

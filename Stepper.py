@@ -78,13 +78,17 @@ class Stepper(object):
 
             dlist = curr_dict["dlist"]
 
-            #data resides in raw data at the start of the session
+            #data resides in raw data at the start of the session (unless we're in preview mode)
             ver_path = os.path.join(self.params_dict["abs_path"], self.sess_loc)
             print("VER_PATH:", ver_path)
             self.B_VER(ver_path, dlist)
-            self.dlist = dlist
             print("PASSED B_VER")
+            self.dlist = dlist
             print("dlist", str(self.dlist))
+
+            if self.params_dict["preview"]:
+                new_sess_loc = os.path.join(self.params_dict["abs_path"], self.params_dict["sess"], str(self.sess_id))
+                self.dutils()
         
             #Initialize Metrics Visualizer
             self.vis = Metric_Visualizer(self.sess_id, self.writer)
@@ -106,7 +110,14 @@ class Stepper(object):
             print("NEW_SESS_LOC:", new_sess_loc)
 
             funclist = curr_dict["funclist"]
-            new_dlist = self.preprocess(self.sess_loc, new_sess_loc, self.dlist, funclist)
+            self.dlist = self.preprocess(self.sess_loc, new_sess_loc, self.dlist, funclist)
+            self.sess_loc = new_sess_loc
+
+            #Visualize preprocess
+            self.vis.log_preprocess(self.dlist, self.sess_loc, self.curr_step)
+
+            #increment step
+            self.curr_step += 1
 
         elif insn_type == "augment":
             pass
@@ -118,6 +129,7 @@ class Stepper(object):
             pass
     
     def preprocess(self, sess_loc, new_sess_loc, dlist, funclist):
+        new_dlist = []
         for i, folder in enumerate(dlist):
             print("PREPROCESSING:", folder)
             new_folder = "preprocess_" + str(len(os.listdir(new_sess_loc))) + folder
@@ -129,8 +141,13 @@ class Stepper(object):
             #get list of transforms & call preprocess_dataset
             tf_list = funclist[i]
             self.dutils.preprocess_folder(sourcepath, destpath, tf_list)
-        return dlist
+
+            #update dlist
+            new_dlist.append(new_folder)
+            
+        return new_dlist
 
 s = Stepper()
+s.step()
 s.step()
 s.writer.close()

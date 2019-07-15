@@ -2,7 +2,7 @@ import os, cv2, math, sys, json, torch, pdb
 import numpy as np
 import matplotlib.pyplot as plt
 import moviepy.editor as mpy
-from data_utils import Data_Utils
+#from Data_Utils import Data_Utils
 import pandas as pd 
 from tensorboardX import SummaryWriter
 
@@ -70,7 +70,7 @@ class Metric_Visualizer(object):
             if pred is not None:
                 self.vis_steer_point(frame, pred, cx, cy, r, size=5, color=(0, 0, 0))
 
-    def vid_from_path(self, dpath, stepname, idx):
+    def vid_from_path(self, dpath, stepname, idx, show_steer=False):
         """
         Send annotated video to Tensorboard
         """
@@ -80,13 +80,13 @@ class Metric_Visualizer(object):
         df = pd.read_csv(csvpath)
         num_rows = int(0.1 * len(df)) #display about 10% of the frames 
         for i in range(num_rows):
-            if i % 3 == 0:
+            if i % 10 == 0:
                 img_name, angle, speed, timestamp = df.iloc[i, 0], df.iloc[i, 1], df.iloc[i, 2], df.iloc[i, 3]
                 #only convert angle before visualizing
                 angle = self._convert_to_rads(angle, dpath, df)
                 framepath = os.path.join(dpath, img_name)
                 frame = cv2.imread(framepath)
-                self.vis_frame(frame, angle, speed, timestamp)
+                self.vis_frame(frame, angle, speed, timestamp, show_steer=show_steer)
                 framebuffer.append(frame.copy())
 
         self.writer.add_video(stepname, framebuffer, global_step= idx, as_np_framebuffer=True)
@@ -130,5 +130,14 @@ class Metric_Visualizer(object):
         for i, folder in enumerate(dlist):
             dpath = os.path.join(sess_path, folder) #where jpgs & csv is
             self.vid_from_path(dpath, tag, i) 
+            self.plot_anglehist(dpath, tag, i)
+            self.log_tbtext(dpath, tag, i, folder) 
+    
+    def log_preprocess(self, dlist, sess_loc, curr_step):
+        sess_path = os.path.join(self.params_dict["abs_path"], sess_loc)
+        tag = f"Step-{curr_step}"
+        for i, folder in enumerate(dlist):
+            dpath = os.path.join(sess_path, folder) #where jpgs & csv is
+            self.vid_from_path(dpath, tag, i, show_steer=True)
             self.plot_anglehist(dpath, tag, i)
             self.log_tbtext(dpath, tag, i, folder) 
