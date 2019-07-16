@@ -52,10 +52,63 @@ def flipNonZero(args, img, metrics_row):
 
 class Data_Utils(object):
     """
-    Useful functions for moving around & processing steer data. Doesn't actually know anything about the steps themselves, purely "executional" in nature
+    UPDATE THIS WHEN I GET IT LMAO
     """
     def __init__(self):
-        self.params_dict = json.load(open("steps.json"))["params"]    
+        pass
+    
+    def get_dest_datapath(self, dest_datadir, folder, op):
+        """
+        Returns absolute path for destination data, takes care of naming
+        folder: name of folder being moved
+        op: if 'aug' don't screw with naming
+        """
+        if op == 'aug':
+            return os.path.join(dest_datadir, folder)
+        else:
+            new_folder = folder + str(len(os.listdir(dest_datadir)))
+            return os.path.join(dest_datadir, new_folder)
+
+    def get_df(self, datapath):
+        csvpath = os.path.join(datapath, 'data.csv')
+        df = pd.read_csv(csvpath)
+        return df
+
+    def df_data_fromidx(self, datapath, df, idx):
+        row = df.iloc[idx]
+        img_name = row[0]
+        img_path = os.path.join(datapath, img_name)
+        img = cv2.imread(img_path)
+        return img, row
+
+    def MOVE(self, src_datadir, folder, dest_datadir, flist=[], maxlen=-1, op='mv'):
+        """
+        MOVE takes src_datadir/folder and moves to dest_datadir & applies flist functions to it
+        src_datadir: abs path to dir containing src data
+        dest_datadir: abs path to dest dir
+        folder: name of folder in src_datadir to MOVE
+        flist: list of json-formatted functions (see steps.json)
+        maxlen: the number of entries to move
+        op: if 'aug', augment current dataset instead of creating a whole new one & moving it elsewhere (IF SO, SRC_DATADIR MUST = DEST_DATADIR)
+        """
+        assert(op=='aug' and src_datadir != dest_datadir), f"MOVE Error: If op={op}, src_datadir = dest_datadir"
+
+        if not os.path.exists(dest_datadir):
+            os.makedirs(dest_datadir)
+
+        src_datapath = os.path.join(src_datadir, folder)
+        dest_datapath = self.get_dest_datapath(dest_datadir, folder, op)
+
+        #make new dataframes
+        src_df = self.get_df(src_datapath)
+        dest_df = pd.DataFrame(columns=src_df.columns.values)
+
+        #iterate through dataframe
+        maxlen = max(len(src_df), maxlen)
+
+        for i in range(maxlen):
+            src_img, src_row = self.df_data_fromidx(src_datapath, src_df, i)
+            
 
     def tf_partial(self, fname, args):
         if fname == 'cropVertical':

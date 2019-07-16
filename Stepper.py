@@ -14,7 +14,7 @@ class Stepper(object):
         #The state of the session 
         self.params_dict = jsonfile["params"]
         self.steplist = jsonfile["steps"]
-        self.curr_step = 0
+        self.curr_step_idx = 0
         self.dlist = None #running list of folders to operate on
         
         #Session ID & Logger
@@ -52,8 +52,9 @@ class Stepper(object):
     def B_VER(self, ver_path, dlist):
         """
         (B)asic (VER)ification of folder structure in dlist
-        """
-
+        ver_path is generally sess_path, but it could also be some other folder
+        similarly, dlist is generally self.dlist, but it could also be someother list of folders
+        """ 
         for folder in dlist:
             dpath = os.path.join(ver_path, folder)
             #Ensure folder exists
@@ -83,46 +84,68 @@ class Stepper(object):
                 framepath = os.path.join(dpath, img_name)
                 frame = cv2.imread(framepath)
                 assert(os.path.isfile(framepath)), F"B_VER Error: frame {framepath} is not a path, but is in the csv"
+    
+    def exec_init(self, curr_step):
+        """
+        Initializes self.sess_path with filtered data
+        curr_step: dict, as in steps.json
+        """
+        assert(self.curr_step_idx == 0 and self.dlist is None), "Step Error: init instruction can only be called once at the start" 
+        
+        #verify raw data & dlist
+        self.dlist = curr_step["dlist"] 
+        raw_datadir= os.path.join(self.params_dict["abs_path"], self.params_dict["raw_data"])
+        self.B_VER(raw_datapath, self.dlist)
+        print(f"PASSED B_VER FOR STEP {self.curr_step_idx}")
+        dest_datadir = self.sess_loc
+
+        #move & filter each folder
+        filter_funclist = [{"F":"filterBadData", "args":[]}]
+        maxlen = 200 if self.params_dict["preview"] else -1
+        for folder in self.dlist:
+            self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=filter_funclist, maxlen=maxlen)
+            
 
     def step(self):
         """
         Executes the instruction for the curr_step
         """
-        curr_dict = self.steplist[self.curr_step]
-        insn_type = curr_dict["type"]
+        curr_step = self.steplist[self.curr_step_idx] #dictionary
+        insn_type = curr_step["type"]
 
         #case over insn_types
         if insn_type == "init":
-            assert(self.curr_step == 0 and self.dlist is None), "Step Error: init instruction can only be called once at the start"
+            self.exec_init(curr_step)
+            # assert(self.curr_step == 0 and self.dlist is None), "Step Error: init instruction can only be called once at the start"
 
-            dlist = curr_dict["dlist"]
+            # dlist = curr_dict["dlist"]
 
-            #data resides in raw data at the start of the session (unless we're in preview mode)
-            ver_path = os.path.join(self.params_dict["abs_path"], self.sess_loc)
-            print("VER_PATH:", ver_path)
-            self.B_VER(ver_path, dlist)
-            print("PASSED B_VER")
-            self.dlist = dlist
-            print("dlist", str(self.dlist))
+            # #data resides in raw data at the start of the session (unless we're in preview mode)
+            # ver_path = os.path.join(self.params_dict["abs_path"], self.sess_loc)
+            # print("VER_PATH:", ver_path)
+            # self.B_VER(ver_path, dlist)
+            # print("PASSED B_VER")
+            # self.dlist = dlist
+            # print("dlist", str(self.dlist))
 
-            if self.params_dict["preview"]:
-                new_sess_loc = os.path.join(self.params_dict["abs_path"], self.params_dict["sess"], str(self.sess_id))
-                new_dlist = []
-                for folder in dlist:
-                    new_folder = "preview_" + str(len(os.listdir(new_sess_loc))) + folder
-                    sourcepath = os.path.join(self.params_dict["abs_path"], self.sess_loc, folder)
-                    destpath = os.path.join(self.params_dict["abs_path"], new_sess_loc, new_folder)
-                    self.dutils.create_preview_folder(sourcepath, destpath)
-                    new_dlist.append(new_folder)
-                self.sess_loc = new_sess_loc
-                self.dlist = new_dlist
+            # if self.params_dict["preview"]:
+            #     new_sess_loc = os.path.join(self.params_dict["abs_path"], self.params_dict["sess"], str(self.sess_id))
+            #     new_dlist = []
+            #     for folder in dlist:
+            #         new_folder = "preview_" + str(len(os.listdir(new_sess_loc))) + folder
+            #         sourcepath = os.path.join(self.params_dict["abs_path"], self.sess_loc, folder)
+            #         destpath = os.path.join(self.params_dict["abs_path"], new_sess_loc, new_folder)
+            #         self.dutils.create_preview_folder(sourcepath, destpath)
+            #         new_dlist.append(new_folder)
+            #     self.sess_loc = new_sess_loc
+            #     self.dlist = new_dlist
             
-            #Initialize Metrics Visualizer
-            self.vis = Metric_Visualizer(self.sess_id, self.writer)
-            self.vis.log_init(self.dlist, self.sess_loc)
+            # #Initialize Metrics Visualizer
+            # self.vis = Metric_Visualizer(self.sess_id, self.writer)
+            # self.vis.log_init(self.dlist, self.sess_loc)
 
-            #increment step
-            self.curr_step += 1
+            # #increment step
+            # self.curr_step += 1
 
         elif insn_type == "preprocess":
             assert(self.curr_step > 0 and self.dlist is not None), "Step Error: Must call init before preprocess"
