@@ -39,6 +39,17 @@ def rad2deg(args, img, metrics_row):
     new_metrics_row[1] = angle_rad * 180.0/math.pi
     return img, new_metrics_row
 
+def flipNonZero(args, img, metrics_row):
+    assert(len(args) == 0), "Incorrect sized argumnets to flipNonzero"
+    new_metrics_row = metrics_row.copy()
+    angle = metrics_row[1]
+    if angle == 0.0:
+        new_metrics_row[1] = -1.0 * angle
+        new_img = cv2.flip(img, 1)
+        return new_img, new_metrics_row
+    else:
+        return img, metrics_row
+
 class Data_Utils(object):
     """
     Useful functions for moving around & processing steer data
@@ -55,6 +66,8 @@ class Data_Utils(object):
             p = partial(radOffset, args)
         elif fname == 'rot90':
             p = partial(rot90, args)
+        elif fname == 'flipNonZero':
+            p = partial(flipNonZero, args)
         else:
             raise Exception('{fname} is not in the list of functions')
         return p
@@ -107,6 +120,37 @@ class Data_Utils(object):
         
         newcsvpath = os.path.join(destpath, "data.csv")
         new_df.to_csv(newcsvpath, index_label=False, index=False)
+
+
+    def augment_folder(self, sourcepath, tf_list):
+        "TODO: Account for when destpath already exists"
+        tfs = self.get_partials_list(tf_list)
+
+        #set up new csv file/dataframe
+        csvpath = os.path.join(sourcepath, "data.csv")
+        old_df = pd.read_csv(csvpath)
+        col_names = old_df.columns.values
+        new_df = pd.DataFrame(columns=col_names)
+
+        for i in range(len(old_df)):
+            #get old_image and old_row
+            old_row = old_df.iloc[i]
+            img_name = old_row[0]
+            img_path = os.path.join(sourcepath, img_name)
+            old_img = cv2.imread(img_path)
+
+            #apply operations to get new_img and new_row
+            new_img, new_row = self.apply_tfs(old_img, old_row, tfs)
+
+            #write image and append to new_df
+            new_img_path = os.path.join(sourcepath, 'aug_' + img_name)
+            cv2.imwrite(new_img_path, new_img)
+            new_df = new_df.append(new_row)
+        
+        new_df.append(old_df)
+        newcsvpath = os.path.join(sourcepath, "data.csv")
+        new_df.to_csv(newcsvpath, index_label=False, index=False)
+
     
     def create_preview_folder(self, sourcepath, destpath):
         #make directories to destpath

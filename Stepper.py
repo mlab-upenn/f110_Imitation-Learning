@@ -128,13 +128,36 @@ class Stepper(object):
             self.curr_step += 1
 
         elif insn_type == "augment":
-            pass
+            assert(self.curr_step > 0 and self.dlist is not None), "Step Error: Must call init before augment"
+
+            ver_path = os.path.join(self.params_dict["abs_path"], self.sess_loc)
+            print("VER_PATH:", ver_path) 
+            self.B_VER(ver_path, self.dlist)
+            print("PASSED B_VER")
+            
+            auglist = curr_dict["auglist"]
+            self.augment(self.sess_loc, self.dlist, auglist)
+
+            #Visualize preprocess
+            self.vis.log_augmentation(self.dlist, self.sess_loc, self.curr_step)
+
+            #increment step
+            self.curr_step += 1
         
         elif insn_type =="combine":
             pass
 
         elif insn_type == "train":
             pass
+
+    def augment(self, sess_loc, dlist, auglist):
+        new_dlist = []
+        for i, folder in enumerate(dlist):
+            print("AUGMENTATION:", folder)
+            #get list of transforms & call augment_dataset
+            sourcepath = os.path.join(self.params_dict["abs_path"], sess_loc, folder)
+            tf_list = auglist[i]
+            self.dutils.augment_folder(sourcepath, tf_list)
 
     def preprocess(self, sess_loc, new_sess_loc, dlist, funclist):
         new_dlist = []
@@ -154,8 +177,9 @@ class Stepper(object):
             new_dlist.append(new_folder)
             
         return new_dlist
-
+    
 s = Stepper()
+s.step()
 s.step()
 s.step()
 s.writer.close()

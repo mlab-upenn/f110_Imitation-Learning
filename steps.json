@@ -42,13 +42,13 @@
             "auglist":
             [
                 [
-                    {"F":"flipNonZero"}
+                    {"F":"flipNonZero", "args":[]}
                 ],
                 [
-                    {"F":"flipNonZero"}
+                    {"F":"flipNonZero", "args":[]}
                 ],
                 [
-                    {"F":"flipNonZero"}
+                    {"F":"flipNonZero", "args":[]}
                 ]
             ]
         }

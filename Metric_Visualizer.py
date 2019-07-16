@@ -142,3 +142,13 @@ class Metric_Visualizer(object):
             self.vid_from_path(dpath, tag, i, show_steer=True)
             self.plot_anglehist(dpath, tag, i)
             self.log_tbtext(dpath, tag, i, folder) 
+
+    def log_augmentation(self, dlist, sess_loc, curr_step):
+        sess_path = os.path.join(self.params_dict["abs_path"], sess_loc)
+        tag = f"Step-{curr_step}"
+        for i, folder in enumerate(dlist):
+            dpath = os.path.join(sess_path, folder) #where jpgs & csv is
+            self.vid_from_path(dpath, tag, i, show_steer=True)
+            self.plot_anglehist(dpath, tag, i)
+            self.log_tbtext(dpath, tag, i, folder) 
+ 
