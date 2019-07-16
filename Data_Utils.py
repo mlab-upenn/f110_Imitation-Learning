@@ -3,52 +3,62 @@ import numpy as np
 from functools import partial
 import pandas as pd
 
-def cropVertical(args, img, metrics_row):
+def cropVertical(args, src_dict):
     assert (len(args) == 2),"Incorrect sized argument to cropVertical"
     cropStart = args[0]
     cropEnd = args[1]
-    if cropEnd < 0:
-        return img[cropStart:, :, :], metrics_row
-    elif cropEnd > 0:
-        return img[cropStart:cropEnd, :, :], metrics_row
+    dest_dict = src_dict
+    src_img = src_dict.get("img")
 
-def rot90(args, img, metrics_row):
+    if cropEnd < 0:
+        dest_dict["img"] = src_img[cropStart:, :, :]
+    elif cropEnd > 0:
+        dest_dict["img"] = src_img[cropStart:cropEnd, :, :]
+    else:
+        raise Exception('bad args cropvertical')
+    return dest_dict
+
+def rot90(args, src_dict):
     assert (len(args) == 1),"Incorrect sized argument to rot90"
     direction = args[0]
+    dest_dict = src_dict
+    src_img = src_dict.get("img")
+
     if direction == 'clockwise':
-        new_img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+        dest_dict["img"] = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
 
     elif direction == 'anticlockwise':
         #TODO: DO ANTICLOCKWISE
         pass
+    return dest_dict
 
-    return new_img, metrics_row
-
-def radOffset(args, img, metrics_row):
+def radOffset(args, src_dict):
     assert (len(args) == 1), "Incorrect sized argument to radOffset"
     offset = args[0]
-    new_metrics_row = metrics_row.copy()
-    angle_rad = metrics_row[1]
-    new_metrics_row[1] = angle_rad + offset
-    return img, new_metrics_row
+    dest_dict = src_dict
+    src_row = src_dict.get("row")
+    dest_dict["row"] = src_row[1] + offset
+    return dest_dict
 
-def rad2deg(args, img, metrics_row):
+def rad2deg(args, src_dict):
     assert(len(args) == 0), "Incorrect sized arguments to rad2deg"
-    new_metrics_row = metrics_row.copy()
-    angle_rad = metrics_row[1]
-    new_metrics_row[1] = angle_rad * 180.0/math.pi
-    return img, new_metrics_row
+    dest_dict = src_dict
+    src_row = src_dict.get("row")
+    dest_dict["row"] = src_row[1] * 180.0/math.pi
+    return dest_dict
 
-def flipNonZero(args, img, metrics_row):
+def flipNonZero(args, src_dict):
     assert(len(args) == 0), "Incorrect sized argumnets to flipNonzero"
-    new_metrics_row = metrics_row.copy()
-    angle = metrics_row[1]
-    if angle == 0.0:
-        new_metrics_row[1] = -1.0 * angle
-        new_img = cv2.flip(img, 1)
-        return new_img, new_metrics_row
+    dest_dict = src_dict
+    src_img = src_dict.get("img")
+    src_row = src_dict.get("row")
+    if src_row[1] == 0.0:
+        dest_dict["flag"] = False
     else:
-        return img, metrics_row
+        dest_dict["flag"] = True
+        dest_dict["img"] = cv2.flip(src_img, 1)
+        dest_dict["row"][1] = -1.0 * src_row[1]
+    return dest_dict
 
 class Data_Utils(object):
     """
@@ -80,7 +90,13 @@ class Data_Utils(object):
         img_path = os.path.join(datapath, img_name)
         img = cv2.imread(img_path)
         return img, row
-
+    
+    def get_finaldf(self, src_df, dest_df, op):
+        final_df = dest_df
+        if op == 'aug':
+            final_df = dest_df.append(src_df)
+        return final_df
+        
     def MOVE(self, src_datadir, folder, dest_datadir, flist=[], maxlen=-1, op='mv'):
         """
         MOVE takes src_datadir/folder and moves to dest_datadir & applies flist functions to it
@@ -105,10 +121,57 @@ class Data_Utils(object):
 
         #iterate through dataframe
         maxlen = max(len(src_df), maxlen)
-
         for i in range(maxlen):
+            #Apply flist, get output
             src_img, src_row = self.df_data_fromidx(src_datapath, src_df, i)
-            
+            src_dict = {"img":src_img, "row":src_row}
+            dest_dict = self.apply_flist(src_dict, flist)
+
+            #continue adding data if flag is true
+            flag = dest_dict.get("flag", True)
+            if flag:
+                dest_row = dest_dict.get("row")
+                dest_img = dest_dict.get("img")
+                dest_img_name = dest_dict.get("img_name", dest_row[0])
+
+                #TODO: Check dest_dict in a B_VER-esque way
+
+                #Accordingly alter dataframe & write img
+                dest_df = dest_df.append(dest_row)
+                cv2.imwrite(dest_img, os.path.join(dest_datapath, dest_img_name))
+
+        #write df
+        final_df = self.get_finaldf(src_df, dest_df, op)
+        final_df.to_csv(os.path.join(dest_datapath, 'data.csv'), index=False)
+    
+    def get_partial_func(self, json_func):
+        """
+        json_func: json formatted function
+        """
+        fname, args = json_func["F"], json_func["args"]
+
+        if fname == 'cropVertical':
+            p = partial(cropVertical, args)
+        elif fname == 'rad2deg':
+            p = partial(rad2deg, args)
+        elif fname == 'radOffset':
+            p = partial(radOffset, args)
+        elif fname == 'rot90':
+            p = partial(rot90, args)
+        elif fname == 'flipNonZero':
+            p = partial(flipNonZero, args)
+        else:
+            raise Exception('{fname} is not in the list of functions')
+        return p
+
+    def apply_flist(self, src_dict, flist):
+        """
+        Apply a list of functions and return a dict
+        src_dict: dictionary representing all source variables
+        flist: json formatted function list (see steps.json)
+        """
+        for json_func in flist:
+            partial_func = self.get_partial_func(json_func)
 
     def tf_partial(self, fname, args):
         if fname == 'cropVertical':
@@ -142,105 +205,3 @@ class Data_Utils(object):
         for tf in tfs:
             new_img, new_row = tf(new_img, new_row)
         return new_img, new_row
-
-    def preprocess_folder(self, sourcepath, destpath, tf_list):
-        "TODO: Account for when destpath already exists"
-        tfs = self.get_partials_list(tf_list)
-
-        #make directories to destpath
-        os.makedirs(destpath)
-
-        #set up new csv file/dataframe
-        csvpath = os.path.join(sourcepath, "data.csv")
-        old_df = pd.read_csv(csvpath)
-        col_names = old_df.columns.values
-        new_df = pd.DataFrame(columns=col_names)
-
-        for i in range(len(old_df)):
-            #get old_image and old_row
-            old_row = old_df.iloc[i]
-            img_name = old_row[0]
-            img_path = os.path.join(sourcepath, img_name)
-            old_img = cv2.imread(img_path)
-
-            #apply operations to get new_img and new_row
-            new_img, new_row = self.apply_tfs(old_img, old_row, tfs)
-
-            #write image and append to new_df
-            new_img_path = os.path.join(destpath, img_name)
-            cv2.imwrite(new_img_path, new_img)
-            new_df = new_df.append(new_row)
-        
-        newcsvpath = os.path.join(destpath, "data.csv")
-        new_df.to_csv(newcsvpath, index_label=False, index=False)
-
-
-    def augment_folder(self, sourcepath, tf_list):
-        "TODO: Account for when destpath already exists"
-        tfs = self.get_partials_list(tf_list)
-
-        #set up new csv file/dataframe
-        csvpath = os.path.join(sourcepath, "data.csv")
-        old_df = pd.read_csv(csvpath)
-        col_names = old_df.columns.values
-        new_df = pd.DataFrame(columns=col_names)
-
-        for i in range(len(old_df)):
-            #get old_image and old_row
-            old_row = old_df.iloc[i]
-            img_name = old_row[0]
-            img_path = os.path.join(sourcepath, img_name)
-            old_img = cv2.imread(img_path)
-
-            #apply operations to get new_img and new_row
-            new_img, new_row = self.apply_tfs(old_img, old_row, tfs)
-
-            #write image and append to new_df
-            new_img_path = os.path.join(sourcepath, 'aug_' + img_name)
-            cv2.imwrite(new_img_path, new_img)
-            new_df = new_df.append(new_row)
-        
-        new_df.append(old_df)
-        newcsvpath = os.path.join(sourcepath, "data.csv")
-        new_df.to_csv(newcsvpath, index_label=False, index=False)
-
-    
-    def create_preview_folder(self, sourcepath, destpath):
-        #make directories to destpath
-        os.makedirs(destpath)
-
-        #set up new csv file/dataframe
-        csvpath = os.path.join(sourcepath, "data.csv")
-        old_df = pd.read_csv(csvpath)
-        col_names = old_df.columns.values
-        new_df = pd.DataFrame(columns=col_names)
-
-        for i in range(50):
-            #get old_image and old_row
-            old_row = old_df.iloc[i]
-            img_name = old_row[0]
-            img_path = os.path.join(sourcepath, img_name)
-            old_img = cv2.imread(img_path)
-
-            new_img_path = os.path.join(destpath, img_name)
-            cv2.imwrite(new_img_path, old_img)
-            new_df = new_df.append(old_row)
-
-        #add max steering angle and minimum steering angle
-        angle_column = old_df.iloc[:, 1].values
-        max_idx = np.argmax(angle_column)
-        min_idx = np.argmin(angle_column)
-        max_row = old_df.iloc[max_idx]
-        min_row = old_df.iloc[min_idx]
-        max_img_name = max_row[0]
-        max_img_path = os.path.join(sourcepath, max_img_name)
-        max_img = cv2.imread(max_img_path)
-        cv2.imwrite(os.path.join(destpath, max_img_name), max_img)
-        new_df = new_df.append(max_row)
-        min_img_name = min_row[0]
-        min_img_path = os.path.join(sourcepath, min_img_name)
-        min_img = cv2.imread(min_img_path) 
-        cv2.imwrite(os.path.join(destpath, min_img_name), min_img)
-        new_df = new_df.append(min_row)
-        newcsvpath = os.path.join(destpath, "data.csv")
-        new_df.to_csv(newcsvpath, index_label=False, index=False)

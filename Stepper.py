@@ -116,36 +116,7 @@ class Stepper(object):
         #case over insn_types
         if insn_type == "init":
             self.exec_init(curr_step)
-            # assert(self.curr_step == 0 and self.dlist is None), "Step Error: init instruction can only be called once at the start"
-
-            # dlist = curr_dict["dlist"]
-
-            # #data resides in raw data at the start of the session (unless we're in preview mode)
-            # ver_path = os.path.join(self.params_dict["abs_path"], self.sess_loc)
-            # print("VER_PATH:", ver_path)
-            # self.B_VER(ver_path, dlist)
-            # print("PASSED B_VER")
-            # self.dlist = dlist
-            # print("dlist", str(self.dlist))
-
-            # if self.params_dict["preview"]:
-            #     new_sess_loc = os.path.join(self.params_dict["abs_path"], self.params_dict["sess"], str(self.sess_id))
-            #     new_dlist = []
-            #     for folder in dlist:
-            #         new_folder = "preview_" + str(len(os.listdir(new_sess_loc))) + folder
-            #         sourcepath = os.path.join(self.params_dict["abs_path"], self.sess_loc, folder)
-            #         destpath = os.path.join(self.params_dict["abs_path"], new_sess_loc, new_folder)
-            #         self.dutils.create_preview_folder(sourcepath, destpath)
-            #         new_dlist.append(new_folder)
-            #     self.sess_loc = new_sess_loc
-            #     self.dlist = new_dlist
-            
-            # #Initialize Metrics Visualizer
-            # self.vis = Metric_Visualizer(self.sess_id, self.writer)
-            # self.vis.log_init(self.dlist, self.sess_loc)
-
-            # #increment step
-            # self.curr_step += 1
+            self.curr_step_idx += 1
 
         elif insn_type == "preprocess":
             assert(self.curr_step > 0 and self.dlist is not None), "Step Error: Must call init before preprocess"
