@@ -23,15 +23,15 @@ class Metric_Visualizer(object):
         """
         Tiny point on big steering graphic that shows the steering angle
         """
-        x = (cx + r*math.cos(-1.0 * angle + math.pi/2))
-        y = (cy - r*math.sin(-1.0 * angle + math.pi/2))
+        x = (cx + r*math.cos(-1.0 * angle + math.pi/2.))
+        y = (cy - r*math.sin(-1.0 * angle + math.pi/2.))
         cv2.circle(frame, (int(x), int(y)), size, color, -1)
 
     def vis_textdata(self, frame, scalar, label, pos):
         """
         Visualize text data. pos = vertical interval on the frame
         """
-        scalar = float(scalar) if float(scalar) != -0.0 else 0.0
+        #scalar = float(scalar) if float(scalar) != -0.0 else 0.0
 
         #TEXT PARAMETERS
         color = (255, 255, 255)
@@ -44,12 +44,6 @@ class Metric_Visualizer(object):
         text = label + '%.3f'%(float(scalar))
         cv2.putText(frame, text, (cx, cy), font, font_size, color, font_thickness)
     
-    def _convert_to_rads(self, angle, dpath, df):
-        units = self._deg_or_rad(dpath, df)
-        if units == 'deg':
-            return angle * math.pi/180.0
-        return angle
-        
     def vis_frame(self, frame, angle, speed, timestamp, pred=None, show_steer=False):
         """
         Vis an image w/ text info log + steering_angle_graphic & display it 
@@ -90,7 +84,7 @@ class Metric_Visualizer(object):
 
                 #fix angle
                 if units == 'deg':
-                    angle = angle * 180.0/math.pi
+                    angle = angle * math.pi/180
 
                 framepath = os.path.join(dpath, img_name)
                 frame = cv2.imread(framepath)
