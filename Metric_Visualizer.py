@@ -106,6 +106,7 @@ class Metric_Visualizer(object):
         h, w, c = frame_0.shape
         return h, w
 
+
     def plot_anglehist(self, dpath, tag, idx):
         csvpath = os.path.join(dpath, "data.csv")
         df = pd.read_csv(csvpath) 
@@ -116,12 +117,14 @@ class Metric_Visualizer(object):
         plt.hist(angle_column, num_bins, color='green')
         self.writer.add_figure(tag, fig, global_step=idx)
 
+
     def text_table(self, dpath, labelname, foldername='', angle_unit='', global_step=0):
         df = self.data_utils.get_df(dpath)
         h, w = self._get_image_size(dpath, df)
         text = f"Folder | Shape | Units | Num Images\n-----|-----|-----|-----\n{foldername}|({h}, {w})|{angle_unit}|{len(df)}"
         self.writer.add_text(labelname, text, global_step=global_step)
         
+
     def standard_log(self, datadir, folder, curr_step, global_step=0, units=''):
         """
         Log "Standard" things in Tensorboard
@@ -171,4 +174,3 @@ class Metric_Visualizer(object):
     #         self.vid_from_path(dpath, tag, i, show_steer=True)
     #         self.plot_anglehist(dpath, tag, i)
     #         self.log_tbtext(dpath, tag, i, folder) 
- 
