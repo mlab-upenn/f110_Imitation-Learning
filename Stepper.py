@@ -175,38 +175,12 @@ class Stepper(object):
             self.curr_step_idx += 1
         
         elif insn_type =="combine":
-            pass
+            self.exec_combine(curr_step)
+            self.curr_step_idx += 1
 
         elif insn_type == "train":
-            pass
-
-    def augment(self, sess_loc, dlist, auglist):
-        new_dlist = []
-        for i, folder in enumerate(dlist):
-            print("AUGMENTATION:", folder)
-            #get list of transforms & call augment_dataset
-            sourcepath = os.path.join(self.params_dict["abs_path"], sess_loc, folder)
-            tf_list = auglist[i]
-            self.dutils.augment_folder(sourcepath, tf_list)
-
-    def preprocess(self, sess_loc, new_sess_loc, dlist, funclist):
-        new_dlist = []
-        for i, folder in enumerate(dlist):
-            print("PREPROCESSING:", folder)
-            new_folder = "preprocess_" + str(len(os.listdir(new_sess_loc))) + folder
-            sourcepath = os.path.join(self.params_dict["abs_path"], sess_loc, folder)
-            destpath = os.path.join(self.params_dict["abs_path"], new_sess_loc, new_folder)
-            print("SOURCEPATH:", sourcepath)
-            print("DESTPATH:", destpath)
-            
-            #get list of transforms & call preprocess_dataset
-            tf_list = funclist[i]
-            self.dutils.preprocess_folder(sourcepath, destpath, tf_list)
-
-            #update dlist
-            new_dlist.append(new_folder)
-            
-        return new_dlist
+            self.exec_train(curr_step)
+            self.curr_step_idx += 1
     
 s = Stepper()
 s.step()

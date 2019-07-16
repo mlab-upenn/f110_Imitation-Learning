@@ -79,7 +79,7 @@ class Metric_Visualizer(object):
         df = pd.read_csv(csvpath)
         num_rows = int(0.1 * len(df)) #display about 10% of the frames 
         for i in range(num_rows):
-            if i % 10 == 0:
+            if i % 4 == 0:
                 img_name, angle, speed, timestamp = df.iloc[i, 0], df.iloc[i, 1], df.iloc[i, 2], df.iloc[i, 3]
 
                 #fix angle
@@ -91,7 +91,7 @@ class Metric_Visualizer(object):
                 self.vis_frame(frame, angle, speed, timestamp, show_steer=show_steer)
                 framebuffer.append(frame.copy())
 
-        self.writer.add_video(stepname, framebuffer, global_step= idx, as_np_framebuffer=True)
+        self.writer.add_video(stepname, framebuffer, fps=10, global_step= idx, as_np_framebuffer=True)
 
     def _get_image_size(self, dpath, df):
         img_name_0 = df.iloc[0, 0]
@@ -133,38 +133,3 @@ class Metric_Visualizer(object):
         self.plot_anglehist(dpath, labelname, global_step)
         self.vid_from_path(dpath, labelname, global_step, show_steer=True, units=units)
         self.text_table(dpath, labelname, foldername=folder, angle_unit=units, global_step=global_step)
-
-    # def log_tbtext(self, dpath, tag, idx, folder):
-    #     csvpath = os.path.join(dpath, "data.csv")
-    #     df = pd.read_csv(csvpath)
-    #     h, w = self._get_image_size(dpath, df)
-    #     angle_unit = self._deg_or_rad(dpath, df)
-    #     text = f"Folder:{folder} ||| Shape:({h}, {w}) ||| AngleUnits:{angle_unit} ||| NumImages:{len(df)}"
-    #     self.writer.add_text(tag, text, global_step=idx)
-        
-    # def log_init(self, ):
-    #     sess_path = os.path.join(self.params_dict["abs_path"], sess_loc)
-    #     tag = f"Step-{0}"
-    #     for i, folder in enumerate(dlist):
-    #         dpath = os.path.join(sess_path, folder) #where jpgs & csv is
-    #         self.vid_from_path(dpath, tag, i) 
-    #         self.plot_anglehist(dpath, tag, i)
-    #         self.log_tbtext(dpath, tag, i, folder) 
-    
-    # def log_preprocess(self, dlist, sess_loc, curr_step):
-    #     sess_path = os.path.join(self.params_dict["abs_path"], sess_loc)
-    #     tag = f"Step-{curr_step}"
-    #     for i, folder in enumerate(dlist):
-    #         dpath = os.path.join(sess_path, folder) #where jpgs & csv is
-    #         self.vid_from_path(dpath, tag, i, show_steer=True)
-    #         self.plot_anglehist(dpath, tag, i)
-    #         self.log_tbtext(dpath, tag, i, folder) 
-
-    # def log_augmentation(self, dlist, sess_loc, curr_step):
-    #     sess_path = os.path.join(self.params_dict["abs_path"], sess_loc)
-    #     tag = f"Step-{curr_step}"
-    #     for i, folder in enumerate(dlist):
-    #         dpath = os.path.join(sess_path, folder) #where jpgs & csv is
-    #         self.vid_from_path(dpath, tag, i, show_steer=True)
-    #         self.plot_anglehist(dpath, tag, i)
-    #         self.log_tbtext(dpath, tag, i, folder) 

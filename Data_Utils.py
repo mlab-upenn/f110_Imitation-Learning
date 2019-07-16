@@ -19,13 +19,14 @@ def cropVertical(args, src_dict):
     cropEnd = args[1]
     dest_dict = src_dict
     src_img = src_dict.get("img")
-
+    src_row = src_dict.get("row")
     if cropEnd < 0:
         dest_dict["img"] = src_img[cropStart:, :, :]
     elif cropEnd > 0:
         dest_dict["img"] = src_img[cropStart:cropEnd, :, :]
     else:
         raise Exception('bad args cropvertical')
+    dest_dict["img_name"] = "vcrop_" + (src_row[0])
     return dest_dict
 
 def rot90(args, src_dict):
@@ -33,13 +34,14 @@ def rot90(args, src_dict):
     direction = args[0]
     dest_dict = src_dict
     src_img = src_dict.get("img")
-
+    src_row = src_dict.get("row")
     if direction == 'clockwise':
         dest_dict["img"] = cv2.rotate(src_img, cv2.ROTATE_90_CLOCKWISE)
 
     elif direction == 'anticlockwise':
         #TODO: DO ANTICLOCKWISE
         pass
+    dest_dict["img_name"] = "rot90" + (src_row[0])
     return dest_dict
 
 def radOffset(args, src_dict):
@@ -68,6 +70,7 @@ def flipNonZero(args, src_dict):
         dest_dict["flag"] = True
         dest_dict["img"] = cv2.flip(src_img, 1)
         dest_dict["row"][1] = -1.0 * src_row[1]
+    dest_dict["img_name"] = "rot90" + (src_row[0])
     return dest_dict
 
 class Data_Utils(object):
@@ -86,7 +89,7 @@ class Data_Utils(object):
         if op == 'aug':
             return folder, os.path.join(dest_datadir, folder)
         else:
-            new_folder = folder + str(len(os.listdir(dest_datadir)))
+            new_folder = str(len(os.listdir(dest_datadir))) + '_' +  folder 
             return new_folder, os.path.join(dest_datadir, new_folder)
 
     def get_df(self, datapath):
@@ -101,12 +104,14 @@ class Data_Utils(object):
         img = cv2.imread(img_path)
         return img, row
     
+
     def get_finaldf(self, src_df, dest_df, op):
         final_df = dest_df
         if op == 'aug':
             final_df = dest_df.append(src_df)
         return final_df
     
+
     def MOVE(self, src_datadir, folder, dest_datadir, flist=[], preview=False, op='mv'):
         """
         MOVE takes src_datadir/folder and moves to dest_datadir & applies flist functions to it
@@ -146,8 +151,10 @@ class Data_Utils(object):
             if flag:
                 dest_row = dest_dict.get("row")
                 dest_img = dest_dict.get("img")
-                dest_img_name = dest_dict.get("img_name", dest_row[0])
-
+                if op == 'aug':
+                    dest_img_name = dest_dict.get("img_name", dest_row[0])
+                else:
+                    dest_img_name = dest_row[0]
                 #TODO: Check dest_dict in a B_VER-esque way
 
                 #Accordingly alter dataframe & write img

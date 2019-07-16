@@ -5,7 +5,7 @@
         "raw_data":"raw_data",
         "sess_root":"runs",
         "comment":"Pretty Std. stuff",
-        "preview":true
+        "preview":false
     },
     "steps":
     [
@@ -21,21 +21,21 @@
             [
                 [
                 {"F":"rot90", "args":["clockwise"]},
-                {"F":"cropVertical", "args":[200, -1]}, 
+                {"F":"cropVertical", "args":[200, 400]}, 
                 {"F":"radOffset", "args":[0.15]},
                 {"F":"rad2deg", "args":[]}
                 ],
 
                 [
                 {"F":"rot90", "args":["clockwise"]},
-                {"F":"cropVertical", "args":[200, -1]}, 
+                {"F":"cropVertical", "args":[200, 400]}, 
                 {"F":"radOffset", "args":[-0.15]},
                 {"F":"rad2deg", "args":[]}
                 ],
 
                 [
                 {"F":"rot90", "args":["clockwise"]},
-                {"F":"cropVertical", "args":[200, -1]}, 
+                {"F":"cropVertical", "args":[200, 400]}, 
                 {"F":"rad2deg", "args":[]}
                 ]
             ]
@@ -55,6 +55,13 @@
                     {"F":"flipNonZero", "args":[]}
                 ]
             ]
+        },
+        {
+            "type":"combine",
+            "units":"deg"
+        },
+        {
+            "train":""
         }
     ]
 }
