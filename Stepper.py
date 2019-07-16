@@ -97,20 +97,19 @@ class Stepper(object):
         raw_datadir= os.path.join(self.params_dict["abs_path"], self.params_dict["raw_data"])
         self.B_VER(raw_datadir, self.dlist)
         print(f"PASSED B_VER FOR STEP {self.curr_step_idx}")
-        dest_datadir = self.sess_loc
+        dest_datadir = self.sess_path
 
         #move & filter each folder
         filter_funclist = [{"F":"filterBadData", "args":[]}]
-        maxlen = 200 if self.params_dict["preview"] else -1
         new_dlist = []
         for folder in self.dlist:
-            new_folder = self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=filter_funclist, maxlen=maxlen)
+            new_folder = self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=filter_funclist, preview=self.params_dict["preview"])
             new_dlist.append(new_folder)
         
         #visualize data in tensorboard
         self.dlist = new_dlist
         for i, folder in enumerate(self.dlist):
-            self.visualizer.standard_log(self.sess_loc, folder, self.curr_step_idx, global_step=i, units=curr_step.get("units", 'rad'))
+            self.visualizer.standard_log(self.sess_path, folder, self.curr_step_idx, global_step=i, units=curr_step.get("units", 'rad'))
             
             
     def step(self):

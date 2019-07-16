@@ -107,7 +107,7 @@ class Data_Utils(object):
             final_df = dest_df.append(src_df)
         return final_df
     
-    def MOVE(self, src_datadir, folder, dest_datadir, flist=[], maxlen=-1, op='mv'):
+    def MOVE(self, src_datadir, folder, dest_datadir, flist=[], preview=False, op='mv'):
         """
         MOVE takes src_datadir/folder and moves to dest_datadir & applies flist functions to it
         also returns the new_folder name for use in dlist
@@ -115,10 +115,10 @@ class Data_Utils(object):
         dest_datadir: abs path to dest dir
         folder: name of folder in src_datadir to MOVE
         flist: list of json-formatted functions (see steps.json)
-        maxlen: the number of entries to move
+        preview:preview shows fewer entries
         op: if 'aug', augment current dataset instead of creating a whole new one & moving it elsewhere (IF SO, SRC_DATADIR MUST = DEST_DATADIR)
         """
-        assert(op=='aug' and src_datadir != dest_datadir), f"MOVE Error: If op={op}, src_datadir = dest_datadir"
+        assert((op =='aug' and src_datadir != dest_datadir) or (op != 'aug')), f"MOVE Error: If op={op}, src_datadir = dest_datadir"
 
         if not os.path.exists(dest_datadir):
             os.makedirs(dest_datadir)
@@ -126,12 +126,15 @@ class Data_Utils(object):
         src_datapath = os.path.join(src_datadir, folder)
         new_folder, dest_datapath = self.get_dest_datapath(dest_datadir, folder, op)
 
+        if not os.path.exists(dest_datapath):
+            os.makedirs(dest_datapath)
+
         #make new dataframes
         src_df = self.get_df(src_datapath)
         dest_df = pd.DataFrame(columns=src_df.columns.values)
 
         #iterate through dataframe
-        maxlen = max(len(src_df), maxlen)
+        maxlen = 100 if preview else len(src_df)
         for i in range(maxlen):
             #Apply flist, get output
             src_img, src_row = self.df_data_fromidx(src_datapath, src_df, i)
@@ -149,7 +152,7 @@ class Data_Utils(object):
 
                 #Accordingly alter dataframe & write img
                 dest_df = dest_df.append(dest_row)
-                cv2.imwrite(dest_img, os.path.join(dest_datapath, dest_img_name))
+                cv2.imwrite(os.path.join(dest_datapath, dest_img_name), dest_img)
 
         #write df
         final_df = self.get_finaldf(src_df, dest_df, op)
@@ -172,6 +175,8 @@ class Data_Utils(object):
             p = partial(rot90, args)
         elif fname == 'flipNonZero':
             p = partial(flipNonZero, args)
+        elif fname == 'filterBadData':
+            p = partial(filterBadData, args)
         else:
             raise Exception('{fname} is not in the list of functions')
         return p
