@@ -72,9 +72,12 @@ class Metric_Visualizer(object):
             if pred is not None:
                 self.vis_steer_point(frame, pred, cx, cy, r, size=5, color=(0, 0, 0))
 
-    def vid_from_path(self, dpath, stepname, idx, show_steer=False):
+    def vid_from_path(self, dpath, stepname, idx, show_steer=False, units='rad'):
         """
         Send annotated video to Tensorboard
+        dpath: abs_path to data folder containing images & csv
+        labelname: str name for the label
+        global_step: global_step to record for slider functionality
         """
         framebuffer = []
         #get dataframe
@@ -84,6 +87,11 @@ class Metric_Visualizer(object):
         for i in range(num_rows):
             if i % 10 == 0:
                 img_name, angle, speed, timestamp = df.iloc[i, 0], df.iloc[i, 1], df.iloc[i, 2], df.iloc[i, 3]
+
+                #fix angle
+                if units == 'deg':
+                    angle = angle * 180.0/math.pi
+
                 framepath = os.path.join(dpath, img_name)
                 frame = cv2.imread(framepath)
                 self.vis_frame(frame, angle, speed, timestamp, show_steer=show_steer)
@@ -98,14 +106,6 @@ class Metric_Visualizer(object):
         h, w, c = frame_0.shape
         return h, w
 
-    def _deg_or_rad(self, dpath, df):
-        #crappy but effective way to figure out if i'm dealing with degrees or radians
-        angle_column = df.iloc[:, 1].values
-        max_angle = np.max(angle_column)
-        if max_angle > 0.4:
-            return 'deg'
-        return 'rad'
-
     def plot_anglehist(self, dpath, tag, idx):
         csvpath = os.path.join(dpath, "data.csv")
         df = pd.read_csv(csvpath) 
@@ -116,7 +116,13 @@ class Metric_Visualizer(object):
         plt.hist(angle_column, num_bins, color='green')
         self.writer.add_figure(tag, fig, global_step=idx)
 
-    def standard_log(self, datadir, folder, curr_step, global_step=0, units='rad'):
+    def text_table(self, dpath, labelname, foldername='', angle_unit='', global_step=0):
+        df = self.data_utils.get_df(dpath)
+        h, w = self._get_image_size(dpath, df)
+        text = f"Folder | Shape | Units | Num Images\n-----|-----|-----|-----\n{foldername}|({h}, {w})|{angle_unit}|{len(df)}"
+        self.writer.add_text(labelname, text, global_step=global_step)
+        
+    def standard_log(self, datadir, folder, curr_step, global_step=0, units=''):
         """
         Log "Standard" things in Tensorboard
         datadir: abs_path of directory containing data folders
@@ -126,7 +132,10 @@ class Metric_Visualizer(object):
         units: 'rad' or 'deg'
         """
         labelname = f"STEP-{curr_step}"
-        
+        dpath = os.path.join(datadir, folder)
+        self.vid_from_path(dpath, labelname, global_step, show_steer=True, units=units)
+        self.plot_anglehist(dpath, labelname, global_step)
+        self.text_table(dpath, labelname, foldername=folder, angle_unit=units, global_step=global_step)
 
     # def log_tbtext(self, dpath, tag, idx, folder):
     #     csvpath = os.path.join(dpath, "data.csv")

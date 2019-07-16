@@ -110,7 +110,7 @@ class Stepper(object):
         #visualize data in tensorboard
         self.dlist = new_dlist
         for i, folder in enumerate(self.dlist):
-            self.visualizer.standard_log(self.sess_loc, folder, self.curr_step_idx, global_step=i, units=curr_step["units"])
+            self.visualizer.standard_log(self.sess_loc, folder, self.curr_step_idx, global_step=i, units=curr_step.get("units", 'rad'))
             
             
     def step(self):
