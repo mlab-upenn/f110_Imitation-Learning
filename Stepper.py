@@ -95,17 +95,17 @@ class Stepper(object):
         #verify raw data & dlist
         self.dlist = curr_step["dlist"] 
         raw_datadir= os.path.join(self.params_dict["abs_path"], self.params_dict["raw_data"])
-        self.B_VER(raw_datapath, self.dlist)
+        self.B_VER(raw_datadir, self.dlist)
         print(f"PASSED B_VER FOR STEP {self.curr_step_idx}")
         dest_datadir = self.sess_loc
 
         #move & filter each folder
         filter_funclist = [{"F":"filterBadData", "args":[]}]
         maxlen = 200 if self.params_dict["preview"] else -1
+        new_dlist = []
         for folder in self.dlist:
-            self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=filter_funclist, maxlen=maxlen)
+            new_dlist = self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=filter_funclist, maxlen=maxlen)
             
-
     def step(self):
         """
         Executes the instruction for the curr_step

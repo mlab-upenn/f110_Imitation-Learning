@@ -77,7 +77,7 @@ class Data_Utils(object):
             return os.path.join(dest_datadir, folder)
         else:
             new_folder = folder + str(len(os.listdir(dest_datadir)))
-            return os.path.join(dest_datadir, new_folder)
+            return new_folder, os.path.join(dest_datadir, new_folder)
 
     def get_df(self, datapath):
         csvpath = os.path.join(datapath, 'data.csv')
@@ -100,6 +100,7 @@ class Data_Utils(object):
     def MOVE(self, src_datadir, folder, dest_datadir, flist=[], maxlen=-1, op='mv'):
         """
         MOVE takes src_datadir/folder and moves to dest_datadir & applies flist functions to it
+        also returns the new_folder name for use in dlist
         src_datadir: abs path to dir containing src data
         dest_datadir: abs path to dest dir
         folder: name of folder in src_datadir to MOVE
@@ -113,7 +114,7 @@ class Data_Utils(object):
             os.makedirs(dest_datadir)
 
         src_datapath = os.path.join(src_datadir, folder)
-        dest_datapath = self.get_dest_datapath(dest_datadir, folder, op)
+        new_folder, dest_datapath = self.get_dest_datapath(dest_datadir, folder, op)
 
         #make new dataframes
         src_df = self.get_df(src_datapath)
@@ -143,7 +144,8 @@ class Data_Utils(object):
         #write df
         final_df = self.get_finaldf(src_df, dest_df, op)
         final_df.to_csv(os.path.join(dest_datapath, 'data.csv'), index=False)
-    
+        return new_folder
+
     def get_partial_func(self, json_func):
         """
         json_func: json formatted function
@@ -169,39 +171,10 @@ class Data_Utils(object):
         Apply a list of functions and return a dict
         src_dict: dictionary representing all source variables
         flist: json formatted function list (see steps.json)
+        TODO:CONSIDER if first False should end it 
         """
+        dest_dict = src_dict
         for json_func in flist:
             partial_func = self.get_partial_func(json_func)
-
-    def tf_partial(self, fname, args):
-        if fname == 'cropVertical':
-            p = partial(cropVertical, args)
-        elif fname == 'rad2deg':
-            p = partial(rad2deg, args)
-        elif fname == 'radOffset':
-            p = partial(radOffset, args)
-        elif fname == 'rot90':
-            p = partial(rot90, args)
-        elif fname == 'flipNonZero':
-            p = partial(flipNonZero, args)
-        else:
-            raise Exception('{fname} is not in the list of functions')
-        return p
-
-    def get_partials_list(self, tf_list):
-        """
-        tf_list: a list of transforms in "F":, "args"[], format
-        return a list of partial functions
-        """
-        parsed_tf_list = []
-        for tf in tf_list:
-            func = self.tf_partial(tf["F"], tf["args"])
-            parsed_tf_list.append(func)
-        return parsed_tf_list
-    
-    def apply_tfs(self, old_img, old_row, tfs):
-        new_img = old_img
-        new_row = old_row
-        for tf in tfs:
-            new_img, new_row = tf(new_img, new_row)
-        return new_img, new_row
+            dest_dict = partial_func(dest_dict)
+        return dest_dict
