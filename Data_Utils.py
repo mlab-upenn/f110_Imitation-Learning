@@ -52,7 +52,7 @@ def flipNonZero(args, img, metrics_row):
 
 class Data_Utils(object):
     """
-    Useful functions for moving around & processing steer data
+    Useful functions for moving around & processing steer data. Doesn't actually know anything about the steps themselves, purely "executional" in nature
     """
     def __init__(self):
         self.params_dict = json.load(open("steps.json"))["params"]    

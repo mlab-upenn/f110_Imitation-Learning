@@ -10,12 +10,12 @@ class Metric_Visualizer(object):
     """
     Visualize metrics in Tensorboard
     """
-    def __init__(self, sess_id, writer):
-        self.params_dict = json.load(open("steps.json"))["params"]
-        
-        #Create SummaryWriter for tensorboard that updates frequently
-        self.logdir = os.path.join(self.params_dict["abs_path"], self.params_dict["sess"], str(sess_id), "logs")
-        print("LOGDIR", self.logdir)
+    def __init__(self, sess_path, writer):
+        """
+        sess_path: current working dir of this session
+        writer: Tensorboard SummmaryWriter
+        """
+        self.sess_path = sess_path
         self.writer = writer
 
     def vis_steer_point(self, frame, angle, cx, cy, r, size=10, color=(0, 0, 0)):

@@ -9,30 +9,49 @@ class Stepper(object):
     Parses steps.json and executes ins. on data folders accordingly
     """
     def __init__(self):
-        self.params_dict = json.load(open("steps.json"))["params"]
-        self.steplist = json.load(open("steps.json"))["steps"]
-        self.curr_step = 0 #the next step we have to execute
-        self.sess_loc = self.params_dict["raw_data"] #running folder of data for this session (start at raw data, update after preprocessing)
-        self.dlist = None #running list of folders to operate on 
-        self.vis = None #Metric Visualizer
-        self.dutils = Data_Utils()
+        jsonfile = json.load(open("steps.json"))
 
-        #Get Session ID
-        sess_path = os.path.join(self.params_dict["abs_path"], self.params_dict["sess"])
+        #The state of the session 
+        self.params_dict = jsonfile["params"]
+        self.steplist = jsonfile["steps"]
+        self.curr_step = 0
+        self.dlist = None #running list of folders to operate on
+        
+        #Session ID & Logger
+        self.sess_id, self.sess_path = self._create_session_data(self.params_dict["abs_path"], self.params_dict["sess_root"])
+        self.writer = self._create_writer(self.sess_path, 'logs', comment=self.params_dict["comment"])
+
+        #Periphery Stuff for data moving and visualization
+        self.data_utils = Data_Utils()
+        self.visualizer = Metric_Visualizer(self.sess_path, self.writer)
+
+    def _create_session_data(self, abs_path, sess_root):
+        """
+        Returns an int representing the unique session ID & makes a folder for the session, along with a string representing the current working directory of the session
+        sess_root: root folder containing all the sessions
+        """
+        sess_path = os.path.join(abs_path, sess_root)
         if not os.path.exists(sess_path):
             os.makedirs(sess_path)
-        self.sess_id = len(os.listdir(sess_path))
+        sess_id = len(os.listdir(sess_path))
+        sess_path = os.path.join(sess_path, str(sess_id))
         print("SESSION PATH:", sess_path)
-        print("SESSION ID:", self.sess_id)
-        
-        #Create SummaryWriter for tensorboard that updates frequently
-        logdir = os.path.join(self.params_dict["abs_path"], self.params_dict["sess"], str(self.sess_id), "logs")
-        print("LOGDIR", logdir)
-        self.writer = SummaryWriter(logdir=logdir)
+        print("SESSION ID:", sess_id)    
+        return sess_id, sess_path
+
+    def _create_writer(self, sess_path, log_foldername, comment=''):
+        """
+        Retruns a summary writer in the right place
+        sess_path: current working dir of session
+        """
+        logdir = os.path.join(sess_path, log_foldername)
+        print("LOGDIR:", logdir)
+        writer = SummaryWriter(logdir=logdir, comment=comment)
+        return writer
     
     def B_VER(self, ver_path, dlist):
         """
-        (B)asic (VER)ification of folders in dlist
+        (B)asic (VER)ification of folder structure in dlist
         """
 
         for folder in dlist:
@@ -180,6 +199,6 @@ class Stepper(object):
     
 s = Stepper()
 s.step()
-s.step()
-s.step()
+# s.step()
+# s.step()
 s.writer.close()

@@ -3,7 +3,8 @@
     {
         "abs_path":"/home/dhruvkar/datasets/avfone",
         "raw_data":"raw_data",
-        "sess":"runs",
+        "sess_root":"runs",
+        "comment":"Pretty Std. stuff",
         "preview":true
     },
     "steps":
