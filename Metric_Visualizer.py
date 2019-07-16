@@ -2,7 +2,7 @@ import os, cv2, math, sys, json, torch, pdb
 import numpy as np
 import matplotlib.pyplot as plt
 import moviepy.editor as mpy
-#from Data_Utils import Data_Utils
+from Data_Utils import Data_Utils
 import pandas as pd 
 from tensorboardX import SummaryWriter
 
@@ -17,6 +17,7 @@ class Metric_Visualizer(object):
         """
         self.sess_path = sess_path
         self.writer = writer
+        self.data_utils = Data_Utils()
 
     def vis_steer_point(self, frame, angle, cx, cy, r, size=10, color=(0, 0, 0)):
         """
@@ -83,8 +84,6 @@ class Metric_Visualizer(object):
         for i in range(num_rows):
             if i % 10 == 0:
                 img_name, angle, speed, timestamp = df.iloc[i, 0], df.iloc[i, 1], df.iloc[i, 2], df.iloc[i, 3]
-                #only convert angle before visualizing
-                angle = self._convert_to_rads(angle, dpath, df)
                 framepath = os.path.join(dpath, img_name)
                 frame = cv2.imread(framepath)
                 self.vis_frame(frame, angle, speed, timestamp, show_steer=show_steer)
@@ -117,38 +116,50 @@ class Metric_Visualizer(object):
         plt.hist(angle_column, num_bins, color='green')
         self.writer.add_figure(tag, fig, global_step=idx)
 
-    def log_tbtext(self, dpath, tag, idx, folder):
-        csvpath = os.path.join(dpath, "data.csv")
-        df = pd.read_csv(csvpath)
-        h, w = self._get_image_size(dpath, df)
-        angle_unit = self._deg_or_rad(dpath, df)
-        text = f"Folder:{folder} ||| Shape:({h}, {w}) ||| AngleUnits:{angle_unit} ||| NumImages:{len(df)}"
-        self.writer.add_text(tag, text, global_step=idx)
+    def standard_log(self, datadir, folder, curr_step, global_step=0, units='rad'):
+        """
+        Log "Standard" things in Tensorboard
+        datadir: abs_path of directory containing data folders
+        folder: data folder name
+        curr_step: progress in steps.json
+        global_step: The "step" value to log into tensorboard (this allows for the cool slider functionality)
+        units: 'rad' or 'deg'
+        """
+        labelname = f"STEP-{curr_step}"
         
-    def log_init(self, dlist, sess_loc):
-        sess_path = os.path.join(self.params_dict["abs_path"], sess_loc)
-        tag = f"Step-{0}"
-        for i, folder in enumerate(dlist):
-            dpath = os.path.join(sess_path, folder) #where jpgs & csv is
-            self.vid_from_path(dpath, tag, i) 
-            self.plot_anglehist(dpath, tag, i)
-            self.log_tbtext(dpath, tag, i, folder) 
-    
-    def log_preprocess(self, dlist, sess_loc, curr_step):
-        sess_path = os.path.join(self.params_dict["abs_path"], sess_loc)
-        tag = f"Step-{curr_step}"
-        for i, folder in enumerate(dlist):
-            dpath = os.path.join(sess_path, folder) #where jpgs & csv is
-            self.vid_from_path(dpath, tag, i, show_steer=True)
-            self.plot_anglehist(dpath, tag, i)
-            self.log_tbtext(dpath, tag, i, folder) 
 
-    def log_augmentation(self, dlist, sess_loc, curr_step):
-        sess_path = os.path.join(self.params_dict["abs_path"], sess_loc)
-        tag = f"Step-{curr_step}"
-        for i, folder in enumerate(dlist):
-            dpath = os.path.join(sess_path, folder) #where jpgs & csv is
-            self.vid_from_path(dpath, tag, i, show_steer=True)
-            self.plot_anglehist(dpath, tag, i)
-            self.log_tbtext(dpath, tag, i, folder) 
+    # def log_tbtext(self, dpath, tag, idx, folder):
+    #     csvpath = os.path.join(dpath, "data.csv")
+    #     df = pd.read_csv(csvpath)
+    #     h, w = self._get_image_size(dpath, df)
+    #     angle_unit = self._deg_or_rad(dpath, df)
+    #     text = f"Folder:{folder} ||| Shape:({h}, {w}) ||| AngleUnits:{angle_unit} ||| NumImages:{len(df)}"
+    #     self.writer.add_text(tag, text, global_step=idx)
+        
+    # def log_init(self, ):
+    #     sess_path = os.path.join(self.params_dict["abs_path"], sess_loc)
+    #     tag = f"Step-{0}"
+    #     for i, folder in enumerate(dlist):
+    #         dpath = os.path.join(sess_path, folder) #where jpgs & csv is
+    #         self.vid_from_path(dpath, tag, i) 
+    #         self.plot_anglehist(dpath, tag, i)
+    #         self.log_tbtext(dpath, tag, i, folder) 
+    
+    # def log_preprocess(self, dlist, sess_loc, curr_step):
+    #     sess_path = os.path.join(self.params_dict["abs_path"], sess_loc)
+    #     tag = f"Step-{curr_step}"
+    #     for i, folder in enumerate(dlist):
+    #         dpath = os.path.join(sess_path, folder) #where jpgs & csv is
+    #         self.vid_from_path(dpath, tag, i, show_steer=True)
+    #         self.plot_anglehist(dpath, tag, i)
+    #         self.log_tbtext(dpath, tag, i, folder) 
+
+    # def log_augmentation(self, dlist, sess_loc, curr_step):
+    #     sess_path = os.path.join(self.params_dict["abs_path"], sess_loc)
+    #     tag = f"Step-{curr_step}"
+    #     for i, folder in enumerate(dlist):
+    #         dpath = os.path.join(sess_path, folder) #where jpgs & csv is
+    #         self.vid_from_path(dpath, tag, i, show_steer=True)
+    #         self.plot_anglehist(dpath, tag, i)
+    #         self.log_tbtext(dpath, tag, i, folder) 
  

@@ -15,6 +15,7 @@
         },
         {
             "type":"preprocess",
+            "units":"rad",
             "funclist":
             [
                 [
@@ -40,6 +41,7 @@
         },
         {
             "type":"augment",
+            "units":"deg",
             "auglist":
             [
                 [

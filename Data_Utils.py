@@ -3,6 +3,16 @@ import numpy as np
 from functools import partial
 import pandas as pd
 
+def filterBadData(args, src_dict):
+    assert(len(args) == 0), "Incorrect size argument to filterBadData"
+    dest_dict = src_dict
+    src_img = src_dict.get("img")
+
+    #stupid check to see if picture is largely black
+    if np.mean(src_img) < 5:
+        dest_dict["flag"] = False
+    return dest_dict
+
 def cropVertical(args, src_dict):
     assert (len(args) == 2),"Incorrect sized argument to cropVertical"
     cropStart = args[0]
@@ -96,7 +106,7 @@ class Data_Utils(object):
         if op == 'aug':
             final_df = dest_df.append(src_df)
         return final_df
-        
+    
     def MOVE(self, src_datadir, folder, dest_datadir, flist=[], maxlen=-1, op='mv'):
         """
         MOVE takes src_datadir/folder and moves to dest_datadir & applies flist functions to it

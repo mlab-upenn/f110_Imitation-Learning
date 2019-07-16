@@ -104,7 +104,14 @@ class Stepper(object):
         maxlen = 200 if self.params_dict["preview"] else -1
         new_dlist = []
         for folder in self.dlist:
-            new_dlist = self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=filter_funclist, maxlen=maxlen)
+            new_folder = self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=filter_funclist, maxlen=maxlen)
+            new_dlist.append(new_folder)
+        
+        #visualize data in tensorboard
+        self.dlist = new_dlist
+        for i, folder in enumerate(self.dlist):
+            self.visualizer.standard_log(self.sess_loc, folder, self.curr_step_idx, global_step=i, units=curr_step["units"])
+            
             
     def step(self):
         """
