@@ -5,17 +5,18 @@
         "raw_data":"raw_data",
         "sess_root":"runs",
         "comment":"Pretty Std. stuff",
-        "preview":false
+        "preview":true
     },
     "steps":
     [
         {
             "type":"init",
+            "units":"rad",
             "dlist":["lr1_left_folder", "lr1_right_folder", "f1_front_folder"]
         },
         {
             "type":"preprocess",
-            "units":"rad",
+            "units":"deg",
             "funclist":
             [
                 [

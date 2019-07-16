@@ -35,7 +35,7 @@ def rot90(args, src_dict):
     src_img = src_dict.get("img")
 
     if direction == 'clockwise':
-        dest_dict["img"] = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+        dest_dict["img"] = cv2.rotate(src_img, cv2.ROTATE_90_CLOCKWISE)
 
     elif direction == 'anticlockwise':
         #TODO: DO ANTICLOCKWISE
@@ -47,14 +47,14 @@ def radOffset(args, src_dict):
     offset = args[0]
     dest_dict = src_dict
     src_row = src_dict.get("row")
-    dest_dict["row"] = src_row[1] + offset
+    dest_dict["row"][1] = src_row[1] + offset
     return dest_dict
 
 def rad2deg(args, src_dict):
     assert(len(args) == 0), "Incorrect sized arguments to rad2deg"
     dest_dict = src_dict
     src_row = src_dict.get("row")
-    dest_dict["row"] = src_row[1] * 180.0/math.pi
+    dest_dict["row"][1] = src_row[1] * 180.0/math.pi
     return dest_dict
 
 def flipNonZero(args, src_dict):

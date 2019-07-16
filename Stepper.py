@@ -85,6 +85,11 @@ class Stepper(object):
                 frame = cv2.imread(framepath)
                 assert(os.path.isfile(framepath)), F"B_VER Error: frame {framepath} is not a path, but is in the csv"
     
+    def default_vis(self, curr_step):
+        #visualize data in tensorboard
+        for i, folder in enumerate(self.dlist):
+            self.visualizer.standard_log(self.sess_path, folder, self.curr_step_idx, global_step=i, units=curr_step.get("units", 'rad'))
+            
     def exec_init(self, curr_step):
         """
         Initializes self.sess_path with filtered data
@@ -108,10 +113,50 @@ class Stepper(object):
         
         #visualize data in tensorboard
         self.dlist = new_dlist
+        self.default_vis(curr_step)
+    
+    def exec_preprocess(self, curr_step):
+        """
+        Preprocesses data as per curr_step in steps.json
+        """
+        assert(self.curr_step_idx > 0 and self.dlist is not None), "Step Error: Must call init before preprocess"            
+
+        #verify raw data & dlist
+        self.B_VER(self.sess_path, self.dlist)
+
+        #move & preprocess each folder
+        funclist = curr_step["funclist"]
+        raw_datadir = self.sess_path
+        dest_datadir = self.sess_path
+        new_dlist = []
         for i, folder in enumerate(self.dlist):
-            self.visualizer.standard_log(self.sess_path, folder, self.curr_step_idx, global_step=i, units=curr_step.get("units", 'rad'))
-            
-            
+            flist = funclist[i]
+            new_folder = self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=flist, preview=self.params_dict["preview"])
+            new_dlist.append(new_folder)
+        self.dlist = new_dlist
+        self.default_vis(curr_step)
+
+    def exec_augment(self, curr_step):
+        """
+        Augment data as per curr_step in steps.json
+        """
+        assert(self.curr_step_idx > 0 and self.dlist is not None), "Step Error: Must call init before preprocess"            
+
+        #verify raw data & dlist
+        self.B_VER(self.sess_path, self.dlist)
+
+        #move & preprocess each folder
+        funclist = curr_step["funclist"]
+        raw_datadir = self.sess_path
+        dest_datadir = self.sess_path
+        new_dlist = []
+        for i, folder in enumerate(self.dlist):
+            flist = funclist[i]
+            new_folder = self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=flist, preview=self.params_dict["preview"], op='aug')
+            new_dlist.append(new_folder)
+        self.dlist = new_dlist
+        self.default_vis(curr_step)    
+
     def step(self):
         """
         Executes the instruction for the curr_step
@@ -125,26 +170,28 @@ class Stepper(object):
             self.curr_step_idx += 1
 
         elif insn_type == "preprocess":
-            assert(self.curr_step > 0 and self.dlist is not None), "Step Error: Must call init before preprocess"
-
-            ver_path = os.path.join(self.params_dict["abs_path"], self.sess_loc)
-            print("VER_PATH:", ver_path) 
-            self.B_VER(ver_path, self.dlist)
-            print("PASSED B_VER")
+            self.exec_preprocess(curr_step)
             
-            #Change session location to inside the current runs folder
-            new_sess_loc = os.path.join(self.params_dict["abs_path"], self.params_dict["sess"], str(self.sess_id))
-            print("NEW_SESS_LOC:", new_sess_loc)
+            # assert(self.curr_step > 0 and self.dlist is not None), "Step Error: Must call init before preprocess"
 
-            funclist = curr_dict["funclist"]
-            self.dlist = self.preprocess(self.sess_loc, new_sess_loc, self.dlist, funclist)
-            self.sess_loc = new_sess_loc
+            # ver_path = os.path.join(self.params_dict["abs_path"], self.sess_loc)
+            # print("VER_PATH:", ver_path) 
+            # self.B_VER(ver_path, self.dlist)
+            # print("PASSED B_VER")
+            
+            # #Change session location to inside the current runs folder
+            # new_sess_loc = os.path.join(self.params_dict["abs_path"], self.params_dict["sess"], str(self.sess_id))
+            # print("NEW_SESS_LOC:", new_sess_loc)
 
-            #Visualize preprocess
-            self.vis.log_preprocess(self.dlist, self.sess_loc, self.curr_step)
+            # funclist = curr_dict["funclist"]
+            # self.dlist = self.preprocess(self.sess_loc, new_sess_loc, self.dlist, funclist)
+            # self.sess_loc = new_sess_loc
+
+            # #Visualize preprocess
+            # self.vis.log_preprocess(self.dlist, self.sess_loc, self.curr_step)
 
             #increment step
-            self.curr_step += 1
+            self.curr_step_idx += 1
 
         elif insn_type == "augment":
             assert(self.curr_step > 0 and self.dlist is not None), "Step Error: Must call init before augment"
@@ -199,6 +246,6 @@ class Stepper(object):
     
 s = Stepper()
 s.step()
-# s.step()
+s.step()
 # s.step()
 s.writer.close()

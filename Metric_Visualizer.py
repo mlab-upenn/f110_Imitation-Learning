@@ -136,8 +136,8 @@ class Metric_Visualizer(object):
         """
         labelname = f"STEP-{curr_step}"
         dpath = os.path.join(datadir, folder)
-        self.vid_from_path(dpath, labelname, global_step, show_steer=True, units=units)
         self.plot_anglehist(dpath, labelname, global_step)
+        self.vid_from_path(dpath, labelname, global_step, show_steer=True, units=units)
         self.text_table(dpath, labelname, foldername=folder, angle_unit=units, global_step=global_step)
 
     # def log_tbtext(self, dpath, tag, idx, folder):
