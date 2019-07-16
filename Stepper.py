@@ -146,15 +146,12 @@ class Stepper(object):
         self.B_VER(self.sess_path, self.dlist)
 
         #move & preprocess each folder
-        funclist = curr_step["funclist"]
+        funclist = curr_step["auglist"]
         raw_datadir = self.sess_path
         dest_datadir = self.sess_path
-        new_dlist = []
         for i, folder in enumerate(self.dlist):
             flist = funclist[i]
-            new_folder = self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=flist, preview=self.params_dict["preview"], op='aug')
-            new_dlist.append(new_folder)
-        self.dlist = new_dlist
+            self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=flist, preview=self.params_dict["preview"], op='aug')
         self.default_vis(curr_step)    
 
     def step(self):
@@ -175,7 +172,7 @@ class Stepper(object):
 
         elif insn_type == "augment":
             self.exec_augment(curr_step)
-            self.curr_step += 1
+            self.curr_step_idx += 1
         
         elif insn_type =="combine":
             pass

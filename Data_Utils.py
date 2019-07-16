@@ -84,7 +84,7 @@ class Data_Utils(object):
         op: if 'aug' don't screw with naming
         """
         if op == 'aug':
-            return os.path.join(dest_datadir, folder)
+            return folder, os.path.join(dest_datadir, folder)
         else:
             new_folder = folder + str(len(os.listdir(dest_datadir)))
             return new_folder, os.path.join(dest_datadir, new_folder)
@@ -118,7 +118,7 @@ class Data_Utils(object):
         preview:preview shows fewer entries
         op: if 'aug', augment current dataset instead of creating a whole new one & moving it elsewhere (IF SO, SRC_DATADIR MUST = DEST_DATADIR)
         """
-        assert((op =='aug' and src_datadir != dest_datadir) or (op != 'aug')), f"MOVE Error: If op={op}, src_datadir = dest_datadir"
+        assert((op =='aug' and src_datadir == dest_datadir) or (op != 'aug')), f"MOVE Error: If op={op}, src_datadir = dest_datadir"
 
         if not os.path.exists(dest_datadir):
             os.makedirs(dest_datadir)
