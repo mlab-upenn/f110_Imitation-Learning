@@ -7,7 +7,7 @@ class NVIDIA_ConvNet(nn.Module):
     """
     Similar architecture to ConvNet used by Nvidia in Bojarski et al. (https://arxiv.org/pdf/1604.07316.pdf) with modified Fully Connected layers size 
     """
-    def __init__(self):
+    def __init__(self, fc_neurons=64*48*53):
         super(NVIDIA_ConvNet, self).__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(3,24,5,stride=2), nn.ELU(),
@@ -33,4 +33,11 @@ class NVIDIA_ConvNet(nn.Module):
         out = self.conv(x)
         out = out.view(out.size(0), -1)
         out = self.fc(out)
+        return out
+    
+    def only_conv(self, x):
+        """
+        does a conv pass and returns resulting tensor
+        """
+        out = self.conv(x)
         return out
