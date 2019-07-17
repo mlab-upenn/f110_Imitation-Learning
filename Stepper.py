@@ -131,7 +131,7 @@ class Stepper(object):
         new_dlist = []
         for i, folder in enumerate(self.dlist):
             flist = funclist[i]
-            new_folder = self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=flist, preview=self.params_dict["preview"])
+            new_folder = self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=flist, preview=False)
             new_dlist.append(new_folder)
         self.dlist = new_dlist
         self.default_vis(curr_step)
@@ -140,7 +140,7 @@ class Stepper(object):
         """
         Augment data as per curr_step in steps.json
         """
-        assert(self.curr_step_idx > 0 and self.dlist is not None), "Step Error: Must call init before preprocess"            
+        assert(self.curr_step_idx > 0 and self.dlist is not None), "Step Error: Must call init before augment"            
 
         #verify raw data & dlist
         self.B_VER(self.sess_path, self.dlist)
@@ -151,9 +151,33 @@ class Stepper(object):
         dest_datadir = self.sess_path
         for i, folder in enumerate(self.dlist):
             flist = funclist[i]
-            self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=flist, preview=self.params_dict["preview"], op='aug')
+            self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=flist, preview=False, op='aug')
         self.default_vis(curr_step)    
 
+    def exec_combine(self, curr_step):
+        """
+        Combines files currently in dlist into a specified folder
+        updates dlist to only have this folder
+        """
+        assert(self.curr_step_idx > 0 and self.dlist is not None), "Step Error: Must call init before combine"            
+        
+        #verify raw data & dlist
+        self.B_VER(self.sess_path, self.dlist)
+
+        #move & preprocess each folder
+        raw_datadir = self.sess_path
+        dest_datadir = self.sess_path
+        foldername = curr_step.get("foldername", "main")
+        for i, folder in enumerate(self.dlist):
+            self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=[], preview=False, op='combine_choosename|' + foldername)
+        self.dlist = [foldername]
+        self.default_vis(curr_step)    
+            
+    def exec_train(self, curr_step):
+        """
+        Perform training & adapt model for image size
+        """
+        
     def step(self):
         """
         Executes the instruction for the curr_step
@@ -183,6 +207,7 @@ class Stepper(object):
             self.curr_step_idx += 1
     
 s = Stepper()
+s.step()
 s.step()
 s.step()
 s.step()

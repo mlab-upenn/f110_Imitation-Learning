@@ -3,6 +3,11 @@ import numpy as np
 from functools import partial
 import pandas as pd
 
+def changeName(dest_dict, prefix):
+    curr_name = dest_dict.get("row")[0]
+    dest_dict["row"][0] = prefix + curr_name
+    return dest_dict
+
 def filterBadData(args, src_dict):
     assert(len(args) == 0), "Incorrect size argument to filterBadData"
     dest_dict = src_dict
@@ -11,7 +16,7 @@ def filterBadData(args, src_dict):
     #stupid check to see if picture is largely black
     if np.mean(src_img) < 5:
         dest_dict["flag"] = False
-    return dest_dict
+    return changeName(dest_dict, 'fbd')
 
 def cropVertical(args, src_dict):
     assert (len(args) == 2),"Incorrect sized argument to cropVertical"
@@ -26,8 +31,7 @@ def cropVertical(args, src_dict):
         dest_dict["img"] = src_img[cropStart:cropEnd, :, :]
     else:
         raise Exception('bad args cropvertical')
-    dest_dict["img_name"] = "vcrop_" + (src_row[0])
-    return dest_dict
+    return changeName(dest_dict, 'cropV')
 
 def rot90(args, src_dict):
     assert (len(args) == 1),"Incorrect sized argument to rot90"
@@ -41,8 +45,7 @@ def rot90(args, src_dict):
     elif direction == 'anticlockwise':
         #TODO: DO ANTICLOCKWISE
         pass
-    dest_dict["img_name"] = "rot90" + (src_row[0])
-    return dest_dict
+    return changeName(dest_dict, 'rot90')
 
 def radOffset(args, src_dict):
     assert (len(args) == 1), "Incorrect sized argument to radOffset"
@@ -50,14 +53,14 @@ def radOffset(args, src_dict):
     dest_dict = src_dict
     src_row = src_dict.get("row")
     dest_dict["row"][1] = src_row[1] + offset
-    return dest_dict
+    return changeName(dest_dict, 'radOff')
 
 def rad2deg(args, src_dict):
     assert(len(args) == 0), "Incorrect sized arguments to rad2deg"
     dest_dict = src_dict
     src_row = src_dict.get("row")
     dest_dict["row"][1] = src_row[1] * 180.0/math.pi
-    return dest_dict
+    return changeName(dest_dict, 'todeg')
 
 def flipNonZero(args, src_dict):
     assert(len(args) == 0), "Incorrect sized argumnets to flipNonzero"
@@ -70,5 +73,4 @@ def flipNonZero(args, src_dict):
         dest_dict["flag"] = True
         dest_dict["img"] = cv2.flip(src_img, 1)
         dest_dict["row"][1] = -1.0 * src_row[1]
-    dest_dict["img_name"] = "rot90" + (src_row[0])
-    return dest_dict
+    return changeName(dest_dict, 'flipped')

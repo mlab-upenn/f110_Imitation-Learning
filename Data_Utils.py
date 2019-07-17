@@ -3,6 +3,7 @@ import numpy as np
 from functools import partial
 import pandas as pd
 from func_utils import *
+
 class Data_Utils(object):
     """
     UPDATE WHEN I GET THIS LMAO
@@ -18,9 +19,19 @@ class Data_Utils(object):
         """
         if op == 'aug':
             return folder, os.path.join(dest_datadir, folder)
-        else:
+        elif op == 'mv':
             new_folder = str(len(os.listdir(dest_datadir))) + '_' +  folder 
-            return new_folder, os.path.join(dest_datadir, new_folder)
+        elif 'prefix' in op:
+            #you need to take care that there are no name conflicts here
+            strlist = op.split('|')
+            assert(len(strlist) == 2), "Incorrect formatting for op = {op}"
+            new_folder = strlist[1] + folder
+        elif 'choosename' in op:
+            #you need to take care that there are no name conflicts here
+            strlist = op.split('|')
+            assert(len(strlist) == 2), "Incorrect formatting for op = {op}"
+            new_folder = strlist[1]
+        return new_folder, os.path.join(dest_datadir, new_folder)
 
     def get_df(self, datapath):
         csvpath = os.path.join(datapath, 'data.csv')
@@ -34,13 +45,24 @@ class Data_Utils(object):
         img = cv2.imread(img_path)
         return img, row
     
-
-    def get_finaldf(self, src_df, dest_df, op):
+    def get_finaldf(self, src_df, dest_df, op, new_folder, dest_datapath):
+        """
+        Creates final dataframe
+        Will overwrite unless op has 'combine' in it 
+        """
         final_df = dest_df
         if op == 'aug':
             final_df = dest_df.append(src_df)
+        elif 'combine' in op:
+            #check if dest_datapath already has a data.csv
+            try:
+                curr_df = self.get_df(dest_datapath)
+            except:
+                curr_df = None
+            if curr_df is not None:
+                final_df = final_df.append(curr_df)
         return final_df
-    
+
 
     def MOVE(self, src_datadir, folder, dest_datadir, flist=[], preview=False, op='mv'):
         """
@@ -69,22 +91,18 @@ class Data_Utils(object):
         dest_df = pd.DataFrame(columns=src_df.columns.values)
 
         #iterate through dataframe
-        maxlen = 100 if preview else len(src_df)
+        maxlen = 20 if preview else len(src_df)
         for i in range(maxlen):
             #Apply flist, get output
             src_img, src_row = self.df_data_fromidx(src_datapath, src_df, i)
             src_dict = {"img":src_img, "row":src_row}
             dest_dict = self.apply_flist(src_dict, flist)
-
             #continue adding data if flag is true
             flag = dest_dict.get("flag", True)
             if flag:
                 dest_row = dest_dict.get("row")
                 dest_img = dest_dict.get("img")
-                if op == 'aug':
-                    dest_img_name = dest_dict.get("img_name", dest_row[0])
-                else:
-                    dest_img_name = dest_row[0]
+                dest_img_name = dest_row[0]
                 #TODO: Check dest_dict in a B_VER-esque way
 
                 #Accordingly alter dataframe & write img
@@ -92,7 +110,7 @@ class Data_Utils(object):
                 cv2.imwrite(os.path.join(dest_datapath, dest_img_name), dest_img)
 
         #write df
-        final_df = self.get_finaldf(src_df, dest_df, op)
+        final_df = self.get_finaldf(src_df, dest_df, op, new_folder, dest_datapath)
         final_df.to_csv(os.path.join(dest_datapath, 'data.csv'), index=False)
         return new_folder
 
@@ -131,4 +149,3 @@ class Data_Utils(object):
             partial_func = self.get_partial_func(json_func)
             dest_dict = partial_func(dest_dict)
         return dest_dict
-
