@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import moviepy.editor as mpy
 from Data_Utils import Data_Utils
 import pandas as pd 
+from tabulate import tabulate
 from tensorboardX import SummaryWriter
 
 class Metric_Visualizer(object):
