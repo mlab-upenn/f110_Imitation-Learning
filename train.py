@@ -4,7 +4,6 @@ import torch.optim as optim
 import numpy as np
 from models import NVIDIA_ConvNet
 from tensorboardX import SummaryWriter
-from data_utils import Data_Utils
 from datetime import datetime
 
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 

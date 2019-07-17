@@ -75,6 +75,16 @@ def flipNonZero(args, src_dict):
         dest_dict["row"][1] = -1.0 * src_row[1]
     return changeName(dest_dict, 'flipped')
 
+def gaussianSamplingAngle(args, src_dict):
+    assert(len(args) == 1), "Incorrect number of arguments to gaussianSamplingAngle"
+    #input angle must be in degrees
+    sigma = args[0]
+    dest_dict = src_dict
+    src_row = src_dict.get("row")
+    #sample from gaussian (w mean = angle)
+    dest_dict["row"][1] = np.random.normal(loc=src_row[1], scale=sigma)
+    return changeName(dest_dict, 'gaussangle')
+
 def rescaleImg(args, src_dict):
     assert(len(args) == 1), "Incorrect sized arguments to rescaleImg"
     scale = args[0]

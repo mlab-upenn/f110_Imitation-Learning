@@ -1,6 +1,9 @@
 from functools import partial
 from models import *
 from func_utils import *
+from datasets import *
+import torch.nn as nn
+import torch.optim as optim
 
 p = lambda func, args: partial(func, args)
 session = {
@@ -9,8 +12,8 @@ session = {
         "abs_path":"/home/dhruvkar/datasets/avfone",
         "raw_data":"raw_data",
         "sess_root":"runs",
-        "comment":"Rescaling Images",
-        "preview":True
+        "comment":"Normally distributed w/ variance 1.2",
+        "preview":False
     },
     "steps":
     [
@@ -35,6 +38,7 @@ session = {
                     p(cropVertical, [200, 400]),
                     p(radOffset, [0.15]),
                     p((rad2deg), []),
+                    p((gaussianSamplingAngle), [1.2]),
                     p((rescaleImg), [0.5])
                 ],
 
@@ -43,6 +47,7 @@ session = {
                     p(cropVertical, [200, 400]),
                     p(radOffset, [0.15]),
                     p((rad2deg), []),
+                    p((gaussianSamplingAngle), [1.2]),
                     p((rescaleImg), [0.5])
                 ],
 
@@ -50,6 +55,7 @@ session = {
                     p(rot90, ["clockwise"]),
                     p(cropVertical, [200, 400]),
                     p((rad2deg), []),
+                    p((gaussianSamplingAngle), [1.2]),
                     p((rescaleImg), [0.5])
                 ]
             ]
@@ -75,5 +81,9 @@ session = {
             "units":"deg",
             "foldername":"main"
         }
-    ]
+    ],
+    "train":
+    {
+        "dataset":SteerDataset
+    }
 }

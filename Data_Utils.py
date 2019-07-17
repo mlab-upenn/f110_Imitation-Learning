@@ -6,7 +6,7 @@ from func_utils import *
 
 class Data_Utils(object):
     """
-    
+    Move around & augment data 
     """
     def __init__(self):
         pass

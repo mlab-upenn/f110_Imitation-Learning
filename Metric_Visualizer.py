@@ -61,13 +61,14 @@ class Metric_Visualizer(object):
             h, w, c = frame.shape
             cx, cy, r = int(w/2), h, int((h * 80)/480)
             cv2.circle(frame, (cx, cy), r, (255, 255, 255), 2)
-            big_steerpoint = int(1/8) * r
+            big_steerpoint = int(math.ceil(r*10.0/80.0))
             angle_extra = angle * 2
-            pred_extra = pred * 2
+            if pred is not None:
+                pred_extra = pred * 2
             #SMALL steering point graphic (angle must be in radians)
             self.vis_steer_point(frame, angle_extra, cx, cy, r, size=big_steerpoint, color=(218, 165, 32))
             if pred is not None:
-                self.vis_steer_point(frame, pred_extra, cx, cy, r, size=int(big_steerpoint/2), color=(0, 0, 0))
+                self.vis_steer_point(frame, pred_extra, cx, cy, r, size=int(math.ceil(big_steerpoint/2.0)), color=(0, 0, 0))
 
     def vid_from_path(self, dpath, stepname, idx, show_steer=False, units='rad'):
         """
@@ -100,7 +101,7 @@ class Metric_Visualizer(object):
         csvpath = os.path.join(dpath, "data.csv")
         df = pd.read_csv(csvpath) 
         angle_column = df.iloc[:, 1].values
-        num_bins = 20
+        num_bins = 100
         #save plot w/ matplotlib
         fig = plt.figure()
         plt.hist(angle_column, num_bins, color='green')
