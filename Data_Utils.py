@@ -133,9 +133,19 @@ class Data_Utils(object):
             p = partial(flipNonZero, args)
         elif fname == 'filterBadData':
             p = partial(filterBadData, args)
+        elif fname == 'rescaleImg':
+            p = partial(rescaleImg, args)
         else:
             raise Exception('{fname} is not in the list of functions')
         return p
+
+    def _get_image_size(self, dpath):
+        df = self.get_df(dpath)
+        img_name_0 = df.iloc[0, 0]
+        framepath = os.path.join(dpath, img_name_0)
+        frame_0 = cv2.imread(framepath)
+        h, w, c = frame_0.shape
+        return h, w
 
     def apply_flist(self, src_dict, flist):
         """

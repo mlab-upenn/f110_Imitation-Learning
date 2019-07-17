@@ -74,3 +74,11 @@ def flipNonZero(args, src_dict):
         dest_dict["img"] = cv2.flip(src_img, 1)
         dest_dict["row"][1] = -1.0 * src_row[1]
     return changeName(dest_dict, 'flipped')
+
+def rescaleImg(args, src_dict):
+    assert(len(args) == 1), "Incorrect sized arguments to rescaleImg"
+    scale = args[0]
+    dest_dict = src_dict
+    src_img = src_dict.get("img")
+    dest_dict["img"] = cv2.resize(src_img, None, fx=scale, fy=scale)
+    return changeName(dest_dict, 'rescaled')

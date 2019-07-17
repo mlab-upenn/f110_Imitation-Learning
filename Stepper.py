@@ -6,7 +6,7 @@ from Data_Utils import Data_Utils
 
 class Stepper(object):
     """
-    Parses steps.json and executes ins. on data folders accordingly
+    Parses steps.json and executes ins. on data folders accordingly to get it into a final state
     """
     def __init__(self):
         jsonfile = json.load(open("steps.json"))
@@ -173,11 +173,6 @@ class Stepper(object):
         self.dlist = [foldername]
         self.default_vis(curr_step)    
             
-    def exec_train(self, curr_step):
-        """
-        Perform training & adapt model for image size
-        """
-        
     def step(self):
         """
         Executes the instruction for the curr_step
@@ -202,10 +197,6 @@ class Stepper(object):
             self.exec_combine(curr_step)
             self.curr_step_idx += 1
 
-        elif insn_type == "train":
-            self.exec_train(curr_step)
-            self.curr_step_idx += 1
-    
 s = Stepper()
 s.step()
 s.step()

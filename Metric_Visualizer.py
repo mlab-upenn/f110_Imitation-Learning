@@ -59,7 +59,7 @@ class Metric_Visualizer(object):
         if show_steer:
             #Big Steering Graphic
             h, w, c = frame.shape
-            cx, cy, r = int(w/2), h, 80
+            cx, cy, r = int(w/2), h, int((h * 80)/480)
             cv2.circle(frame, (cx, cy), r, (255, 255, 255), 2)
 
             #SMALL steering point graphic (angle must be in radians)
@@ -94,14 +94,6 @@ class Metric_Visualizer(object):
 
         self.writer.add_video(stepname, framebuffer, fps=10, global_step= idx, as_np_framebuffer=True)
 
-    def _get_image_size(self, dpath, df):
-        img_name_0 = df.iloc[0, 0]
-        framepath = os.path.join(dpath, img_name_0)
-        frame_0 = cv2.imread(framepath)
-        h, w, c = frame_0.shape
-        return h, w
-
-
     def plot_anglehist(self, dpath, tag, idx):
         csvpath = os.path.join(dpath, "data.csv")
         df = pd.read_csv(csvpath) 
@@ -115,7 +107,7 @@ class Metric_Visualizer(object):
 
     def text_table(self, dpath, labelname, foldername='', angle_unit='', global_step=0):
         df = self.data_utils.get_df(dpath)
-        h, w = self._get_image_size(dpath, df)
+        h, w = self.data_utils._get_image_size(dpath)
         text = f"Folder | Shape | Units | Num Images\n-----|-----|-----|-----\n{foldername}|({h}, {w})|{angle_unit}|{len(df)}"
         self.writer.add_text(labelname, text, global_step=global_step)
         

@@ -4,7 +4,7 @@
         "abs_path":"/home/dhruvkar/datasets/avfone",
         "raw_data":"raw_data",
         "sess_root":"runs",
-        "comment":"Pretty Std. stuff",
+        "comment":"Rescaling Images",
         "preview":true
     },
     "steps":
@@ -24,6 +24,7 @@
                 {"F":"cropVertical", "args":[200, 400]}, 
                 {"F":"radOffset", "args":[0.15]},
                 {"F":"rad2deg", "args":[]}
+                ,{"F":"rescaleImg", "args":[0.5]}
                 ],
 
                 [
@@ -31,12 +32,14 @@
                 {"F":"cropVertical", "args":[200, 400]}, 
                 {"F":"radOffset", "args":[-0.15]},
                 {"F":"rad2deg", "args":[]}
+                ,{"F":"rescaleImg", "args":[0.5]}
                 ],
 
                 [
                 {"F":"rot90", "args":["clockwise"]},
                 {"F":"cropVertical", "args":[200, 400]}, 
                 {"F":"rad2deg", "args":[]}
+                ,{"F":"rescaleImg", "args":[0.5]}
                 ]
             ]
         },
@@ -60,10 +63,6 @@
             "type":"combine",
             "units":"deg",
             "foldername":"main"
-        },
-        {
-            "type":"train",
-            "units":"deg"
         }
     ]
 }
