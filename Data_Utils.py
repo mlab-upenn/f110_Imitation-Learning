@@ -6,7 +6,7 @@ from func_utils import *
 
 class Data_Utils(object):
     """
-    UPDATE WHEN I GET THIS LMAO
+    
     """
     def __init__(self):
         pass
@@ -22,12 +22,13 @@ class Data_Utils(object):
         elif op == 'mv':
             new_folder = str(len(os.listdir(dest_datadir))) + '_' +  folder 
         elif 'prefix' in op:
-            #you need to take care that there are no name conflicts here
             strlist = op.split('|')
             assert(len(strlist) == 2), "Incorrect formatting for op = {op}"
             new_folder = strlist[1] + folder
         elif 'choosename' in op:
             #you need to take care that there are no name conflicts here
+            if os.path.exists(os.path.join(dest_datadir, op)):
+                print(f"WARNING: FOLDER {op} already exists in PATH:{dest_datadir}")
             strlist = op.split('|')
             assert(len(strlist) == 2), "Incorrect formatting for op = {op}"
             new_folder = strlist[1]
@@ -114,31 +115,6 @@ class Data_Utils(object):
         final_df.to_csv(os.path.join(dest_datapath, 'data.csv'), index=False)
         return new_folder
 
-    def get_partial_func(self, json_func):
-        """
-        json_func: json formatted function
-        Functions are in func_utils.py
-        """
-        fname, args = json_func["F"], json_func["args"]
-
-        if fname == 'cropVertical':
-            p = partial(cropVertical, args)
-        elif fname == 'rad2deg':
-            p = partial(rad2deg, args)
-        elif fname == 'radOffset':
-            p = partial(radOffset, args)
-        elif fname == 'rot90':
-            p = partial(rot90, args)
-        elif fname == 'flipNonZero':
-            p = partial(flipNonZero, args)
-        elif fname == 'filterBadData':
-            p = partial(filterBadData, args)
-        elif fname == 'rescaleImg':
-            p = partial(rescaleImg, args)
-        else:
-            raise Exception('{fname} is not in the list of functions')
-        return p
-
     def _get_image_size(self, dpath):
         df = self.get_df(dpath)
         img_name_0 = df.iloc[0, 0]
@@ -151,11 +127,12 @@ class Data_Utils(object):
         """
         Apply a list of functions and return a dict
         src_dict: dictionary representing all source variables
-        flist: json formatted function list (see steps.json)
+        flist: partial formatted function list 
         TODO:CONSIDER if first False should end it 
         """
         dest_dict = src_dict
         for json_func in flist:
-            partial_func = self.get_partial_func(json_func)
+            # partial_func = get_partial_func(json_func)
+            partial_func = json_func
             dest_dict = partial_func(dest_dict)
         return dest_dict

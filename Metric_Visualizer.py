@@ -61,11 +61,13 @@ class Metric_Visualizer(object):
             h, w, c = frame.shape
             cx, cy, r = int(w/2), h, int((h * 80)/480)
             cv2.circle(frame, (cx, cy), r, (255, 255, 255), 2)
-
+            big_steerpoint = int(1/8) * r
+            angle_extra = angle * 2
+            pred_extra = pred * 2
             #SMALL steering point graphic (angle must be in radians)
-            self.vis_steer_point(frame, angle, cx, cy, r, size=10, color=(218, 165, 32))
+            self.vis_steer_point(frame, angle_extra, cx, cy, r, size=big_steerpoint, color=(218, 165, 32))
             if pred is not None:
-                self.vis_steer_point(frame, pred, cx, cy, r, size=5, color=(0, 0, 0))
+                self.vis_steer_point(frame, pred_extra, cx, cy, r, size=int(big_steerpoint/2), color=(0, 0, 0))
 
     def vid_from_path(self, dpath, stepname, idx, show_steer=False, units='rad'):
         """

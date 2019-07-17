@@ -2,15 +2,15 @@ import os, json, glob, pdb, cv2
 import pandas as pd
 from tensorboardX import SummaryWriter
 from Metric_Visualizer import Metric_Visualizer
+import steps
 from Data_Utils import Data_Utils
 
 class Stepper(object):
     """
-    Parses steps.json and executes ins. on data folders accordingly to get it into a final state
+    Parses steps.session and executes ins. on data folders accordingly to get it into a final state
     """
     def __init__(self):
-        jsonfile = json.load(open("steps.json"))
-
+        jsonfile = steps.session
         #The state of the session 
         self.params_dict = jsonfile["params"]
         self.steplist = jsonfile["steps"]
@@ -93,7 +93,7 @@ class Stepper(object):
     def exec_init(self, curr_step):
         """
         Initializes self.sess_path with filtered data
-        curr_step: dict, as in steps.json
+        curr_step: dict, as in steps.session
         """
         assert(self.curr_step_idx == 0 and self.dlist is None), "Step Error: init instruction can only be called once at the start" 
         
@@ -103,12 +103,11 @@ class Stepper(object):
         self.B_VER(raw_datadir, self.dlist)
         print(f"PASSED B_VER FOR STEP {self.curr_step_idx}")
         dest_datadir = self.sess_path
-
+        filter_funclist = curr_step["funclist"]
         #move & filter each folder
-        filter_funclist = [{"F":"filterBadData", "args":[]}]
         new_dlist = []
-        for folder in self.dlist:
-            new_folder = self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=filter_funclist, preview=self.params_dict["preview"])
+        for i, folder in enumerate(self.dlist):
+            new_folder = self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=filter_funclist[i], preview=self.params_dict["preview"])
             new_dlist.append(new_folder)
         
         #visualize data in tensorboard
@@ -117,7 +116,7 @@ class Stepper(object):
     
     def exec_preprocess(self, curr_step):
         """
-        Preprocesses data as per curr_step in steps.json
+        Preprocesses data as per curr_step in steps.session
         """
         assert(self.curr_step_idx > 0 and self.dlist is not None), "Step Error: Must call init before preprocess"            
 
@@ -146,7 +145,7 @@ class Stepper(object):
         self.B_VER(self.sess_path, self.dlist)
 
         #move & preprocess each folder
-        funclist = curr_step["auglist"]
+        funclist = curr_step["funclist"]
         raw_datadir = self.sess_path
         dest_datadir = self.sess_path
         for i, folder in enumerate(self.dlist):
