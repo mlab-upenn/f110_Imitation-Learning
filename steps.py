@@ -15,6 +15,10 @@ session = {
         "comment":"Normally distributed w/ variance 1.2",
         "preview":True
     },
+    "visualizer":
+    {
+        "vis_type":"framelist",
+    },
     "steps":
     [
         {
@@ -89,7 +93,7 @@ session = {
         "loss_func":nn.functional.mse_loss,
         "optimizer":torch.optim.Adam,
         "num_epochs":300,
-        "batch_size":128,
+        "batch_size":64,
         "sess_id": 0,
         "foldername":"main",
         "vsplit":0.1,

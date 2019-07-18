@@ -1,22 +1,24 @@
-import os, cv2, math, sys, json, torch, pdb
+import os, cv2, math, sys, json, torch, pdb, random
 import numpy as np
 import matplotlib.pyplot as plt
 import moviepy.editor as mpy
 from Data_Utils import Data_Utils
 import pandas as pd 
 from tabulate import tabulate
+from steps import session
 from tensorboardX import SummaryWriter
 
 class Metric_Visualizer(object):
     """
     Visualize metrics in Tensorboard
     """
-    def __init__(self, sess_path, writer):
+    def __init__(self, sess_path=None, writer=None):
         """
         sess_path: current working dir of this session
         writer: Tensorboard SummmaryWriter
         """
-        self.sess_path = sess_path
+        self.gvis = lambda param: session["visualizer"].get(param)
+        self.fixangle = lambda angle, units: angle if units == 'rad' else angle * math.pi/180.0
         self.writer = writer
         self.data_utils = Data_Utils()
 
@@ -32,7 +34,7 @@ class Metric_Visualizer(object):
         """
         Visualize text data. pos = vertical interval on the frame
         """
-        #scalar = float(scalar) if float(scalar) != -0.0 else 0.0
+        scalar = float(scalar) if float(scalar) != -0.0 else 0.0
 
         #TEXT PARAMETERS
         color = (255, 255, 255)
@@ -70,6 +72,38 @@ class Metric_Visualizer(object):
             if pred is not None:
                 self.vis_steer_point(frame, pred_extra, cx, cy, r, size=int(math.ceil(big_steerpoint/2.0)), color=(0, 0, 0))
 
+    def vis_framelist(self, labelname, framelist, angle_list, global_step=0, show_steer=False, vel_list = None, predangle_list=None, timestamp_list=None):
+        """
+        Visualize a list of frames (cv2) w/ angles (radians, floats)
+        """
+        vislist = []
+        tryget = lambda arr, index, default: default if arr is None else arr[index]
+        for i, frame in enumerate(framelist):
+            curr_timestamp = tryget(timestamp_list, i, 0)
+            curr_predangle = tryget(predangle_list, i, None)
+            curr_vel = tryget(vel_list, i, 0)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            self.vis_frame(frame, angle_list[i], curr_vel, curr_timestamp, curr_predangle, show_steer=True)
+            frame = cv2.bitwise_not(frame)
+            vislist.append(frame)
+        self.writer.add_images(labelname, vislist, global_step=global_step, dataformats='HWC')
+    
+    def framelist_from_path(self, dpath, stepname, idx, show_steer=False, units='rad'):
+        """
+        Send a list of frames to Tensorboard from a path
+        """
+        interesting_idxs = self.data_utils.get_interesting_idxs(dpath, 5)
+        df = self.data_utils.get_df(dpath)
+        datalist = list(map(lambda x: self.data_utils.df_data_fromidx(dpath, df, x), interesting_idxs)) #list of image, row pairs
+        framelist = list(map(lambda x: x[0], datalist))
+        rowlist = list(map(lambda x:x[1], datalist))
+        splitrow = lambda idx: list(map(lambda x:x[idx], rowlist))
+        angle_list = splitrow(1)
+        angle_list = list(map(lambda x: self.fixangle(x, units), angle_list))
+        vel_list = splitrow(2)
+        timestamp_list = splitrow(3)
+        self.vis_framelist(stepname, framelist, angle_list, global_step=idx, show_steer=show_steer, vel_list=vel_list, timestamp_list=timestamp_list)
+        
     def vid_from_path(self, dpath, stepname, idx, show_steer=False, units='rad'):
         """
         Send annotated video to Tensorboard
@@ -85,11 +119,7 @@ class Metric_Visualizer(object):
         for i in range(num_rows):
             if i % 4 == 0:
                 img_name, angle, speed, timestamp = df.iloc[i, 0], df.iloc[i, 1], df.iloc[i, 2], df.iloc[i, 3]
-
-                #fix angle
-                if units == 'deg':
-                    angle = angle * math.pi/180
-
+                angle = self.fixangle(angle, units)
                 framepath = os.path.join(dpath, img_name)
                 frame = cv2.imread(framepath)
                 self.vis_frame(frame, angle, speed, timestamp, show_steer=show_steer)
@@ -102,16 +132,10 @@ class Metric_Visualizer(object):
         df = pd.read_csv(csvpath) 
         angle_column = df.iloc[:, 1].values
         num_bins = 100
-        # self.writer.add_histogram(tag, np.random.random(10), global_step=idx, bins='auto')
-    
-        # for i in range(10):
-        x = np.random.random(1000)
-        i = idx
-        self.writer.add_histogram('distribution center', x + i, i)
         #save plot w/ matplotlib
-        # fig = plt.figure()
-        # plt.hist(angle_column, num_bins, color='green')
-        # self.writer.add_figure(tag, fig, global_step=idx)
+        fig = plt.figure()
+        plt.hist(angle_column, num_bins, color='green')
+        self.writer.add_figure(tag, fig, global_step=idx)
 
     def text_table(self, dpath, labelname, foldername='', angle_unit='', global_step=0):
         df = self.data_utils.get_df(dpath)
@@ -119,6 +143,8 @@ class Metric_Visualizer(object):
         text = f"Folder | Shape | Units | Num Images\n-----|-----|-----|-----\n{foldername}|({h}, {w})|{angle_unit}|{len(df)}"
         self.writer.add_text(labelname, text, global_step=global_step)
         
+    def visualize_batch(self,ts_imgbatch, ts_anglebatch, ts_predanglebatch, global_step=0):
+        self.writer.add_image("Sample Batch", ts_imgbatch[:5], global_step=global_step)
 
     def standard_log(self, datadir, folder, curr_step, global_step=0, units=''):
         """
@@ -132,5 +158,8 @@ class Metric_Visualizer(object):
         labelname = f"STEP-{curr_step}"
         dpath = os.path.join(datadir, folder)
         self.plot_anglehist(dpath, labelname, global_step)
-        self.vid_from_path(dpath, labelname, global_step, show_steer=True, units=units)
+        if self.gvis("vis_type") == 'video':
+            self.vid_from_path(dpath, labelname, global_step, show_steer=True, units=units)
+        elif self.gvis("vis_type") == 'framelist':
+            self.framelist_from_path(dpath, labelname, global_step, show_steer=True, units=units)
         self.text_table(dpath, labelname, foldername=folder, angle_unit=units, global_step=global_step)

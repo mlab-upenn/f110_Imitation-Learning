@@ -1,10 +1,11 @@
-import os, torch, logging, random, pdb, json
+import os, torch, logging, random, pdb, json, time
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from steps import session
 import numpy as np
+from Metric_Visualizer import Metric_Visualizer
 from models import NVIDIA_ConvNet
 from tensorboardX import SummaryWriter
 
@@ -27,20 +28,45 @@ class Trainer(object):
         config, dataset, net, optim, loss_func, num_epochs, bs = self.configure_train() #sets sess_path, datapath & gconf
         train_dataloader, valid_dataloader = self.get_dataloaders(dataset, bs)
         
-        #Make Writer
-        self.writer = SummaryWriter(logdir=os.path.joint(self.sess_path, "logs"))
-
+        #Make Writer & Visualize
+        logdir = os.path.join(self.sess_path, "logs")
+        self.train_id = len(os.listdir(logdir))
+        self.logpath_prefix = os.path.join(logdir, str(self.train_id))
+        self.writer = SummaryWriter(logdir=logdir)
+        self.vis = Metric_Visualizer(self.sess_path, self.writer)
+    
         #TRAIN!
         self.TRAIN(net, num_epochs, optim, loss_func, train_dataloader, valid_dataloader)
 
-    def loss_pass(self, net, loss_func, train_dataloader, epoch, optim, train=True):
+    def loss_pass(self, net, loss_func, loader, epoch, optim, op='train'):
         """
         Performs one epoch & continually updates the model 
         """
-        if not train:
+        if op == 'valid':
             torch.set_grad_enabled(False)
-            print(f"STARTING VALIDATION EPOCH{epoch}")
             
+        print(f"STARTING {op} EPOCH{epoch}")
+        t0 = time.time()
+        total_epoch_loss = 0
+        for i, input_dict in enumerate(loader):
+            ts_imgbatch, ts_anglebatch = input_dict.get("img"), input_dict.get("angle")
+            ts_imgbatch, ts_anglebatch = ts_imgbatch.to(device), ts_anglebatch.to(device)
+            #Classic train loop
+            optim.zero_grad()
+            ts_predanglebatch = net(ts_imgbatch)
+            ts_loss = loss_func(ts_predanglebatch, ts_anglebatch)
+            if op=='train':
+                ts_loss.backward()
+                optim.step()
+            print("loss:{}".format(ts_loss.item()))
+            total_epoch_loss += ts_loss.item() 
+            if i % 20 == 0:
+                self.vis.visualize_batch(ts_imgbatch, ts_anglebatch, ts_predanglebatch, global_step=epoch)
+        if op == 'valid':
+            torch.set_grad_enabled(True)
+        print(f"FINISHED {op} EPOCH{epoch}")
+        print(f"----{time.time() - t0} seconds----")
+        return total_epoch_loss
 
     def TRAIN(self, net, num_epochs, optim, loss_func, train_dataloader, valid_dataloader):
         """
@@ -50,12 +76,16 @@ class Trainer(object):
         best_valid_loss = float('inf')
         for epoch in range(num_epochs):
             print("Starting epoch: {}".format(epoch))
-            train_epoch_loss = self.loss_pass(net, loss_func, train_dataloader, epoch, optim, train=True)
-            valid_epoch_loss = self.loss_pass(net, loss_func, train_dataloader, epoch, optim, train=False)
-        print("----------------EPOCH{}STATS:".format(epoch))
-        print("TRAIN LOSS:{}".format(train_epoch_loss))
-        print("VALIDATION LOSS:{}".format(valid_epoch_loss))
-        print("----------------------------")
+            train_epoch_loss = self.loss_pass(net, loss_func, train_dataloader, epoch, optim, op='train')
+            valid_epoch_loss = self.loss_pass(net, loss_func, valid_dataloader, epoch, optim, op='valid')
+            print("----------------EPOCH{}STATS:".format(epoch))
+            print("TRAIN LOSS:{}".format(train_epoch_loss))
+            print("VALIDATION LOSS:{}".format(valid_epoch_loss))
+            print("----------------------------")
+            if best_train_loss > train_epoch_loss:
+                torch.save(net.state_dict(), self.logpath_prefix + str('best_train_model'))
+            if best_valid_loss > valid_epoch_loss:
+                torch.save(net.state_dict(), self.logpath_prefix + str('best_valid_model'))
 
     def get_dataloaders(self, dataset, bs):
         """
@@ -89,10 +119,10 @@ class Trainer(object):
         #get training parameters from file
         self.gconf = lambda key: config.get(key)
         model = self.gconf("model")
-        dataset = self.gconf("model")(self.datapath)
+        dataset = self.gconf("dataset")(self.datapath)
         net = self.make_net(model, dataset)
         lr = self.gconf("lr")
-        optim = self.gconf("optimizer")(net.parameters, lr=lr)
+        optim = self.gconf("optimizer")(net.parameters(), lr=lr)
         loss_func = self.gconf("loss_func")
         num_epochs = self.gconf("num_epochs")
         bs = self.gconf("batch_size")
@@ -112,7 +142,6 @@ class Trainer(object):
         Get the fc dimensions of images of a dataset and a model
         dummy_net: Helps us get the tensor shape after all the conv layers
         """
-        pdb.set_trace()
         input_dict = dataset[0]
         input_dict["img"] = input_dict["img"][None]
         out_dict = dummy_net.only_conv(input_dict)

@@ -1,4 +1,4 @@
-import os, json, pdb, cv2, math
+import os, json, pdb, cv2, math, random
 import numpy as np
 from functools import partial
 import pandas as pd
@@ -38,6 +38,19 @@ class Data_Utils(object):
         csvpath = os.path.join(datapath, 'data.csv')
         df = pd.read_csv(csvpath)
         return df
+
+    def get_interesting_idxs(self, dpath, num_idxs):
+        df = self.get_df(dpath)
+        interesting_idxs = []
+        #currently only considers the angle
+        angle_column = df.iloc[:, 1].values
+        max_idx = np.argmax(angle_column)
+        min_idx = np.argmin(angle_column)
+        interesting_idxs += [max_idx, min_idx]
+        #stupid, but just randomly sample the other stuff
+        dfsize = len(df)
+        interesting_idxs += random.sample(range(1, dfsize), num_idxs - 2)
+        return interesting_idxs
 
     def df_data_fromidx(self, datapath, df, idx):
         row = df.iloc[idx]
@@ -92,8 +105,8 @@ class Data_Utils(object):
         dest_df = pd.DataFrame(columns=src_df.columns.values)
 
         #iterate through dataframe
-        maxlen = 20 if preview else len(src_df)
-        for i in range(maxlen):
+        maxlen = self.get_interesting_idxs(src_datapath, 20) if preview else range(len(src_df))
+        for i in maxlen:
             #Apply flist, get output
             src_img, src_row = self.df_data_fromidx(src_datapath, src_df, i)
             src_dict = {"img":src_img, "row":src_row}

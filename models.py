@@ -27,7 +27,6 @@ class NVIDIA_ConvNet(nn.Module):
 
     def forward(self, input_dict):
         """
-        input_dict: dict w/ "img" tensor of shape C x H x W
         out_dict: dict w/ "angle" 1-Tensor 
         """
         x = input_dict["img"]
@@ -42,7 +41,6 @@ class NVIDIA_ConvNet(nn.Module):
         Does a conv pass and returns resulting tensor
         """
         ts_img = input_dict["img"]
-        pdb.set_trace()
         out = self.conv(ts_img)
         out_dict = {"img":out}
         return out_dict
