@@ -7,7 +7,7 @@ class NVIDIA_ConvNet(nn.Module):
     """
     Similar architecture to ConvNet used by Nvidia in Bojarski et al. (https://arxiv.org/pdf/1604.07316.pdf) with modified Fully Connected layers size 
     """
-    def __init__(self, fc_neurons=64*48*53):
+    def __init__(self, args_dict={"fc_shape":64*48*53}):
         super(NVIDIA_ConvNet, self).__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(3,24,5,stride=2), nn.ELU(),
@@ -18,26 +18,29 @@ class NVIDIA_ConvNet(nn.Module):
         )
         
         self.fc = nn.Sequential(
-            nn.Linear(64*48*53, 1164), 
+            nn.Linear(args_dict["fc_shape"], 1164), 
             nn.Linear(1164, 100), 
             nn.Linear(100, 50),
             nn.Linear(50, 10), 
             nn.Linear(10, 1)
         )
-    
-    def forward(self, x):
+
+    def forward(self, input_dict):
         """
-        x: tensor of shape C x H x W
-        return: 1-tensor
+        out_dict: dict w/ "angle" 1-Tensor 
         """
+        x = input_dict["img"]
         out = self.conv(x)
         out = out.view(out.size(0), -1)
         out = self.fc(out)
-        return out
+        out_dict = {"angle":out}
+        return out_dict
     
-    def only_conv(self, x):
+    def only_conv(self, input_dict):
         """
-        does a conv pass and returns resulting tensor
+        Does a conv pass and returns resulting tensor
         """
-        out = self.conv(x)
-        return out
+        ts_img = input_dict["img"]
+        out = self.conv(ts_img)
+        out_dict = {"img":out}
+        return out_dict

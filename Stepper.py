@@ -2,8 +2,8 @@ import os, json, glob, pdb, cv2
 import pandas as pd
 from tensorboardX import SummaryWriter
 from Metric_Visualizer import Metric_Visualizer
-import steps
 from Data_Utils import Data_Utils
+import steps
 
 class Stepper(object):
     """

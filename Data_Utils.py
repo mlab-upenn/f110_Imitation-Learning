@@ -1,12 +1,11 @@
-import os, json, pdb, cv2, math
+import os, json, pdb, cv2, math, random
 import numpy as np
 from functools import partial
 import pandas as pd
-from func_utils import *
 
 class Data_Utils(object):
     """
-    
+    Move around & augment data 
     """
     def __init__(self):
         pass
@@ -38,6 +37,19 @@ class Data_Utils(object):
         csvpath = os.path.join(datapath, 'data.csv')
         df = pd.read_csv(csvpath)
         return df
+    
+    def get_interesting_idxs(self, dpath, num_idxs):
+        df = self.get_df(dpath)
+        interesting_idxs = []
+        #currently only considers the angle
+        angle_column = df.iloc[:, 1].values
+        max_idx = np.argmax(angle_column)
+        min_idx = np.argmin(angle_column)
+        interesting_idxs += [max_idx, min_idx]
+        #stupid, but just randomly sample the other stuff
+        dfsize = len(df)
+        interesting_idxs += random.sample(range(1, dfsize), num_idxs - 2)
+        return interesting_idxs
 
     def df_data_fromidx(self, datapath, df, idx):
         row = df.iloc[idx]
@@ -64,6 +76,18 @@ class Data_Utils(object):
                 final_df = final_df.append(curr_df)
         return final_df
 
+    def get_last_n_frames(self, n, datapath, idx):
+        """
+        Retrieve last n frames from data.csv in "datapath"
+        If less than n frames available, will return as many as possible
+        """
+        df = self.get_df(datapath)
+        src_img, src_row = self.df_data_fromidx(datapath, df, idx)
+        n = min(idx, n)
+        start_idx = idx - n
+        datalist = [self.df_data_fromidx(datapath, df, x)[0] for x in range(start_idx, idx)]
+        pdb.set_trace()
+        return datalist
 
     def MOVE(self, src_datadir, folder, dest_datadir, flist=[], preview=False, op='mv'):
         """
@@ -73,7 +97,7 @@ class Data_Utils(object):
         dest_datadir: abs path to dest dir
         folder: name of folder in src_datadir to MOVE
         flist: list of json-formatted functions (see steps.json)
-        preview:preview shows fewer entries
+        preview: if true, shows fewer entries
         op: if 'aug', augment current dataset instead of creating a whole new one & moving it elsewhere (IF SO, SRC_DATADIR MUST = DEST_DATADIR)
         """
         assert((op =='aug' and src_datadir == dest_datadir) or (op != 'aug')), f"MOVE Error: If op={op}, src_datadir = dest_datadir"
@@ -92,11 +116,11 @@ class Data_Utils(object):
         dest_df = pd.DataFrame(columns=src_df.columns.values)
 
         #iterate through dataframe
-        maxlen = 20 if preview else len(src_df)
-        for i in range(maxlen):
+        maxlen = self.get_interesting_idxs(src_datapath, 20) if preview else range(len(src_df))
+        for i in maxlen:
             #Apply flist, get output
             src_img, src_row = self.df_data_fromidx(src_datapath, src_df, i)
-            src_dict = {"img":src_img, "row":src_row}
+            src_dict = {"img":src_img, "row":src_row, "src_datapath":src_datapath, "idx":i}
             dest_dict = self.apply_flist(src_dict, flist)
             #continue adding data if flag is true
             flag = dest_dict.get("flag", True)

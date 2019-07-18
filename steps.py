@@ -1,6 +1,9 @@
 from functools import partial
 from models import *
 from func_utils import *
+from datasets import *
+import torch.nn as nn
+import torch.optim as optim
 
 p = lambda func, args: partial(func, args)
 session = {
@@ -9,8 +12,12 @@ session = {
         "abs_path":"/home/dhruvkar/datasets/avfone",
         "raw_data":"raw_data",
         "sess_root":"runs",
-        "comment":"Rescaling Images",
+        "comment":"Normally distributed w/ variance 1.2",
         "preview":True
+    },
+    "visualizer":
+    {
+        "vis_type":"video",
     },
     "steps":
     [
@@ -35,14 +42,16 @@ session = {
                     p(cropVertical, [200, 400]),
                     p(radOffset, [0.15]),
                     p((rad2deg), []),
+                    p((gaussianSamplingAngle), [1.2]),
                     p((rescaleImg), [0.5])
                 ],
 
                 [
                     p(rot90, ["clockwise"]),
                     p(cropVertical, [200, 400]),
-                    p(radOffset, [0.15]),
+                    p(radOffset, [-0.15]),
                     p((rad2deg), []),
+                    p((gaussianSamplingAngle), [1.2]),
                     p((rescaleImg), [0.5])
                 ],
 
@@ -50,7 +59,8 @@ session = {
                     p(rot90, ["clockwise"]),
                     p(cropVertical, [200, 400]),
                     p((rad2deg), []),
-                    p((rescaleImg), [0.5])
+                    p((gaussianSamplingAngle), [1.2]),
+                    p((rescaleImg), [0.5]) 
                 ]
             ]
         },
@@ -75,5 +85,18 @@ session = {
             "units":"deg",
             "foldername":"main"
         }
-    ]
+    ],
+    "train":
+    {
+        "model":NVIDIA_ConvNet,
+        "lr":1e-3,
+        "loss_func":nn.functional.mse_loss,
+        "optimizer":torch.optim.RMSprop,
+        "num_epochs":5,
+        "batch_size":4,
+        "sess_id": 0,
+        "foldername":"main",
+        "vsplit":0.2,
+        "dataset":SteerDataset
+    }
 }
