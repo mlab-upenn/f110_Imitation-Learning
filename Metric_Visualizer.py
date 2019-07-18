@@ -144,7 +144,26 @@ class Metric_Visualizer(object):
         self.writer.add_text(labelname, text, global_step=global_step)
         
     def visualize_batch(self,ts_imgbatch, ts_anglebatch, ts_predanglebatch, global_step=0):
-        self.writer.add_image("Sample Batch", ts_imgbatch[:5], global_step=global_step)
+        self.writer.add_images("Sample Batch", ts_imgbatch[:5], global_step=global_step)
+        
+    def dict_to_table(self, my_dict):
+        """
+        Converts a python dict into a table
+        TODO: Consider the numerous edge cases (what if dict is already array)
+        """
+        tabulate_dict = {}
+        for key in my_dict:
+            tabulate_dict[key] = [str(my_dict[key])]
+        text = tabulate(tabulate_dict, headers="keys", tablefmt="github")
+        return text
+
+    def log_training(self, config, train_id, best_train_loss, best_valid_loss):
+        final_dict = config
+        final_dict["train_id"] = train_id
+        final_dict["t_loss"] = best_train_loss
+        final_dict["v_loss"] = best_valid_loss
+        text = self.dict_to_table(final_dict)
+        self.writer.add_text('Train Summary', text, global_step=0)
 
     def standard_log(self, datadir, folder, curr_step, global_step=0, units=''):
         """

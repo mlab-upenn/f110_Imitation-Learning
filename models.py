@@ -34,7 +34,7 @@ class NVIDIA_ConvNet(nn.Module):
         out = out.view(out.size(0), -1)
         out = self.fc(out)
         out_dict = {"angle":out}
-        return out
+        return out_dict
     
     def only_conv(self, input_dict):
         """

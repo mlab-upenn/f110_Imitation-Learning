@@ -25,13 +25,13 @@ class Trainer(object):
         self.sess_path = None
         self.datapath = None
         self.gconf = None
-        config, dataset, net, optim, loss_func, num_epochs, bs = self.configure_train() #sets sess_path, datapath & gconf
+        self.config, dataset, net, optim, loss_func, num_epochs, bs = self.configure_train() #sets sess_path, datapath & gconf
         train_dataloader, valid_dataloader = self.get_dataloaders(dataset, bs)
         
         #Make Writer & Visualize
         logdir = os.path.join(self.sess_path, "logs")
         self.train_id = len(os.listdir(logdir))
-        self.logpath_prefix = os.path.join(logdir, str(self.train_id))
+        self.logpath_prefix = os.path.join(logdir, str(self.train_id), )
         self.writer = SummaryWriter(logdir=logdir)
         self.vis = Metric_Visualizer(self.sess_path, self.writer)
     
@@ -51,9 +51,12 @@ class Trainer(object):
         for i, input_dict in enumerate(loader):
             ts_imgbatch, ts_anglebatch = input_dict.get("img"), input_dict.get("angle")
             ts_imgbatch, ts_anglebatch = ts_imgbatch.to(device), ts_anglebatch.to(device)
+            input_dict["img"] = ts_imgbatch
+            input_dict["angle"] = ts_imgbatch
             #Classic train loop
             optim.zero_grad()
-            ts_predanglebatch = net(ts_imgbatch)
+            out_dict = net(input_dict)
+            ts_predanglebatch = out_dict["angle"]
             ts_loss = loss_func(ts_predanglebatch, ts_anglebatch)
             if op=='train':
                 ts_loss.backward()
@@ -82,11 +85,20 @@ class Trainer(object):
             print("TRAIN LOSS:{}".format(train_epoch_loss))
             print("VALIDATION LOSS:{}".format(valid_epoch_loss))
             print("----------------------------")
-            if best_train_loss > train_epoch_loss:
-                torch.save(net.state_dict(), self.logpath_prefix + str('best_train_model'))
-            if best_valid_loss > valid_epoch_loss:
-                torch.save(net.state_dict(), self.logpath_prefix + str('best_valid_model'))
 
+            if best_train_loss > train_epoch_loss:
+                best_train_loss = train_epoch_loss
+                torch.save(net.state_dict(), os.path.join(self.logpath_prefix + str('best_train_model')))
+
+            if best_valid_loss > valid_epoch_loss:
+                best_valid_loss = valid_epoch_loss
+                torch.save(net.state_dict(), os.path.join(self.logpath_prefix + str('best_valid_model')))
+
+            self.writer.add_scalar('Train Loss', train_epoch_loss, epoch)
+            self.writer.add_scalar('Valid Loss', valid_epoch_loss, epoch)
+        self.vis.log_training(self.config, self.train_id, best_train_loss, best_valid_loss)
+        self.writer.close()
+            
     def get_dataloaders(self, dataset, bs):
         """
         Get train and valid dataloader based on vsplit parameter defined in steps.session 
@@ -157,28 +169,13 @@ class Trainer(object):
         if self.hasLinear(dummy_net):
             #find the right shape of fc layer
             fc_shape = self.get_fc_shape(dummy_net, dataset)
-            net = model({"fc_shape":fc_shape})
-        net = model()
+            net = model(args_dict={"fc_shape":fc_shape})
+        else:
+            net = model()
         return net.to(device)
 
 def main():
     trainer = Trainer()
-    
-#     config = configure_train()
-
-#     #Choose Net + Parameters for training
-#     net = NVIDIA_ConvNet().to(device)
-#     loss_func = nn.functional.mse_loss
-#     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
-#     num_epochs = 300
-#     batch_size = 128
-    
-#     #Make Dataloaders
-#     dutils = Data_Utils()
-#     train_dataloader, valid_dataloader = dutils.get_dataloaders(batch_size)
-
-#     #TRAIN!
-#     train(net, num_epochs, optimizer, loss_func, train_dataloader, valid_dataloader)
 
 if __name__ == "__main__":
     main()
