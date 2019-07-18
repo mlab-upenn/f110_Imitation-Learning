@@ -13,7 +13,7 @@ session = {
         "raw_data":"raw_data",
         "sess_root":"runs",
         "comment":"Normally distributed w/ variance 1.2",
-        "preview":False
+        "preview":True
     },
     "steps":
     [
@@ -45,7 +45,7 @@ session = {
                 [
                     p(rot90, ["clockwise"]),
                     p(cropVertical, [200, 400]),
-                    p(radOffset, [0.15]),
+                    p(radOffset, [-0.15]),
                     p((rad2deg), []),
                     p((gaussianSamplingAngle), [1.2]),
                     p((rescaleImg), [0.5])
@@ -84,6 +84,15 @@ session = {
     ],
     "train":
     {
+        "model":NVIDIA_ConvNet,
+        "lr":1e-3,
+        "loss_func":nn.functional.mse_loss,
+        "optimizer":torch.optim.Adam,
+        "num_epochs":300,
+        "batch_size":128,
+        "sess_id": 0,
+        "foldername":"main",
+        "vsplit":0.1,
         "dataset":SteerDataset
     }
 }

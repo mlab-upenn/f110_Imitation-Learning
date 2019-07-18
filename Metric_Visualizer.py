@@ -95,18 +95,23 @@ class Metric_Visualizer(object):
                 self.vis_frame(frame, angle, speed, timestamp, show_steer=show_steer)
                 framebuffer.append(frame.copy())
 
-        self.writer.add_video(stepname, framebuffer, fps=10, global_step= idx, as_np_framebuffer=True)
+        self.writer.add_video(stepname, framebuffer, fps=10, global_step=idx, as_np_framebuffer=True)
 
     def plot_anglehist(self, dpath, tag, idx):
         csvpath = os.path.join(dpath, "data.csv")
         df = pd.read_csv(csvpath) 
         angle_column = df.iloc[:, 1].values
         num_bins = 100
+        # self.writer.add_histogram(tag, np.random.random(10), global_step=idx, bins='auto')
+    
+        # for i in range(10):
+        x = np.random.random(1000)
+        i = idx
+        self.writer.add_histogram('distribution center', x + i, i)
         #save plot w/ matplotlib
-        fig = plt.figure()
-        plt.hist(angle_column, num_bins, color='green')
-        self.writer.add_figure(tag, fig, global_step=idx)
-
+        # fig = plt.figure()
+        # plt.hist(angle_column, num_bins, color='green')
+        # self.writer.add_figure(tag, fig, global_step=idx)
 
     def text_table(self, dpath, labelname, foldername='', angle_unit='', global_step=0):
         df = self.data_utils.get_df(dpath)

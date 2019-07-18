@@ -73,7 +73,7 @@ class Data_Utils(object):
         dest_datadir: abs path to dest dir
         folder: name of folder in src_datadir to MOVE
         flist: list of json-formatted functions (see steps.json)
-        preview:preview shows fewer entries
+        preview: if true, shows fewer entries
         op: if 'aug', augment current dataset instead of creating a whole new one & moving it elsewhere (IF SO, SRC_DATADIR MUST = DEST_DATADIR)
         """
         assert((op =='aug' and src_datadir == dest_datadir) or (op != 'aug')), f"MOVE Error: If op={op}, src_datadir = dest_datadir"
