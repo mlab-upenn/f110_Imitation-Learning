@@ -2,11 +2,21 @@ import os, json, pdb, cv2, math
 import numpy as np
 from functools import partial
 import pandas as pd
+from Data_Utils import Data_Utils
+dutils = Data_Utils()
 
 def changeName(dest_dict, prefix):
     curr_name = dest_dict.get("row")[0]
     dest_dict["row"][0] = prefix + curr_name
     return dest_dict
+
+def cannyEdge(args, src_dict):
+    assert(len(args) == 2), "Incorrect size argument to cannyEdge"
+    dest_dict = src_dict
+    src_img = src_dict["img"]
+    dest_img = cv2.Canny(src_img, args[0], args[1])
+    dest_dict["img"] = dest_img
+    return changeName(dest_dict, 'cannyedge')
 
 def filterBadData(args, src_dict):
     assert(len(args) == 0), "Incorrect size argument to filterBadData"
@@ -17,6 +27,12 @@ def filterBadData(args, src_dict):
     if np.mean(src_img) < 5:
         dest_dict["flag"] = False
     return changeName(dest_dict, 'fbd')
+
+def opticalFlow(args, src_dict):
+    assert(len(args) == 0), "Incorrect size argument to opticalFlow"
+    dest_dict = src_dict
+    framelist = dutils.get_last_n_frames(3, src_dict["src_datapath"], src_dict["idx"])
+    return changeName(dest_dict, 'opticalFlow')
 
 def cropVertical(args, src_dict):
     assert (len(args) == 2),"Incorrect sized argument to cropVertical"

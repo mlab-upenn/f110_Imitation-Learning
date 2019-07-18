@@ -32,7 +32,7 @@ class SteerDataset(Dataset):
         if self.transforms:
             cv_img = self.transforms(cv_img)
 
-        ts_angle = torch.Tensor([df_row[1]])
+        ts_angle = torch.Tensor([df_row[1]]).float()
         ts_img = torch.from_numpy(cv_img).permute(2, 0, 1).float() #size (C x H x W)
 
         data_dict = {"img":ts_img, "angle":ts_angle}

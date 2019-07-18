@@ -2,7 +2,6 @@ import os, json, pdb, cv2, math, random
 import numpy as np
 from functools import partial
 import pandas as pd
-from func_utils import *
 
 class Data_Utils(object):
     """
@@ -38,7 +37,7 @@ class Data_Utils(object):
         csvpath = os.path.join(datapath, 'data.csv')
         df = pd.read_csv(csvpath)
         return df
-
+    
     def get_interesting_idxs(self, dpath, num_idxs):
         df = self.get_df(dpath)
         interesting_idxs = []
@@ -77,6 +76,18 @@ class Data_Utils(object):
                 final_df = final_df.append(curr_df)
         return final_df
 
+    def get_last_n_frames(self, n, datapath, idx):
+        """
+        Retrieve last n frames from data.csv in "datapath"
+        If less than n frames available, will return as many as possible
+        """
+        df = self.get_df(datapath)
+        src_img, src_row = self.df_data_fromidx(datapath, df, idx)
+        n = min(idx, n)
+        start_idx = idx - n
+        datalist = [self.df_data_fromidx(datapath, df, x)[0] for x in range(start_idx, idx)]
+        pdb.set_trace()
+        return datalist
 
     def MOVE(self, src_datadir, folder, dest_datadir, flist=[], preview=False, op='mv'):
         """
@@ -109,7 +120,7 @@ class Data_Utils(object):
         for i in maxlen:
             #Apply flist, get output
             src_img, src_row = self.df_data_fromidx(src_datapath, src_df, i)
-            src_dict = {"img":src_img, "row":src_row}
+            src_dict = {"img":src_img, "row":src_row, "src_datapath":src_datapath, "idx":i}
             dest_dict = self.apply_flist(src_dict, flist)
             #continue adding data if flag is true
             flag = dest_dict.get("flag", True)

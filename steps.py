@@ -17,7 +17,7 @@ session = {
     },
     "visualizer":
     {
-        "vis_type":"framelist",
+        "vis_type":"video",
     },
     "steps":
     [
@@ -60,7 +60,7 @@ session = {
                     p(cropVertical, [200, 400]),
                     p((rad2deg), []),
                     p((gaussianSamplingAngle), [1.2]),
-                    p((rescaleImg), [0.5])
+                    p((rescaleImg), [0.5]) 
                 ]
             ]
         },
@@ -91,12 +91,12 @@ session = {
         "model":NVIDIA_ConvNet,
         "lr":1e-3,
         "loss_func":nn.functional.mse_loss,
-        "optimizer":torch.optim.Adam,
+        "optimizer":torch.optim.RMSprop,
         "num_epochs":5,
-        "batch_size":10,
+        "batch_size":4,
         "sess_id": 0,
         "foldername":"main",
-        "vsplit":0.1,
+        "vsplit":0.2,
         "dataset":SteerDataset
     }
 }

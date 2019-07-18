@@ -32,7 +32,7 @@ class Trainer(object):
         logdir = os.path.join(self.sess_path, "logs")
         self.train_id = len(os.listdir(logdir))
         self.logpath_prefix = os.path.join(logdir, str(self.train_id), )
-        self.writer = SummaryWriter(logdir=logdir)
+        self.writer = SummaryWriter(logdir=self.logpath_prefix)
         self.vis = Metric_Visualizer(self.sess_path, self.writer)
     
         #TRAIN!
@@ -88,11 +88,11 @@ class Trainer(object):
 
             if best_train_loss > train_epoch_loss:
                 best_train_loss = train_epoch_loss
-                torch.save(net.state_dict(), os.path.join(self.logpath_prefix + str('best_train_model')))
+                torch.save(net.state_dict(), os.path.join(self.logpath_prefix, str('best_train_model')))
 
             if best_valid_loss > valid_epoch_loss:
                 best_valid_loss = valid_epoch_loss
-                torch.save(net.state_dict(), os.path.join(self.logpath_prefix + str('best_valid_model')))
+                torch.save(net.state_dict(), os.path.join(self.logpath_prefix, str('best_valid_model')))
 
             self.writer.add_scalar('Train Loss', train_epoch_loss, epoch)
             self.writer.add_scalar('Valid Loss', valid_epoch_loss, epoch)
