@@ -115,7 +115,8 @@ class Metric_Visualizer(object):
         #get dataframe
         csvpath = os.path.join(dpath, "data.csv")
         df = pd.read_csv(csvpath)
-        num_rows = int(0.1 * len(df)) #display about 10% of the frames 
+        # num_rows = int(0.1 * len(df)) #display about 10% of the frames 
+        num_rows = len(df)
         for i in range(num_rows):
             if i % 4 == 0:
                 img_name, angle, speed, timestamp = df.iloc[i, 0], df.iloc[i, 1], df.iloc[i, 2], df.iloc[i, 3]
