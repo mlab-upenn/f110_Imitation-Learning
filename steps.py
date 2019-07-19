@@ -43,7 +43,8 @@ session = {
                     p(radOffset, [0.15]),
                     p((rad2deg), []),
                     p((gaussianSamplingAngle), [1.2]),
-                    p((rescaleImg), [0.5])
+                    p((rescaleImg), [0.5]),
+                    p(cannyEdge, [100, 200]),
                 ],
 
                 [
@@ -94,9 +95,9 @@ session = {
         "optimizer":torch.optim.Adam,
         "num_epochs":5,
         "batch_size":4,
-        "sess_id": 0,
+        "sess_id": 2,
         "foldername":"main",
         "vsplit":0.2,
         "dataset":SteerDataset
-    }
+    },
 }

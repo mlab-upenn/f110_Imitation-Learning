@@ -23,7 +23,7 @@ def filterBadData(args, src_dict):
     dest_dict = src_dict
     src_img = src_dict.get("img")
 
-    #stupid check to see if picture is largely black
+    #check to see if picture is largely black
     if np.mean(src_img) < 5:
         dest_dict["flag"] = False
     return changeName(dest_dict, 'fbd')
