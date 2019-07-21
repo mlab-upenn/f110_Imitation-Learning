@@ -77,33 +77,17 @@ class f110Sender(object):
 		#print('----------------------------')
 		#print(self.latest_obs["steer"])
 		#lidar_dump = msgpack.dumps('olda')
-		#self.zmq_socket.send(lidar_dump, copy=False | zmq.SNDMORE)
-		#self.zmq_socket.send(steer_dump, copy=False | zmq.SNDMORE)
+		self.zmq_socket.send(lidar_dump, copy=False, flags=zmq.SNDMORE)
+		self.zmq_socket.send(steer_dump, copy=False, flags=zmq.SNDMORE)
 		self.zmq_socket.send_array(cv_img, copy=False, track=False)
 		message = self.zmq_socket.recv()
 		print("Recv reply")
 		self.latest_obs = {}
 
-class f110Server(object):
-    """
-    Opens a zmq REQ socket & recieves ROS data 
-    """
-    def __init__(self, open_port='tcp://*:5555'):
-        self.zmq_context = SerializingContext()
-        self.zmq_socket = self.zmq_context.socket(zmq.REP)
-        self.zmq_socket.bind(open_port)
-    
-    def recv_data(self, copy=False):
-        lidar = msgpack.unpack(self.zmq_socket.recv())
-        steer = msgpack.unpack(self.zmq_socket.recv())
-        md, cv_img = self.zmq_socket.recv_array(copy=False)
-        print(lidar, steer)
-        cv2.imshow('Bastards', cv_img)
-
 def main(args):
 	rospy.init_node("f110ZMQTest", anonymous=True)
 	sender = f110Sender(connect_to="tcp://195.0.0.7:5555")
-	rospy.sleep(0.05)
+	rospy.sleep(0.1)
 	rospy.spin()
 
 if __name__ == '__main__':
