@@ -1,7 +1,3 @@
-"""f110zmq: Send f110 data via ZMQ
-@author: Dhruv Karthik (github.com/botforge)
-"""
-
 #!/usr/bin/env python
 from __future__ import print_function
 
@@ -28,7 +24,7 @@ class f110Sender(object):
         sublist:list of rostopics you want sent over
         """
         #important zmq initialization stuff
-        self.zmq_context = zmq.SerializingContext()
+        self.zmq_context = SerializingContext()
         self.zmq_socket = self.zmq_context.socket(zmq.REQ)
         self.zmq_socket.connect(connect_to)
 
@@ -38,7 +34,7 @@ class f110Sender(object):
 
         #Syncs to each frame
         self.lidar_sub = rospy.Subscriber("/scan", LaserScan, self.lidar_callback)
-        self.steer_sub = rospy.Subscriber("/vesc/high_level/ackermann_cmd_mux/output", AckermannDriveStamped, self.steer_callback)
+        self.steer_sub = rospy.Subscriber("/vesc/low_level/ackermann_cmd_mux/output", AckermannDriveStamped, self.steer_callback)
         self.cam_sub = rospy.Subscriber("/usb_cam/image_raw", Image, self.cam_callback)
 
         #Hooks sends to the camera, so we need the latest of each observation
@@ -59,9 +55,9 @@ class f110Sender(object):
         
     def steer_callback(self, data):
         steer = dict(
-            steering_angle = data.steering_angle, 
-            steering_angle_velocity = data.steering_angle_velocity,
-            speed = data.speed
+            steering_angle = data.drive.steering_angle, 
+	    steering_angle_velocity = data.drive.steering_angle_velocity,
+            speed = data.drive.speed
         )
         self.latest_obs['steer'] = steer
     
@@ -74,11 +70,13 @@ class f110Sender(object):
 
         cv_img = cv2.resize(cv_img, None, fx=0.4, fy=0.4)
         #make msgpack dumps of everything
-        lidar_dump = msgpack.dumps(self.latest_obs["lidar"]) 
-        steer_dump = msgpack.dumps(self.latest_obs["steer"])
-        self.zmq_socket.send(lidar_dump, copy=False | zmq.SNDMORE)
-        self.zmq_socket.send(steer_dump, copy=False | zmq.SNDMORE)
-        self.zmq_socket.send_array(cv_img, copy=False, track=False)
+	if "lidar" in self.latest_obs and "steer" in self.latest_obs:
+		lidar_dump = msgpack.dumps(self.latest_obs["lidar"]) 
+		steer_dump = msgpack.dumps(self.latest_obs["steer"])
+		self.zmq_socket.send(lidar_dump, copy=False | zmq.SNDMORE)
+		self.zmq_socket.send(steer_dump, copy=False | zmq.SNDMORE)
+		#self.zmq_socket.send_array(cv_img, copy=False, track=False)
+		self.latest_obs = {}
 
 class f110Server(object):
     """
