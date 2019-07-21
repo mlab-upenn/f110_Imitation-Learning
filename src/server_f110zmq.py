@@ -20,7 +20,7 @@ class f110Server(object):
         print(type(lidar))
         print(type(steer))
         # print(cv_img)
-        cv2.imshow('Bastards', cv_img)
+        cv2.imshow('yeeboi', cv_img)
         cv2.waitKey(1)
         self.zmq_socket.send(b"World")
 
