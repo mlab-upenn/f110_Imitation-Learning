@@ -40,11 +40,11 @@ session = {
                 [
                     p(rot90, ["clockwise"]),
                     p(cropVertical, [200, 400]),
+                    p(cannyEdge, [100, 200]),
                     p(radOffset, [0.15]),
                     p((rad2deg), []),
                     p((gaussianSamplingAngle), [1.2]),
                     p((rescaleImg), [0.5]),
-                    p(cannyEdge, [100, 200]),
                 ],
 
                 [
@@ -91,13 +91,13 @@ session = {
     {
         "model":NVIDIA_ConvNet,
         "lr":1e-3,
-        "loss_func":nn.functional.mse_loss,
+        "loss_func":nn.functional.l1_loss,
         "optimizer":torch.optim.Adam,
         "num_epochs":5,
         "batch_size":4,
-        "sess_id": 2,
+        "sess_id": 0,
         "foldername":"main",
-        "vsplit":0.2,
+        "vsplit":0.1,
         "dataset":SteerDataset
     },
 }
