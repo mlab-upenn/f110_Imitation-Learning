@@ -73,13 +73,15 @@ class f110Sender(object):
 	if "lidar" in self.latest_obs and "steer" in self.latest_obs:
 		lidar_dump = msgpack.dumps(self.latest_obs["lidar"]) 
 		steer_dump = msgpack.dumps(self.latest_obs["steer"])
-		print(self.latest_obs["lidar"])
-		print('----------------------------')
-		print(self.latest_obs["steer"])
-		lidar_dump = msgpack.dumps('olda')
-		self.zmq_socket.send(lidar_dump, copy=False | zmq.SNDMORE)
+		#print(self.latest_obs["lidar"])
+		#print('----------------------------')
+		#print(self.latest_obs["steer"])
+		#lidar_dump = msgpack.dumps('olda')
+		#self.zmq_socket.send(lidar_dump, copy=False | zmq.SNDMORE)
 		#self.zmq_socket.send(steer_dump, copy=False | zmq.SNDMORE)
-		#self.zmq_socket.send_array(cv_img, copy=False, track=False)
+		self.zmq_socket.send_array(cv_img, copy=False, track=False)
+		message = self.zmq_socket.recv()
+		print("Recv reply")
 		self.latest_obs = {}
 
 class f110Server(object):
@@ -100,7 +102,7 @@ class f110Server(object):
 
 def main(args):
 	rospy.init_node("f110ZMQTest", anonymous=True)
-	sender = f110Sender(connect_to="tcp://192.0.0.7:5555")
+	sender = f110Sender(connect_to="tcp://195.0.0.7:5555")
 	rospy.sleep(0.05)
 	rospy.spin()
 
