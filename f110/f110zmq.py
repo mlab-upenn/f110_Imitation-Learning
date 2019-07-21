@@ -39,7 +39,7 @@ class f110Sender(object):
         #Syncs to each frame
         self.lidar_sub = rospy.Subscriber("/scan", LaserScan, self.lidar_callback)
         self.steer_sub = rospy.Subscriber("/vesc/high_level/ackermann_cmd_mux/output", AckermannDriveStamped, self.steer_callback)
-        self.cam_sub = rospy.Subscriber("/usb_cam", Image, self.cam_callback)
+        self.cam_sub = rospy.Subscriber("/usb_cam/image_raw", Image, self.cam_callback)
 
         #Hooks sends to the camera, so we need the latest of each observation
         self.latest_obs = {}
@@ -95,3 +95,12 @@ class f110Server(object):
         md, cv_img = self.zmq_socket.recv_array(copy=False)
         print(lidar, steer)
         cv2.imshow('Bastards', cv_img)
+
+def main(args):
+	rospy.init_node("f110ZMQTest", anonymous=True)
+	sender = f110Sender(connect_to="tcp://192.0.0.7:5555")
+	rospy.sleep(0.05)
+	rospy.spin()
+
+if __name__ == '__main__':
+	main(sys.argv)
