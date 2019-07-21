@@ -110,7 +110,7 @@ class Trainer(object):
         np.random.shuffle(idxs)
         train_idxs, val_idxs = idxs[split:], idxs[:split]
 
-        #Using SubsetRandomSampler but should ideally sample equally form each steer angle to avoid distributional bias
+        #Using SubsetRandomSampler but should ideally sample equally from each steer angle to avoid distributional bias
         train_sampler = SubsetRandomSampler(train_idxs)
         val_sampler = SubsetRandomSampler(val_idxs)
 
