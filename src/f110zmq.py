@@ -73,8 +73,12 @@ class f110Sender(object):
 	if "lidar" in self.latest_obs and "steer" in self.latest_obs:
 		lidar_dump = msgpack.dumps(self.latest_obs["lidar"]) 
 		steer_dump = msgpack.dumps(self.latest_obs["steer"])
+		print(self.latest_obs["lidar"])
+		print('----------------------------')
+		print(self.latest_obs["steer"])
+		lidar_dump = msgpack.dumps('olda')
 		self.zmq_socket.send(lidar_dump, copy=False | zmq.SNDMORE)
-		self.zmq_socket.send(steer_dump, copy=False | zmq.SNDMORE)
+		#self.zmq_socket.send(steer_dump, copy=False | zmq.SNDMORE)
 		#self.zmq_socket.send_array(cv_img, copy=False, track=False)
 		self.latest_obs = {}
 
