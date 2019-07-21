@@ -1,4 +1,5 @@
 import time
+import cv2
 import zmq
 import msgpack
 import msgpack_numpy
@@ -13,11 +14,14 @@ class f110Server(object):
         self.zmq_socket.bind(open_port)
     
     def recv_data(self, copy=False):
-        # lidar = msgpack.unpack(self.zmq_socket.recv())
-        # steer = msgpack.unpack(self.zmq_socket.recv())
+        lidar = msgpack.unpackb(self.zmq_socket.recv())
+        steer = msgpack.unpackb(self.zmq_socket.recv())
         md, cv_img = self.zmq_socket.recv_array(copy=False)
-        # print(lidar, steer)
+        print(type(lidar))
+        print(type(steer))
+        # print(cv_img)
         cv2.imshow('Bastards', cv_img)
+        cv2.waitKey(1)
         self.zmq_socket.send(b"World")
 
         
