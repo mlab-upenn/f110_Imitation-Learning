@@ -76,9 +76,14 @@ class ExperienceRecorder(object):
                     shape=cv_img.shape,
                 )
                 cv_md_dump = msgpack.dumps(cv_md)
-                self.curr_batch += [lidar_dump, steer_dump, cv_md_dump, cv_img]
+                # self.curr_batch += [lidar_dump, steer_dump, cv_md_dump, cv_img]
+                self.curr_batch += [b'lidary', b'dumpy', b'steery', b'cvmd', b'cvimg']
                 self.latest_obs = {}
                 if (len(self.curr_batch) / 4.0 % 20.0) == 0:
                     print(f"Sending out {len(self.curr_batch)/4.0}")
                     self.zmq_socket.send_multipart(self.curr_batch, copy=False)
-                    
+def main(args):
+	rospy.init_node("ExperienceRecorder", anonymous=True)
+	sender = ExperienceRecorder(connect_to="tcp://195.0.0.7:5555")
+	rospy.sleep(0.1)
+	rospy.spin()
