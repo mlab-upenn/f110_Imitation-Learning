@@ -1,4 +1,4 @@
-import os, cv2, math, sys, json, torch, pdb, random
+import os, cv2, math, sys, json, torch, pdb, random, pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import moviepy.editor as mpy
@@ -105,10 +105,30 @@ class Metric_Visualizer(object):
         timestamp_list = splitrow(3)
         self.vis_framelist(stepname, framelist, angle_list, global_step=idx, show_steer=show_steer, vel_list=vel_list, timestamp_list=timestamp_list)
         
+    def vid_from_pkl(self, dpath, stepname, idx, show_steer=False, units='rad', live=False):
+        """
+        Send annotated video to Tensorboard/View video (PKL)
+        dpath: abs_path to data folder containing the pkl files
+        labelname: str name for the label
+        global_step:global_step to record for slider functionality
+        """
+        framebuffer = []
+        pkl_files = os.listdir(dpath)
+        for pkl in pkl_files:
+            data_in = open(os.path.join(dpath, pkl))
+            data_array = pickle.load(data_in)
+            print(pkl)
+            for i, data_dict in enumerate(data_array):
+                img, steer = data_dict["img"], data_dict["steer"]
+                frame = img.copy()
+                angle = steer["steering_angle"]
+                speed = steer["speed"]
+                self.vis_frame(frame, angle, speed, 0, show_steer=True)
+                print(i)
 
     def vid_from_path(self, dpath, stepname, idx, show_steer=False, units='rad'):
         """
-        Send annotated video to Tensorboard
+        Send annotated video to Tensorboard (CSV)
         dpath: abs_path to data folder containing images & csv
         labelname: str name for the label
         global_step: global_step to record for slider functionality
@@ -127,7 +147,6 @@ class Metric_Visualizer(object):
                 frame = cv2.imread(framepath)
                 self.vis_frame(frame, angle, speed, timestamp, show_steer=show_steer)
                 framebuffer.append(frame.copy())
-
         self.writer.add_video(stepname, framebuffer, fps=10, global_step=idx, as_np_framebuffer=True)
 
     def plot_anglehist(self, dpath, tag, idx):

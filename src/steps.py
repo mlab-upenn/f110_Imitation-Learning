@@ -100,4 +100,8 @@ session = {
         "vsplit":0.1,
         "dataset":SteerDataset
     },
+    "dagger":
+    {
+        "sess_id": 0
+    }
 }

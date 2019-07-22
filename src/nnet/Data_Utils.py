@@ -1,4 +1,5 @@
-import os, json, pdb, cv2, math, random
+import os, json, pdb, cv2, math, random, pickle, msgpack
+import msgpack_numpy as m
 import numpy as np
 from functools import partial
 import pandas as pd
@@ -8,6 +9,7 @@ class Data_Utils(object):
     Move around & augment data 
     """
     def __init__(self):
+        m.patch()
         pass
     
     def get_dest_datapath(self, dest_datadir, folder, op):
@@ -160,3 +162,21 @@ class Data_Utils(object):
             partial_func = json_func
             dest_dict = partial_func(dest_dict)
         return dest_dict
+    
+    def save_batch_to_pickle(self, fullmsg, dest_dir):
+        """
+        Saves batch to a pkl file
+        """
+        dump_array = []
+        for i in range(len(fullmsg)):
+            if i%5 == 0:
+                lidar = msgpack.loads(fullmsg[i], encoding="utf-8")
+                steer = msgpack.unpackb(fullmsg[i+1], encoding="utf-8")
+                md = msgpack.unpackb(fullmsg[i + 2])
+                cv_img = fullmsg[i+3]
+                cv_img = np.frombuffer(cv_img, dtype=md[b'dtype'])
+                cv_img = cv_img.reshape(md[b'shape'])
+                dump_array.append({"img":cv_img, "lidar":lidar, "steer":steer})
+        dump_path = os.path.join(dest_dir, 'batch'+str(len(os.listdir(dest_dir))))
+        dump_out = open(dump_path, "wb")
+        pickle.dump(dump_array, dump_out)
