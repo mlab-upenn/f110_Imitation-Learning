@@ -10,15 +10,15 @@ from cv_bridge import CvBridge, CvBridgeError
 from ackermann_msgs.msg import AckermannDriveStamped, AckermannDrive
 from rospy_message_converter import json_message_converter
 # from common.imagezmq import SerializingContext, SerializingSocket
-import zmq, msgpack
+import zmq, msgpack, threading
 import msgpack_numpy as m
 import numpy as np
 
 __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 
-class ExperienceRecorder(object):
+class ExperienceRecorder(threading.Thread):
     """
-    Opens zmq REQ socket & sends 'experiences' over
+    Opens zmq DEALIER socket & sends 'experiences' over
     ATM: Records Lidar, Camera & Steer (cmd_mux)
     """
     def __init__(self, connect_to='tcp://195.0.0.7:5555', only_record='both'
@@ -30,9 +30,11 @@ class ExperienceRecorder(object):
         """
         #important zmq initialization stuff
         self.zmq_context = zmq.Context()
-        self.zmq_socket = self.zmq_context.socket(zmq.REQ)
+        self.zmq_socket = self.zmq_context.socket(zmq.DEALER)
         self.zmq_socket.connect(connect_to)
-        
+        id = '0'
+        self.zmq_socket.identity = identity.encode('ascii')
+
         #Sub to each frame
         self.lidar_sub = rospy.Subscriber(record_topics['lidar_topic'], LaserScan, self.lidar_callback)
         self.steer_sub = rospy.Subscriber(record_topics['camera_topic'], AckermannDriveStamped, self.steer_callback)
@@ -44,6 +46,9 @@ class ExperienceRecorder(object):
         self.framecount = 0
         m.patch()
         self.bridge = CvBridge()
+
+        #Multithreading stuff
+        threading.Thread.__init__ (self)
     
     def lidar_callback(self, data):
         lidar = dict(
@@ -80,10 +85,20 @@ class ExperienceRecorder(object):
                 self.curr_batch += [b'lidary', b'dumpy', b'steery', b'cvmd', b'cvimg']
                 self.latest_obs = {}
                 if (len(self.curr_batch) / 4.0 % 20.0) == 0:
-                    print(f"Sending out {len(self.curr_batch)/4.0}")
+                    print(f"Sending out batch {len(self.curr_batch)/4.0}")
                     self.zmq_socket.send_multipart(self.curr_batch, copy=False)
+    def run(self):
+        poll = zmq.Poller()
+        poll.register(self.zmq_socket, zmq.POLLIN)
+        while True:
+            sockets = dict(poll.poll(1000))
+            if self.zmq_socket in sockets:
+                msg = self.zmq_socket.recv_multipart()
+                print(msg)
+
 def main(args):
-	rospy.init_node("ExperienceRecorder", anonymous=True)
-	sender = ExperienceRecorder(connect_to="tcp://195.0.0.7:5555")
-	rospy.sleep(0.1)
-	rospy.spin()
+    rospy.init_node("ExperienceRecorder", anonymous=True)
+    sender = ExperienceRecorder(connect_to="tcp://195.0.0.7:5555")
+    sender.start()
+    rospy.sleep(0.1)
+    rospy.spin()

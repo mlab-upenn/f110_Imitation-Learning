@@ -10,7 +10,9 @@ class f110Server(object):
     """
     def __init__(self, open_port='tcp://*:5555'):
         self.zmq_context = SerializingContext()
-        self.zmq_socket = self.zmq_context.socket(zmq.REP)
+        self.zmq_socket = self.zmq_context.socket(zmq.DEALER)
+        id = '0'
+        self.socket = id.encode('ascii')
         self.zmq_socket.bind(open_port)
     
     def recv_data(self, copy=False):
