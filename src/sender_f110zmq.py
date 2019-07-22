@@ -70,19 +70,19 @@ class f110Sender(object):
 
         cv_img = cv2.resize(cv_img, None, fx=0.4, fy=0.4)
         #make msgpack dumps of everything
-	if "lidar" in self.latest_obs and "steer" in self.latest_obs:
-		lidar_dump = msgpack.dumps(self.latest_obs["lidar"]) 
-		steer_dump = msgpack.dumps(self.latest_obs["steer"])
-		#print(self.latest_obs["lidar"])
-		#print('----------------------------')
-		#print(self.latest_obs["steer"])
-		#lidar_dump = msgpack.dumps('olda')
-		self.zmq_socket.send(lidar_dump, copy=False, flags=zmq.SNDMORE)
-		self.zmq_socket.send(steer_dump, copy=False, flags=zmq.SNDMORE)
-		self.zmq_socket.send_array(cv_img, copy=False, track=False)
-		message = self.zmq_socket.recv()
-		print("Recv reply")
-		self.latest_obs = {}
+        if "lidar" in self.latest_obs and "steer" in self.latest_obs:
+            lidar_dump = msgpack.dumps(self.latest_obs["lidar"]) 
+            steer_dump = msgpack.dumps(self.latest_obs["steer"])
+            #print(self.latest_obs["lidar"])
+            #print('----------------------------')
+            #print(self.latest_obs["steer"])
+            #lidar_dump = msgpack.dumps('olda')
+            self.zmq_socket.send(lidar_dump, copy=False, flags=zmq.SNDMORE)
+            self.zmq_socket.send(steer_dump, copy=False, flags=zmq.SNDMORE)
+            self.zmq_socket.send_array(cv_img, copy=False, track=False)
+            message = self.zmq_socket.recv()
+            print("Recv reply")
+            self.latest_obs = {}
 
 def main(args):
 	rospy.init_node("f110ZMQTest", anonymous=True)
