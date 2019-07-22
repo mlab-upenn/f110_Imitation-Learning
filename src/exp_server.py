@@ -1,4 +1,5 @@
 import time, cv2, zmq, msgpack, threading
+from NN.Metric_Visualizer import Metric_Visualizer
 import numpy as np
 import msgpack_numpy as m
 __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
@@ -10,6 +11,20 @@ class ExperienceServer(threading.Thread):
         self.zmq_socket.bind(open_port)
         threading.Thread.__init__(self)
 
+        #Visualizer
+        self.vis = Metric_Visualizer()
+
+    def convert_batch(self, fullmsg):
+        for i in range(len(fullmsg)):
+            if i%4 == 0:
+                lidar = msgpack.unpackb(fullmsg[i])
+                steer = msgpack.unpackb(fullmsg[i+1])
+                md = msgpack.unpackb(fullmsg[i + 2])
+                cv_img = fullmsg[i+3]
+                cv_img = np.frombuffer(cv_img, dtype=md[b'dtype'])
+                cv_img = cv_img.reshape(md[b'shape'])
+
+        
     def show_msg(self, fullmsg):
         for i in range(len(fullmsg)):
             if i%4 == 0:
