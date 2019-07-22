@@ -2,7 +2,7 @@ import os, json, pdb, cv2, math
 import numpy as np
 from functools import partial
 import pandas as pd
-from Data_Utils import Data_Utils
+from nnet.Data_Utils import Data_Utils
 dutils = Data_Utils()
 
 def changeName(dest_dict, prefix):

@@ -2,7 +2,7 @@ import os, cv2, math, sys, json, torch, pdb, random
 import numpy as np
 import matplotlib.pyplot as plt
 import moviepy.editor as mpy
-from Data_Utils import Data_Utils
+from nnet.Data_Utils import Data_Utils
 import pandas as pd 
 from tabulate import tabulate
 from steps import session

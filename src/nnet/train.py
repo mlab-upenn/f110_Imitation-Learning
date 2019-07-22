@@ -5,8 +5,8 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from steps import session
 import numpy as np
-from Metric_Visualizer import Metric_Visualizer
-from models import NVIDIA_ConvNet
+from nnet.Metric_Visualizer import Metric_Visualizer
+from nnet.models import NVIDIA_ConvNet
 from tensorboardX import SummaryWriter
 
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 

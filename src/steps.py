@@ -1,7 +1,7 @@
 from functools import partial
-from models import *
-from func_utils import *
-from datasets import *
+from nnet.models import *
+from nnet.func_utils import *
+from nnet.datasets import *
 import torch.nn as nn
 import torch.optim as optim
 

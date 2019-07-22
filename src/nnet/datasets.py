@@ -1,9 +1,8 @@
 import os, torch, cv2
 import numpy as np
-from Data_Utils import Data_Utils
+from nnet.Data_Utils import Data_Utils
 from torch.utils.data import Dataset
 from torchvision import transforms, utils
-from Data_Utils import Data_Utils
 import pandas as pd
 
 class SteerDataset(Dataset):

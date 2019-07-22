@@ -1,5 +1,7 @@
 import time, cv2, zmq, msgpack, threading
-from NN.Metric_Visualizer import Metric_Visualizer
+from nnet.Metric_Visualizer import Metric_Visualizer
+from nnet.Data_Utils import Data_Utils
+from steps import session
 import numpy as np
 import msgpack_numpy as m
 __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
