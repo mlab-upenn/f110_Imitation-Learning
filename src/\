@@ -35,7 +35,7 @@ class ExperienceRecorder(threading.Thread):
         self.lidar_sub = rospy.Subscriber(record_topics['lidar_topic'], LaserScan, self.lidar_callback)
         self.steer_sub = rospy.Subscriber(record_topics['steer_topic'], AckermannDriveStamped, self.steer_callback)
         self.cam_sub = rospy.Subscriber(record_topics['camera_topic'], Image, self.cam_callback)
-	self.joy_sub = rospy.Subscribed('/vesc/joy', Joy, self.joy_callback)
+	self.joy_sub = rospy.Subscribed('/vesc/joy'
 
         #other stuff
         self.latest_obs = {}
@@ -44,20 +44,9 @@ class ExperienceRecorder(threading.Thread):
 	self.batchcount = 0
         m.patch()
         self.bridge = CvBridge()
-	self.only_record = ''
-	self.curr_recording = '' #either autonomous, joystick or both
 
         #Multithreading stuff
 	threading.Thread.__init__(self)
-
-    def joy_callback(self, data):
-	#just sets the bit 
-	auton_button = data.buttons[5]
-	joy_button = data.button[4]
-	if joy_button:
-	    self.curr_recording = 'autonomous'
-	elif auton_button:
-	    self.curr_recording = 'joystick'
 
     def lidar_callback(self, data):
         lidar = dict(
@@ -68,13 +57,12 @@ class ExperienceRecorder(threading.Thread):
         self.latest_obs['lidar'] = lidar
         
     def steer_callback(self, data):
-	if self.curr_recording == self.only_record or self.only_record == 'both':
-		steer = dict(
-		    steering_angle = data.drive.steering_angle, 
-		    steering_angle_velocity = data.drive.steering_angle_velocity,
-		    speed = data.drive.speed
-		)
-		self.latest_obs['steer'] = steer
+        steer = dict(
+            steering_angle = data.drive.steering_angle, 
+	    steering_angle_velocity = data.drive.steering_angle_velocity,
+            speed = data.drive.speed
+        )
+        self.latest_obs['steer'] = steer
     
 
     def cam_callback(self, data):
@@ -87,7 +75,7 @@ class ExperienceRecorder(threading.Thread):
                     cv_img = self.bridge.imgmsg_to_cv2(data, "bgr8")
                 except CvBridgeError as e:
                     print(e)
-		cv_img = cv2.resize(cv_img, None, fx=0.5, fy=0.5)
+		cv_img = cv2.resize(cv_img, None, fx=0.4, fy=0.4)
                 cv_md = dict(
                     dtype=str(cv_img.dtype),
                     shape=cv_img.shape,
@@ -95,12 +83,12 @@ class ExperienceRecorder(threading.Thread):
                 cv_md_dump = msgpack.dumps(cv_md)
                 self.curr_batch += [lidar_dump, steer_dump, cv_md_dump, cv_img]
                 self.latest_obs = {}
-                if (len(self.curr_batch) / 4.0 % 32.0) == 0:
+                if (len(self.curr_batch) / 4.0 % 20.0) == 0:
                     print("Sending out batch %s" % self.batchcount)
                     self.zmq_socket.send_multipart(self.curr_batch, copy=False)
 		    self.curr_batch = []
 		    self.batchcount+=1
-	      self.framecount+=1
+	self.framecount+=1
 
     def run(self):
         poll = zmq.Poller()
@@ -115,7 +103,7 @@ def main(args):
     rospy.init_node("ExperienceRecorder", anonymous=True)
     sender = ExperienceRecorder(connect_to="tcp://195.0.0.7:5555")
     sender.start()
-    rospy.sleep(0.2)
+    rospy.sleep(0.3)
     rospy.spin()
 
 if __name__ == '__main__':
