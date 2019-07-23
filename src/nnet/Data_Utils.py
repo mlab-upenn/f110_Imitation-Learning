@@ -169,7 +169,7 @@ class Data_Utils(object):
         """
         dump_array = []
         for i in range(len(fullmsg)):
-            if i%5 == 0:
+            if i%4 == 0:
                 lidar = msgpack.loads(fullmsg[i], encoding="utf-8")
                 steer = msgpack.unpackb(fullmsg[i+1], encoding="utf-8")
                 md = msgpack.unpackb(fullmsg[i + 2])

@@ -115,16 +115,22 @@ class Metric_Visualizer(object):
         framebuffer = []
         pkl_files = os.listdir(dpath)
         for pkl in pkl_files:
-            data_in = open(os.path.join(dpath, pkl))
+            print(os.path.join(dpath, pkl))
+            data_in = open(os.path.join(dpath, pkl), 'rb')
             data_array = pickle.load(data_in)
-            print(pkl)
             for i, data_dict in enumerate(data_array):
                 img, steer = data_dict["img"], data_dict["steer"]
                 frame = img.copy()
                 angle = steer["steering_angle"]
                 speed = steer["speed"]
                 self.vis_frame(frame, angle, speed, 0, show_steer=True)
-                print(i)
+                if live:
+                    cv2.imshow('FrameBatch', frame)
+                    cv2.waitKey(0)
+                else:
+                    framebuffer.append(frame.copy())
+        if not live:
+            self.writer.add_video(stepname, framebuffer, fps=10, global_step=idx, as_np_framebuffer=True)
 
     def vid_from_path(self, dpath, stepname, idx, show_steer=False, units='rad'):
         """
