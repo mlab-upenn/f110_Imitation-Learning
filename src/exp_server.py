@@ -18,7 +18,7 @@ class ExperienceServer(threading.Thread):
         self.dutils = Data_Utils()
 
         #Session to save experiences
-        self.exp_path = os.path.join(session["params"]["abs_path"], session["params"]["sess_root"], str(session["dagger"]["sess_id"]), "exp")
+        self.exp_path = os.path.join(session["params"]["abs_path"], session["params"]["sess_root"], str(session["online"]["sess_id"]), "exp")
         if not os.path.exists(self.exp_path):
             os.makedirs(self.exp_path)
         print("EXPERIENCE PATH:", self.exp_path)

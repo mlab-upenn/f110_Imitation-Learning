@@ -57,7 +57,7 @@ def rot90(args, src_dict, ros_dict=None):
         pass
     return changeName(dest_dict, 'rot90')
 
-def radOffset(args, src_dictm ros_dict=None):
+def radOffset(args, src_dict, ros_dict=None):
     assert (len(args) == 1), "Incorrect sized argument to radOffset"
     offset = args[0]
     dest_dict = src_dict
