@@ -100,8 +100,14 @@ session = {
         "vsplit":0.1,
         "dataset":SteerDataset
     },
-    "dagger":
+    "online":
     {
         "sess_id": 0
+        ,"funclist":
+                [
+                    p(rot90, ["clockwise"]),
+                    p(cropVertical, [100, 200]),
+                    p((rad2deg), []),
+                ]
     }
 }

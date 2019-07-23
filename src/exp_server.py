@@ -26,7 +26,6 @@ class ExperienceServer(threading.Thread):
     def show_msg(self, fullmsg):
         for i in range(len(fullmsg)):
             if i%4 == 0:
-                # lidar = msgpack.unpackb(fullmsg[i])
                 lidar = msgpack.loads(fullmsg[i], encoding="utf-8")
                 print(lidar.keys())
                 steer = msgpack.unpackb(fullmsg[i+1])
@@ -46,7 +45,7 @@ class ExperienceServer(threading.Thread):
             fullmsg = self.zmq_socket.recv_multipart()
             print('IDENT:', fullmsg[0])
             self.dutils.save_batch_to_pickle(fullmsg[1:], os.path.join(self.exp_path))
-            self.vis.vid_from_pkl(self.exp_path, 0, 0, show_steer=True, units='rad')
+            self.vis.vid_from_pkl(self.exp_path, 0, 0, show_steer=True, units='rad', live=True)
             msg = b'NN for experience %s' % (fullmsg[0])
             
             #Include where i'm sending also as a multipart
