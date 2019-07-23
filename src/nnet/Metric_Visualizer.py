@@ -136,7 +136,7 @@ class Metric_Visualizer(object):
                 frame[0:lidar_rows, img_cols:frame_cols, :] = lidar_frame
                 if live:
                     cv2.imshow('FrameBatch', frame)
-                    cv2.waitKey(0)
+                    cv2.waitKey(100)
                 else:
                     framebuffer.append(frame.copy())
         if not live:
@@ -170,14 +170,6 @@ class Metric_Visualizer(object):
                 scaled_y = int(cy - y * 120)
                 print(scaled_x, scaled_y)
                 cv2.circle(lidar_frame, (scaled_x, scaled_y), 1, (255, 255, 255), -1)
-
-        #reference points
-        # (zerox, zeroy) = self.data_utils.polar_to_cart(0.0, 0.4)
-        # (zerox, zeroy) = int(cx + zerox * 120), int(cy - zeroy * 120)
-        # cv2.circle(lidar_frame, (int(zerox), int(zeroy)), 3, (0, 0, 255), -1)
-        # (maxx, maxy) = self.data_utils.polar_to_cart(math.pi, 0.4)
-        # (maxx, maxy) = int(cx + maxx * 120), int(cy - maxy * 120)
-        # cv2.circle(lidar_frame, (int(maxx), int(maxy)), 3, (0, 255, 0), -1)
 
         #add steer visualizer
         steering_angle = steer_dict["steering_angle"]
