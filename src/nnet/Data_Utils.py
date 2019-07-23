@@ -168,7 +168,7 @@ class Data_Utils(object):
         y_ranges = []
         for i, r in enumerate(ranges):
             theta = angle_min + i * angle_incr
-            x, y = self.polar_to_cart(theta, r)
+            x, y = self.polar_to_cart(theta + math.pi/2, r*100.0)
             x_ranges.append(x)
             y_ranges.append(y)
         return x_ranges, y_ranges

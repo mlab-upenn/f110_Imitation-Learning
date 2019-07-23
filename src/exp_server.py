@@ -51,7 +51,7 @@ class ExperienceServer(threading.Thread):
         self.vis.vid_from_online_dir(self.exp_path, 0, 0, show_steer=True, units='rad', live=True)
 
         #fix steering angles to use follow the gap
-        self.online_learner.fix_steering(self.exp_path)
+        # self.online_learner.fix_steering(self.exp_path)
 
     def run(self):
         while True:
@@ -59,7 +59,7 @@ class ExperienceServer(threading.Thread):
             print('IDENT:', fullmsg[0])
 
             #Do stuff with fullmsg & get an nn
-            self.dostuff(fullmsg)
+            self.dostuff(fullmsg[1:])
             msg = b'NN for experience %s' % (fullmsg[0])
             #Include where i'm sending also as a multipart
             self.zmq_socket.send_multipart([fullmsg[0],msg, b'Hello', b'mister', b'lioa'])
