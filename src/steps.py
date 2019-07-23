@@ -34,7 +34,7 @@ session = {
         },
         {
             "type":"preprocess",
-            "units":"deg",
+            "units":"rad",
             "funclist":
             [
                 [
@@ -42,7 +42,6 @@ session = {
                     p(cropVertical, [200, 400]),
                     p(cannyEdge, [100, 200]),
                     p(radOffset, [0.15]),
-                    p((rad2deg), []),
                     p((gaussianSamplingAngle), [1.2]),
                     p((rescaleImg), [0.5]),
                 ],
@@ -51,7 +50,6 @@ session = {
                     p(rot90, ["clockwise"]),
                     p(cropVertical, [200, 400]),
                     p(radOffset, [-0.15]),
-                    p((rad2deg), []),
                     p((gaussianSamplingAngle), [1.2]),
                     p((rescaleImg), [0.5])
                 ],
@@ -59,7 +57,6 @@ session = {
                 [
                     p(rot90, ["clockwise"]),
                     p(cropVertical, [200, 400]),
-                    p((rad2deg), []),
                     p((gaussianSamplingAngle), [1.2]),
                     p((rescaleImg), [0.5]) 
                 ]
@@ -67,7 +64,7 @@ session = {
         },
         {
             "type":"augment",
-            "units":"deg",
+            "units":"rad",
             "funclist":
             [
                 [
@@ -83,7 +80,7 @@ session = {
         },
         {
             "type":"combine",
-            "units":"deg",
+            "units":"rad",
             "foldername":"main"
         }
     ],
@@ -107,7 +104,6 @@ session = {
                 [
                     p(rot90, ["clockwise"]),
                     p(cropVertical, [100, 200]),
-                    p((rad2deg), []),
                 ]
     }
 }

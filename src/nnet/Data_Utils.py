@@ -148,6 +148,30 @@ class Data_Utils(object):
         frame_0 = cv2.imread(framepath)
         h, w, c = frame_0.shape
         return h, w
+    
+    def polar_to_cart(self, theta, r):
+        """
+        Assumes theta in radians & returns x,y
+        """
+        x = r*math.cos(theta)
+        y = r*math.sin(theta)
+        return x,y
+
+    def lidar_polar_to_cart(self, lidar_dict):
+        """
+        Convert a lidar_dict to cartesian & return x_ranges & y_ranges
+        """
+        ranges = lidar_dict.get("ranges")
+        angle_min = lidar_dict.get("angle_min")
+        angle_incr = lidar_dict.get("angle_increment")
+        x_ranges = []
+        y_ranges = []
+        for i, r in enumerate(ranges):
+            theta = angle_min + i * angle_incr
+            x, y = self.polar_to_cart(theta, r)
+            x_ranges.append(x)
+            y_ranges.append(y)
+        return x_ranges, y_ranges
 
     def apply_flist(self, src_dict, flist):
         """
