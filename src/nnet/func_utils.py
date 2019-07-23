@@ -2,7 +2,7 @@ import os, json, pdb, cv2, math
 import numpy as np
 from functools import partial
 import pandas as pd
-from Data_Utils import Data_Utils
+from nnet.Data_Utils import Data_Utils
 dutils = Data_Utils()
 
 def changeName(dest_dict, prefix):
@@ -28,13 +28,7 @@ def filterBadData(args, src_dict):
         dest_dict["flag"] = False
     return changeName(dest_dict, 'fbd')
 
-def opticalFlow(args, src_dict):
-    assert(len(args) == 0), "Incorrect size argument to opticalFlow"
-    dest_dict = src_dict
-    framelist = dutils.get_last_n_frames(3, src_dict["src_datapath"], src_dict["idx"])
-    return changeName(dest_dict, 'opticalFlow')
-
-def cropVertical(args, src_dict):
+def cropVertical(args, src_dict, ros_dict=None):
     assert (len(args) == 2),"Incorrect sized argument to cropVertical"
     cropStart = args[0]
     cropEnd = args[1]
@@ -49,7 +43,7 @@ def cropVertical(args, src_dict):
         raise Exception('bad args cropvertical')
     return changeName(dest_dict, 'cropV')
 
-def rot90(args, src_dict):
+def rot90(args, src_dict, ros_dict=None):
     assert (len(args) == 1),"Incorrect sized argument to rot90"
     direction = args[0]
     dest_dict = src_dict
@@ -63,7 +57,7 @@ def rot90(args, src_dict):
         pass
     return changeName(dest_dict, 'rot90')
 
-def radOffset(args, src_dict):
+def radOffset(args, src_dict, ros_dict=None):
     assert (len(args) == 1), "Incorrect sized argument to radOffset"
     offset = args[0]
     dest_dict = src_dict
@@ -71,7 +65,7 @@ def radOffset(args, src_dict):
     dest_dict["row"][1] = src_row[1] + offset
     return changeName(dest_dict, 'radOff')
 
-def rad2deg(args, src_dict):
+def rad2deg(args, src_dict, ros_dict=None):
     assert(len(args) == 0), "Incorrect sized arguments to rad2deg"
     dest_dict = src_dict
     src_row = src_dict.get("row")

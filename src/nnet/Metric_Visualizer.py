@@ -1,8 +1,8 @@
-import os, cv2, math, sys, json, torch, pdb, random
+import os, cv2, math, sys, json, torch, pdb, random, pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import moviepy.editor as mpy
-from Data_Utils import Data_Utils
+from nnet.Data_Utils import Data_Utils
 import pandas as pd 
 from tabulate import tabulate
 from steps import session
@@ -88,6 +88,7 @@ class Metric_Visualizer(object):
             vislist.append(frame)
         self.writer.add_images(labelname, vislist, global_step=global_step, dataformats='HWC')
     
+
     def framelist_from_path(self, dpath, stepname, idx, show_steer=False, units='rad'):
         """
         Send a list of frames to Tensorboard from a path
@@ -104,9 +105,84 @@ class Metric_Visualizer(object):
         timestamp_list = splitrow(3)
         self.vis_framelist(stepname, framelist, angle_list, global_step=idx, show_steer=show_steer, vel_list=vel_list, timestamp_list=timestamp_list)
         
+    def frame_from_datadict(self, data_dict):
+        img, steer = data_dict["img"], data_dict["steer"]
+        img_frame = img.copy()
+        angle = steer["steering_angle"]
+        speed = steer["speed"]
+        self.vis_frame(img_frame, angle, speed, 0, show_steer=True)
+
+        #make bigframe
+        img_rows, img_cols, _ = img_frame.shape
+        lidar_frame = self.vis_lidar(data_dict["lidar"], data_dict["steer"])
+        lidar_rows, lidar_cols, _ = lidar_frame.shape
+        frame_rows, frame_cols = max(lidar_rows,img_rows), lidar_cols+img_cols
+        frame = np.zeros((frame_rows, frame_cols, 3), dtype=img_frame.dtype)
+        frame[0:img_rows, 0:img_cols, :] = img_frame
+        frame[0:lidar_rows, img_cols:frame_cols, :] = lidar_frame
+        return frame
+            
+    def vid_from_online_dir(self, dpath, stepname, idx, show_steer=False, units='rad', live=False):
+        """
+        Send annotated video to Tensorboard/View video (PKL)
+        dpath: abs_path to data folder containing the pkl files
+        labelname: str name for the label
+        global_step:global_step to record for slider functionality
+        """
+        framebuffer = []
+        pkl_files = os.listdir(dpath)
+        for pkl in pkl_files:
+        print(os.path.join(dpath, pkl))
+            data_in = open(os.path.join(dpath, pkl), 'rb')
+            data_array = pickle.load(data_in)
+            for i, data_dict in enumerate(data_array):
+                frame = self.frame_from_datadict(data_dict)
+                if live:
+                    cv2.imshow('FrameBatch', frame)
+                    cv2.waitKey(100)
+                else:
+                    framebuffer.append(frame.copy())
+        if not live:
+            self.writer.add_video(stepname, framebuffer, fps=10, global_step=idx, as_np_framebuffer=True)
+
+    def vis_lidar(self, lidar_dict, steer_dict, units='rad', live=False):
+        """
+        lidar_dict has the following format:
+        {
+            'ranges': [float array],
+            'angle_min':float,
+            'angle_increment':float
+        }
+        steer_dict has the following format:
+        {
+            'steering_angle_velocity':float,
+            'speed':float,
+            'steering_angle':float
+        }
+        return lidar frame
+        """
+        #convert lidar data to x,y coordinates
+        x_ranges, y_ranges = self.data_utils.lidar_polar_to_cart(lidar_dict)
+        lidar_frame = np.zeros((400, 400, 3))
+        cx = 200
+        cy = 300
+        rangecheck = lambda x, y: x < 1000.0 and x >= 0 and y < 1000.0 and y >= 0
+        for x, y in zip(x_ranges, y_ranges):
+            if (rangecheck(x, y)):
+                scaled_x = int(cx + x * 120)
+                scaled_y = int(cy - y * 120)
+                print(scaled_x, scaled_y)
+                cv2.circle(lidar_frame, (scaled_x, scaled_y), 1, (255, 255, 255), -1)
+
+        #add steer visualizer
+        steering_angle = steer_dict["steering_angle"]
+        (steerx, steery) = (cx + 0.1*120*math.cos(-1.0 * steering_angle + math.pi/2.)), (cy - 0.1*120*math.sin(-1.0 * steering_angle + math.pi/2.))
+        cv2.circle(lidar_frame, (int(steerx), int(steery)), 4, (0, 255, 0), -1)
+        return lidar_frame
+
     def vid_from_path(self, dpath, stepname, idx, show_steer=False, units='rad'):
         """
-        Send annotated video to Tensorboard
+        Send annotated video to Tensorboard (CSV)
         dpath: abs_path to data folder containing images & csv
         labelname: str name for the label
         global_step: global_step to record for slider functionality
@@ -125,9 +201,9 @@ class Metric_Visualizer(object):
                 frame = cv2.imread(framepath)
                 self.vis_frame(frame, angle, speed, timestamp, show_steer=show_steer)
                 framebuffer.append(frame.copy())
-
         self.writer.add_video(stepname, framebuffer, fps=10, global_step=idx, as_np_framebuffer=True)
-
+    
+        
     def plot_anglehist(self, dpath, tag, idx):
         csvpath = os.path.join(dpath, "data.csv")
         df = pd.read_csv(csvpath) 
@@ -137,6 +213,7 @@ class Metric_Visualizer(object):
         fig = plt.figure()
         plt.hist(angle_column, num_bins, color='green')
         self.writer.add_figure(tag, fig, global_step=idx)
+        
 
     def text_table(self, dpath, labelname, foldername='', angle_unit='', global_step=0):
         df = self.data_utils.get_df(dpath)
