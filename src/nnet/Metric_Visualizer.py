@@ -105,8 +105,24 @@ class Metric_Visualizer(object):
         timestamp_list = splitrow(3)
         self.vis_framelist(stepname, framelist, angle_list, global_step=idx, show_steer=show_steer, vel_list=vel_list, timestamp_list=timestamp_list)
         
+    def frame_from_datadict(self, data_dict):
+        img, steer = data_dict["img"], data_dict["steer"]
+        img_frame = img.copy()
+        angle = steer["steering_angle"]
+        speed = steer["speed"]
+        self.vis_frame(img_frame, angle, speed, 0, show_steer=True)
 
-    def vid_from_pkl(self, dpath, stepname, idx, show_steer=False, units='rad', live=False):
+        #make bigframe
+        img_rows, img_cols, _ = img_frame.shape
+        lidar_frame = self.vis_lidar(data_dict["lidar"], data_dict["steer"])
+        lidar_rows, lidar_cols, _ = lidar_frame.shape
+        frame_rows, frame_cols = max(lidar_rows,img_rows), lidar_cols+img_cols
+        frame = np.zeros((frame_rows, frame_cols, 3), dtype=img_frame.dtype)
+        frame[0:img_rows, 0:img_cols, :] = img_frame
+        frame[0:lidar_rows, img_cols:frame_cols, :] = lidar_frame
+        return frame
+            
+    def vid_from_online_dir(self, dpath, stepname, idx, show_steer=False, units='rad', live=False):
         """
         Send annotated video to Tensorboard/View video (PKL)
         dpath: abs_path to data folder containing the pkl files
@@ -116,24 +132,11 @@ class Metric_Visualizer(object):
         framebuffer = []
         pkl_files = os.listdir(dpath)
         for pkl in pkl_files:
-            print(os.path.join(dpath, pkl))
+        print(os.path.join(dpath, pkl))
             data_in = open(os.path.join(dpath, pkl), 'rb')
             data_array = pickle.load(data_in)
             for i, data_dict in enumerate(data_array):
-                img, steer = data_dict["img"], data_dict["steer"]
-                img_frame = img.copy()
-                angle = steer["steering_angle"]
-                speed = steer["speed"]
-                self.vis_frame(img_frame, angle, speed, 0, show_steer=True)
-
-                #make bigframe
-                img_rows, img_cols, _ = img_frame.shape
-                lidar_frame = self.vis_lidar(data_dict["lidar"], data_dict["steer"])
-                lidar_rows, lidar_cols, _ = lidar_frame.shape
-                frame_rows, frame_cols = max(lidar_rows,img_rows), lidar_cols+img_cols
-                frame = np.zeros((frame_rows, frame_cols, 3), dtype=img_frame.dtype)
-                frame[0:img_rows, 0:img_cols, :] = img_frame
-                frame[0:lidar_rows, img_cols:frame_cols, :] = lidar_frame
+                frame = self.frame_from_datadict(data_dict)
                 if live:
                     cv2.imshow('FrameBatch', frame)
                     cv2.waitKey(100)

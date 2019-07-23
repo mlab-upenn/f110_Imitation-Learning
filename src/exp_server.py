@@ -1,4 +1,5 @@
 import time, cv2, zmq, msgpack, threading, os
+from nnet.Online import Online
 from nnet.Metric_Visualizer import Metric_Visualizer
 from nnet.Data_Utils import Data_Utils
 from steps import session
@@ -15,7 +16,7 @@ class ExperienceServer(threading.Thread):
 
         #Visualizer & Data Utils
         self.vis = Metric_Visualizer()
-        self.dutils = Data_Utils()
+        self.online_learner = Online()
 
         #Session to save experiences
         self.exp_path = os.path.join(session["params"]["abs_path"], session["params"]["sess_root"], str(session["online"]["sess_id"]), "exp")
@@ -40,14 +41,26 @@ class ExperienceServer(threading.Thread):
                 cv2.imshow('BatchImages', cv_img)
                 cv2.waitKey(0)
         
+    def dostuff(self, fullmsg):
+        """
+        NEEDS A BETTER NAME - But basically takes fullmsg & does stuff with it, kind of like how Stepper 'does stuff' with the OG data
+        """
+        self.online_learner.save_batch_to_pickle(fullmsg, self.exp_path)
+
+        #for now, visualize batches live (do tensorboard stuff soon)
+        self.vis.vid_from_online_dir(self.exp_path, 0, 0, show_steer=True, units='rad', live=True)
+
+        #fix steering angles to use follow the gap
+        self.online_learner.fix_steering(self.exp_path)
+
     def run(self):
         while True:
             fullmsg = self.zmq_socket.recv_multipart()
             print('IDENT:', fullmsg[0])
-            self.dutils.save_batch_to_pickle(fullmsg[1:], os.path.join(self.exp_path))
-            self.vis.vid_from_pkl(self.exp_path, 0, 0, show_steer=True, units='rad', live=True)
+
+            #Do stuff with fullmsg & get an nn
+            self.dostuff(fullmsg)
             msg = b'NN for experience %s' % (fullmsg[0])
-            
             #Include where i'm sending also as a multipart
             self.zmq_socket.send_multipart([fullmsg[0],msg, b'Hello', b'mister', b'lioa'])
 
