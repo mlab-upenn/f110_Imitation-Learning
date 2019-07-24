@@ -51,7 +51,7 @@ class ExperienceServer(threading.Thread):
         self.online_learner.fix_steering(os.path.join(self.exp_path, 'raw'), os.path.join(self.exp_path, 'proc'))
         
         #for now, visualize batches live (do tensorboard stuff soon)
-        self.vis.vid_from_online_dir(self.exp_path, 0, 0, show_steer=True, units='rad', live=True)
+        self.vis.vid_from_online_dir(os.path.join(self.exp_path, 'proc'), 0, 0, show_steer=True, units='rad', live=True)
 
     def run(self):
         while True:

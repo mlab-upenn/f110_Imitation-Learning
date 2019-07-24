@@ -98,5 +98,5 @@ class FGM(object):
         if (angle < -0.32):
             angle = -0.32
 
-        data_dict["steer"]["steering_angle"] = angle
+        data_dict["steer"]["steering_angle"] = -1.0 * angle
         return data_dict

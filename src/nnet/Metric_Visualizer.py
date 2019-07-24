@@ -181,7 +181,7 @@ class Metric_Visualizer(object):
         
         #add steer visualizer
         steering_angle = steer_dict["steering_angle"]
-        (steerx, steery) = (cx + 0.4*100*math.cos(steering_angle + math.pi/2.)), (cy - 0.4*100*math.sin(steering_angle + math.pi/2.))
+        (steerx, steery) = (cx + 0.4*100*math.cos(-1.0 * steering_angle + math.pi/2.)), (cy - 0.4*100*math.sin(-1.0 * steering_angle + math.pi/2.))
         cv2.circle(lidar_frame, (int(steerx), int(steery)), 4, (0, 255, 0), -1)
         return lidar_frame
 

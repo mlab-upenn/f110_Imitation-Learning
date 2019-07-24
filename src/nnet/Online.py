@@ -30,6 +30,8 @@ class Online(object):
         """
         Saves batch to a pkl file in self.online_sess_dir
         """
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
         dump_array = []
         for i in range(len(fullmsg)):
             if i%4 == 0:
@@ -41,6 +43,7 @@ class Online(object):
                 cv_img = cv_img.reshape(md[b'shape'])
                 dump_array.append({"img":cv_img, "lidar":lidar, "steer":steer})
         dump_path = os.path.join(dest_dir, 'batch'+str(len(os.listdir(dest_dir))))
+        self.pickledump(dump_array, dump_path)
 
     def fix_steering(self, src_dir, dest_dir):
         """
@@ -48,8 +51,9 @@ class Online(object):
         """
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
-
-        pkl_files = os.listdir(dest_dir)
+        
+        pkl_files = os.listdir(src_dir)
+        print(pkl_files)
         for pkl in pkl_files:
             dump_array = []
             if pkl not in self.seen_pkls:
@@ -57,19 +61,13 @@ class Online(object):
                 data_in = open(os.path.join(src_dir, pkl), 'rb')
                 data_array = pickle.load(data_in)
                 for i, data_dict in enumerate(data_array):
-                    frame = self.vis.frame_from_datadict(data_dict)
-                    cv2.imshow("OG_FRAME", frame)
-                    cv2.waitKey(3)
                     try:
                         new_data_dict = self.oracle.fix(data_dict)
                     except Exception as e:
                         print(e)
                         new_data_dict["flag"] = False
                     if new_data_dict.get("flag", True):
-                        frame = self.vis.frame_from_datadict(data_dict)
-                        cv2.imshow("NEW FRAME", frame)
-                        cv2.waitKey(0)
                         dump_array.append(new_data_dict)
-                dump_path = os.path.join(dest_dir, pkl)
+                dump_path = os.path.join(dest_dir, 'proc_' + pkl)
                 self.pickledump(dump_array, dump_path)
                 self.seen_pkls.append(pkl)
