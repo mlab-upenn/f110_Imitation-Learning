@@ -7,7 +7,7 @@ import pandas as pd
 
 class SteerDataset(Dataset):
     """
-    Returns img, steering_angle pairs
+    Returns img, steering_angle pairs CVS
     """
     def __init__(self, datapath, transforms=None):
         """
@@ -36,3 +36,11 @@ class SteerDataset(Dataset):
 
         data_dict = {"img":ts_img, "angle":ts_angle}
         return data_dict
+
+class SteerDataset_ONLINE(Dataset):
+    """
+    Very Similar to SteerDataset, but process pkl files
+    """
+    def __init__(self, pkl_path, transforms=None):
+        """
+        """

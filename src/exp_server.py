@@ -22,6 +22,7 @@ class ExperienceServer(threading.Thread):
         self.exp_path = os.path.join(session["params"]["abs_path"], session["params"]["sess_root"], str(session["online"]["sess_id"]), "exp")
         if not os.path.exists(self.exp_path):
             os.makedirs(self.exp_path)
+        self.funclist = session["online"]["funclist"]
         print("EXPERIENCE PATH:", self.exp_path)
 
     def show_msg(self, fullmsg):
@@ -41,17 +42,25 @@ class ExperienceServer(threading.Thread):
                 cv2.imshow('BatchImages', cv_img)
                 cv2.waitKey(0)
         
-    def dostuff(self, fullmsg):
+    def dostuff(self, fullmsg, debug=False):
         """
         NEEDS A BETTER NAME - But basically takes fullmsg & does stuff with it, kind of like how Stepper 'does stuff' with the OG data
         """
-        self.online_learner.save_batch_to_pickle(fullmsg, self.exp_path)
-
-        #for now, visualize batches live (do tensorboard stuff soon)
-        self.vis.vid_from_online_dir(self.exp_path, 0, 0, show_steer=True, units='rad', live=True)
+        if not debug:
+            self.online_learner.save_batch_to_pickle(fullmsg, os.path.join(self.exp_path, 'raw'))
 
         #fix steering angles to use follow the gap
-        self.online_learner.fix_steering(self.exp_path)
+        self.online_learner.fix_steering(os.path.join(self.exp_path, 'raw'), os.path.join(self.exp_path, 'proc'))
+        
+        #Apply funclist to each batch
+        self.online_learner.apply_funcs(os.path.join(self.exp_path, 'proc'), os.path.join(self.exp_path,'proc'), self.funclist)
+
+        #for now, visualized processed batches live (TODO:Tensorboard Support)
+        self.vis.vid_from_online_dir(os.path.join(self.exp_path, 'proc'), 0, 0, show_steer=True, units='rad', live=True)
+
+        #Make dataset & dataloader from processed batches
+        
+
 
     def run(self):
         while True:
@@ -59,7 +68,7 @@ class ExperienceServer(threading.Thread):
             print('IDENT:', fullmsg[0])
 
             #Do stuff with fullmsg & get an nn
-            self.dostuff(fullmsg)
+            self.dostuff(fullmsg[1:])
             msg = b'NN for experience %s' % (fullmsg[0])
             #Include where i'm sending also as a multipart
             self.zmq_socket.send_multipart([fullmsg[0],msg, b'Hello', b'mister', b'lioa'])

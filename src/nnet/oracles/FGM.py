@@ -55,8 +55,6 @@ class FGM(object):
             grad = ((centerlen - edge_i) / consideration_dist)
             const =  edge_i
             y = grad * x + const
-            #print(grad)
-            #return centerlen
             return int(y)
         else:
             return int(edge_i)
@@ -85,7 +83,6 @@ class FGM(object):
         #Find the max length gap
         start_i , end_i, max_i = self.find_max_gap(free_space_ranges)
 
-        print(start_i, end_i)
         free_space_ranges[0:start_i] = np.nan
         free_space_ranges[end_i + 1 :] = np.nan
 
@@ -96,11 +93,10 @@ class FGM(object):
 
         angle = safest_theta
 
-        if (angle > 0.5236):
-            angle = 0.5236
-        if (angle < -0.5236):
-            angle = -0.5236
+        if (angle > 0.32):
+            angle = 0.32
+        if (angle < -0.32):
+            angle = -0.32
 
-        data_dict["steer"]["steering_angle"] = angle
-
+        data_dict["steer"]["steering_angle"] = -1.0 * angle
         return data_dict

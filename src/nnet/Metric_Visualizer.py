@@ -21,6 +21,7 @@ class Metric_Visualizer(object):
         self.fixangle = lambda angle, units: angle if units == 'rad' else angle * math.pi/180.0
         self.writer = writer
         self.data_utils = Data_Utils()
+        self.seen_pkls = []
 
     def vis_steer_point(self, frame, angle, cx, cy, r, size=10, color=(0, 0, 0)):
         """
@@ -106,22 +107,22 @@ class Metric_Visualizer(object):
         self.vis_framelist(stepname, framelist, angle_list, global_step=idx, show_steer=show_steer, vel_list=vel_list, timestamp_list=timestamp_list)
         
     def frame_from_datadict(self, data_dict):
-        img, steer = data_dict["img"], data_dict["steer"]
-        img_frame = img.copy()
-        angle = steer["steering_angle"]
-        speed = steer["speed"]
-        self.vis_frame(img_frame, angle, speed, 0, show_steer=True)
+            img, steer = data_dict["img"], data_dict["steer"]
+            img_frame = img.copy()
+            angle = steer["steering_angle"]
+            speed = steer["speed"]
+            self.vis_frame(img_frame, angle, speed, 0, show_steer=True)
 
-        #make bigframe
-        img_rows, img_cols, _ = img_frame.shape
-        lidar_frame = self.vis_lidar(data_dict["lidar"], data_dict["steer"])
-        lidar_rows, lidar_cols, _ = lidar_frame.shape
-        frame_rows, frame_cols = max(lidar_rows,img_rows), lidar_cols+img_cols
-        frame = np.zeros((frame_rows, frame_cols, 3), dtype=img_frame.dtype)
-        frame[0:img_rows, 0:img_cols, :] = img_frame
-        frame[0:lidar_rows, img_cols:frame_cols, :] = lidar_frame
-        return frame
-            
+            #make bigframe
+            img_rows, img_cols, _ = img_frame.shape
+            lidar_frame = self.vis_lidar(data_dict["lidar"], data_dict["steer"])
+            lidar_rows, lidar_cols, _ = lidar_frame.shape
+            frame_rows, frame_cols = max(lidar_rows,img_rows), lidar_cols+img_cols
+            frame = np.zeros((frame_rows, frame_cols, 3), dtype=img_frame.dtype)
+            frame[0:img_rows, 0:img_cols, :] = img_frame
+            frame[0:lidar_rows, img_cols:frame_cols, :] = lidar_frame
+            return frame
+
     def vid_from_online_dir(self, dpath, stepname, idx, show_steer=False, units='rad', live=False):
         """
         Send annotated video to Tensorboard/View video (PKL)
@@ -132,16 +133,18 @@ class Metric_Visualizer(object):
         framebuffer = []
         pkl_files = os.listdir(dpath)
         for pkl in pkl_files:
-        print(os.path.join(dpath, pkl))
-            data_in = open(os.path.join(dpath, pkl), 'rb')
-            data_array = pickle.load(data_in)
-            for i, data_dict in enumerate(data_array):
-                frame = self.frame_from_datadict(data_dict)
-                if live:
-                    cv2.imshow('FrameBatch', frame)
-                    cv2.waitKey(100)
-                else:
-                    framebuffer.append(frame.copy())
+            if pkl not in self.seen_pkls:
+                print(os.path.join(dpath, pkl))
+                data_in = open(os.path.join(dpath, pkl), 'rb')
+                data_array = pickle.load(data_in)
+                for i, data_dict in enumerate(data_array):
+                    frame = self.frame_from_datadict(data_dict)
+                    if live:
+                        cv2.imshow('FrameBatch', frame)
+                        cv2.waitKey(100)
+                    else:
+                        framebuffer.append(frame.copy())
+            self.seen_pkls.append(pkl)
         if not live:
             self.writer.add_video(stepname, framebuffer, fps=10, global_step=idx, as_np_framebuffer=True)
 
@@ -163,20 +166,22 @@ class Metric_Visualizer(object):
         """
         #convert lidar data to x,y coordinates
         x_ranges, y_ranges = self.data_utils.lidar_polar_to_cart(lidar_dict)
-        lidar_frame = np.zeros((400, 400, 3))
-        cx = 200
-        cy = 300
-        rangecheck = lambda x, y: x < 1000.0 and x >= 0 and y < 1000.0 and y >= 0
+        lidar_frame = np.ones((500, 500, 3)) * 75
+        cx = 250
+        cy = 450
+        rangecheck = lambda x, y: abs(x) < 1000. and abs(y) < 1000.
         for x, y in zip(x_ranges, y_ranges):
             if (rangecheck(x, y)):
-                scaled_x = int(cx + x * 120)
-                scaled_y = int(cy - y * 120)
-                print(scaled_x, scaled_y)
+                scaled_x = int(cx + x)
+                scaled_y = int(cy - y)
                 cv2.circle(lidar_frame, (scaled_x, scaled_y), 1, (255, 255, 255), -1)
 
+        #big steering angle
+        cv2.circle(lidar_frame, (cx, cy), int(0.4*100), (200, 0, 200), 1)
+        
         #add steer visualizer
         steering_angle = steer_dict["steering_angle"]
-        (steerx, steery) = (cx + 0.1*120*math.cos(-1.0 * steering_angle + math.pi/2.)), (cy - 0.1*120*math.sin(-1.0 * steering_angle + math.pi/2.))
+        (steerx, steery) = (cx + 0.4*100*math.cos(-1.0 * steering_angle + math.pi/2.)), (cy - 0.4*100*math.sin(-1.0 * steering_angle + math.pi/2.))
         cv2.circle(lidar_frame, (int(steerx), int(steery)), 4, (0, 255, 0), -1)
         return lidar_frame
 

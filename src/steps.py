@@ -102,7 +102,6 @@ session = {
         "sess_id": 0
         ,"funclist":
                 [
-                    p(rot90, ["clockwise"]),
                     p(cropVertical, [100, 200]),
                 ]
     }

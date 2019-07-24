@@ -170,12 +170,12 @@ class Data_Utils(object):
         y_ranges = []
         for i, r in enumerate(ranges):
             theta = angle_min + i * angle_incr
-            x, y = self.polar_to_cart(theta, r)
+            x, y = self.polar_to_cart(theta + math.pi/2, r*100.0)
             x_ranges.append(x)
             y_ranges.append(y)
         return x_ranges, y_ranges
 
-    def apply_flist(self, src_dict, flist):
+    def apply_flist(self, src_dict, flist, w_rosdict=False):
         """
         Apply a list of functions and return a dict
         src_dict: dictionary representing all source variables
@@ -184,9 +184,11 @@ class Data_Utils(object):
         """
         dest_dict = src_dict
         for json_func in flist:
-            # partial_func = get_partial_func(json_func)
             partial_func = json_func
-            dest_dict = partial_func(dest_dict)
+            if w_rosdict:
+                dest_dict = partial_func(None, ros_dict=src_dict)
+            else:
+                dest_dict = partial_func(dest_dict)
         return dest_dict
 
     def initYolo(self,model_dict):
@@ -237,6 +239,3 @@ class Data_Utils(object):
         final_df = self.get_finaldf(src_df, dest_df, "aug", new_folder, dest_datapath,)
         final_df.to_csv(os.path.join(dest_datapath, 'data.csv'), index=False)
         return new_folder
-
-
-
