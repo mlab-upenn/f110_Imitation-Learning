@@ -1,4 +1,4 @@
-import os, torch, cv2
+import os, torch, cv2, pickle
 import numpy as np
 from nnet.Data_Utils import Data_Utils
 from torch.utils.data import Dataset
@@ -43,4 +43,22 @@ class SteerDataset_ONLINE(Dataset):
     """
     def __init__(self, pkl_path, transforms=None):
         """
+        pkl_path: source of pkl file to read from 
         """
+        super(SteerDataset_ONLINE, self).__init__()
+        data_in = open(pkl_path, 'rb')
+        self.data_array = pickle.load(data_in)
+
+    def __len__(self):
+        return len(self.data_array)
+    
+    def __getitem__(self, idx):
+        """
+        Returns dictionary {"img":Tensor, C X H x W, "angle":float 1-Tensor}
+        """
+        data_dict = self.data_array[idx]
+        cv_img = data_dict
+        ts_angle = torch.Tensor(data_dict["steer"]["steering_angle"]).float()
+        ts_img = torch.from_numpy(cv_img).permute(2, 0, 1).float()
+        data_dict = {"img":ts_img, "angle":ts_angle}
+        return data_dict

@@ -224,10 +224,3 @@ class Stepper(object):
         elif insn_type =="attention":
             self.exec_attention(curr_step)
             self.curr_step_idx += 1
-
-s = Stepper()
-s.step()
-s.step()
-s.step()
-s.step()
-s.writer.close()

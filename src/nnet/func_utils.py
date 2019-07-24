@@ -110,7 +110,7 @@ def rescaleImg(args, src_dict):
     dest_dict["img"] = cv2.resize(src_img, None, fx=scale, fy=scale)
     return changeName(dest_dict, 'rescaled')
 
-def attentionMask(args,src_dict):
+def attentionMask(args, src_dict):
     dest_dict = src_dict
     img = src_dict.get("img")
     mask = np.zeros_like(img)

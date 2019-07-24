@@ -91,6 +91,6 @@ class Online(object):
                     new_data_dict = self.dutils.apply_flist(data_dict, funclist, w_rosdict=True)
                     if new_data_dict.get("flag", True):
                         dump_array.append(new_data_dict)
-                dump_path = os.path.join(dest_dir, 'func_' + pkl)
+                dump_path = os.path.join(dest_dir, pkl)
                 self.pickledump(dump_array, dump_path)
                 self.seen_pkls.append(pkl)
