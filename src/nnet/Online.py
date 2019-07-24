@@ -17,6 +17,7 @@ class Online(object):
     def __init__(self):
         self.vis = Metric_Visualizer()
         self.oracle = FGM()
+        self.dutils = Data_Utils()
         self.seen_pkls = []
 
     def pickledump(self, dump_array, dump_path, replace=True):
@@ -72,4 +73,24 @@ class Online(object):
                 self.pickledump(dump_array, dump_path)
                 self.seen_pkls.append(pkl)
 
-    def online_learner(self, src_dir, dest_dir, funclist):
+    def apply_funcs(self, src_dir, dest_dir, funclist):
+        """
+        Apply a series of functions 
+        """
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
+        pkl_files = os.listdir(src_dir)
+        print(pkl_files)
+        for pkl in pkl_files:
+            dump_array = []
+            if pkl not in self.seen_pkls:
+                print(os.path.join(src_dir, pkl))
+                data_in = open(os.path.join(src_dir, pkl), 'rb')
+                data_array = pickle.load(data_in)
+                for i, data_dict in enumerate(data_array):
+                    new_data_dict = self.dutils.apply_flist(data_dict, funclist, w_rosdict=True)
+                    if new_data_dict.get("flag", True):
+                        dump_array.append(new_data_dict)
+                dump_path = os.path.join(dest_dir, 'func_' + pkl)
+                self.pickledump(dump_array, dump_path)
+                self.seen_pkls.append(pkl)
