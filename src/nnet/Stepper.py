@@ -170,7 +170,32 @@ class Stepper(object):
         for i, folder in enumerate(self.dlist):
             self.data_utils.MOVE(raw_datadir, folder, dest_datadir, flist=[], preview=False, op='combine_choosename|' + foldername)
         self.dlist = [foldername]
-        self.default_vis(curr_step)    
+        self.default_vis(curr_step)
+
+    def exec_attention(self,curr_step):
+        """
+            Function to use a detection network to predict bounding boxes around objects of interest.
+            The bounding boxes will then be highlighted in the image so that the network pays more attention
+            to these objects during training
+        """    
+
+        assert(self.curr_step_idx > 0 and self.dlist is not None), "Step Error: Must call init before combine"            
+        
+        detectType = curr_step["detectionNetwork"]
+        paramsFile = curr_step["paramsFile"]
+        funclist = curr_step["funclist"]
+
+        #verify raw data & dlist
+        # self.B_VER(self.sess_path, self.dlist)
+        raw_datadir = self.sess_path
+        dest_datadir = self.sess_path  
+
+        model_dict = {"detectType": detectType, "paramsFile" : paramsFile}    
+
+        for i, folder in enumerate(self.dlist):
+            flist = funclist[i]
+            self.data_utils.DETECT(raw_datadir, folder, dest_datadir, model_dict, flist=[], preview=False)
+        self.default_vis(curr_step)
             
     def step(self):
         """
@@ -194,6 +219,10 @@ class Stepper(object):
         
         elif insn_type =="combine":
             self.exec_combine(curr_step)
+            self.curr_step_idx += 1
+
+        elif insn_type =="attention":
+            self.exec_attention(curr_step)
             self.curr_step_idx += 1
 
 s = Stepper()

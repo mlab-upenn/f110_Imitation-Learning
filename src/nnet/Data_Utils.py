@@ -3,6 +3,8 @@ import msgpack_numpy as m
 import numpy as np
 from functools import partial
 import pandas as pd
+import json
+from detection.yolov3 import YoloDetection
 
 class Data_Utils(object):
     """
@@ -186,3 +188,55 @@ class Data_Utils(object):
             partial_func = json_func
             dest_dict = partial_func(dest_dict)
         return dest_dict
+
+    def initYolo(self,model_dict):
+        modelDir = os.path.dirname(YoloDetection.__file__)
+        paramsFile = os.path.join(modelDir,model_dict.get("paramsFile"))
+        jsonFile = open(paramsFile)
+        params = json.load(jsonFile)
+        params = params["Yolo_params"]
+        cfg_path = os.path.join(modelDir,params["cfg"])
+        data_cfg = os.path.join(modelDir,params["data-cfg"])
+        weights =  os.path.join(modelDir,params["weights"])
+        return YoloDetection.YoloDetection(cfg_path,data_cfg,weights)
+
+    def initDetection(self,model_dict):
+        if (model_dict.get("detectType") == "yolo"):
+            return self.initYolo(model_dict)
+
+    def DETECT(self, src_datadir, folder, dest_datadir, model_dict,flist=[], preview=False):
+        
+        if not os.path.exists(dest_datadir):
+            os.makedirs(dest_datadir)
+
+        src_datapath = os.path.join(src_datadir, folder)
+        new_folder, dest_datapath = self.get_dest_datapath(dest_datadir, folder, op="aug")
+
+        if not os.path.exists(dest_datapath):
+            os.makedirs(dest_datapath)
+        #make new dataframes
+        src_df = self.get_df(src_datapath)
+        dest_df = pd.DataFrame(columns=src_df.columns.values)
+        model = self.initDetection(model_dict)
+        maxlen = self.get_interesting_idxs(src_datapath, 20) if preview else range(len(src_df))
+
+        for i in maxlen:
+            #Apply flist, get output
+            src_img, src_row = self.df_data_fromidx(src_datapath, src_df, i)
+            points = model.predict(src_img)
+            src_dict = {"img":src_img, "row":src_row, "src_datapath":src_datapath, "idx":i, "points":points}
+            dest_dict = self.apply_flist(src_dict, flist)
+
+            flag = dest_dict.get("flag", True)
+            if flag:
+                dest_row = dest_dict.get("row")
+                dest_img = dest_dict.get("img")
+                dest_img_name = dest_row[0]
+
+        #write df
+        final_df = self.get_finaldf(src_df, dest_df, "aug", new_folder, dest_datapath,)
+        final_df.to_csv(os.path.join(dest_datapath, 'data.csv'), index=False)
+        return new_folder
+
+
+

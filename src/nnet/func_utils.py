@@ -102,3 +102,14 @@ def rescaleImg(args, src_dict):
     src_img = src_dict.get("img")
     dest_dict["img"] = cv2.resize(src_img, None, fx=scale, fy=scale)
     return changeName(dest_dict, 'rescaled')
+
+def attentionMask(args,src_dict):
+    dest_dict = src_dict
+    img = src_dict.get("img")
+    mask = np.zeros_like(img)
+    points = src_dict["points"]
+    for x1,y1,x2,y2 in points:
+        mask[int(y1):int(y2),int(x1):int(x2)] = 255
+    extract = cv2.bitwise_and(img,mask)
+    dest_dict["img"] = cv2.addWeighted(img,0.5,extract,0.8,25)
+    return dest_dict
