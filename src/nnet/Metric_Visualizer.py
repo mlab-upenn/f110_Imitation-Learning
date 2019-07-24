@@ -166,7 +166,7 @@ class Metric_Visualizer(object):
         """
         #convert lidar data to x,y coordinates
         x_ranges, y_ranges = self.data_utils.lidar_polar_to_cart(lidar_dict)
-        lidar_frame = np.zeros((500, 500, 3))
+        lidar_frame = np.ones((500, 500, 3)) * 100
         cx = 250
         cy = 450
         rangecheck = lambda x, y: abs(x) < 1000. and abs(y) < 1000.
@@ -176,9 +176,12 @@ class Metric_Visualizer(object):
                 scaled_y = int(cy - y)
                 cv2.circle(lidar_frame, (scaled_x, scaled_y), 1, (255, 255, 255), -1)
 
+        #big steering angle
+        cv2.circle(lidar_frame, (cx, cy), int(0.4*100), (200, 0, 200), 1)
+        
         #add steer visualizer
         steering_angle = steer_dict["steering_angle"]
-        (steerx, steery) = (cx + 0.1*100*math.cos(-1.0 * steering_angle + math.pi/2.)), (cy - 0.1*100*math.sin(-1.0 * steering_angle + math.pi/2.))
+        (steerx, steery) = (cx + 0.4*100*math.cos(steering_angle + math.pi/2.)), (cy - 0.4*100*math.sin(steering_angle + math.pi/2.))
         cv2.circle(lidar_frame, (int(steerx), int(steery)), 4, (0, 255, 0), -1)
         return lidar_frame
 

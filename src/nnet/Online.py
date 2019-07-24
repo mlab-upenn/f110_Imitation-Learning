@@ -43,15 +43,16 @@ class Online(object):
         """
         pkl_files = os.listdir(dest_dir)
         for pkl in pkl_files:
-            print(os.path.join(dest_dir, pkl))
-            data_in = open(os.path.join(dest_dir, pkl), 'rb')
-            data_array = pickle.load(data_in)
-            for i, data_dict in enumerate(data_array):
-                frame = self.vis.frame_from_datadict(data_dict)
-                cv2.imshow("OG_FRAME", frame)
-                cv2.waitKey(3)
-                new_data_dict = self.oracle.fix(data_dict)
-                frame = self.vis.frame_from_datadict(data_dict)
-                cv2.imshow("NEW FRAME", frame)
-                cv2.waitKey(0)
-                self.seen_pkls.append(pkl)
+            if pkl not in self.seen_pkls:
+                print(os.path.join(dest_dir, pkl))
+                data_in = open(os.path.join(dest_dir, pkl), 'rb')
+                data_array = pickle.load(data_in)
+                for i, data_dict in enumerate(data_array):
+                    frame = self.vis.frame_from_datadict(data_dict)
+                    cv2.imshow("OG_FRAME", frame)
+                    cv2.waitKey(3)
+                    new_data_dict = self.oracle.fix(data_dict)
+                    frame = self.vis.frame_from_datadict(data_dict)
+                    cv2.imshow("NEW FRAME", frame)
+                    cv2.waitKey(0)
+                    self.seen_pkls.append(pkl)

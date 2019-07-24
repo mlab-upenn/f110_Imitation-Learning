@@ -47,11 +47,11 @@ class ExperienceServer(threading.Thread):
         """
         self.online_learner.save_batch_to_pickle(fullmsg, self.exp_path)
 
+        #fix steering angles to use follow the gap
+        self.online_learner.fix_steering(self.exp_path)
+        
         #for now, visualize batches live (do tensorboard stuff soon)
         self.vis.vid_from_online_dir(self.exp_path, 0, 0, show_steer=True, units='rad', live=True)
-
-        #fix steering angles to use follow the gap
-        # self.online_learner.fix_steering(self.exp_path)
 
     def run(self):
         while True:
