@@ -43,54 +43,53 @@ class Online(object):
                 cv_img = np.frombuffer(cv_img, dtype=md[b'dtype'])
                 cv_img = cv_img.reshape(md[b'shape'])
                 dump_array.append({"img":cv_img, "lidar":lidar, "steer":steer})
-        dump_path = os.path.join(dest_dir, 'batch'+str(len(os.listdir(dest_dir))))
+        pkl_name = 'batch' + str(len(os.listdir(dest_dir)))
+        dump_path = os.path.join(dest_dir, pkl_name)
         self.pickledump(dump_array, dump_path)
+        return pkl_name
 
-    def fix_steering(self, src_dir, dest_dir):
+    def fix_steering(self, src_dir, pkl_name, dest_dir):
         """
         Use an Oracle/Expert Policy to fix steering angles
+        src_dir:abs path to current dir containing pkl file
+        pkl_name: name of pkl file to fix
+        dest_dir:final directory (will change pkl filename accordingly)
         """
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
+    
+        dump_array = []
+        data_in = open(os.path.join(src_dir, pkl_name), 'rb')
+        data_array = pickle.load(data_in)
+        for i, data_dict in enumerate(data_array):
+            try:
+                new_data_dict = self.oracle.fix(data_dict)
+            except Exception as e:
+                print(e)
+                new_data_dict["flag"] = False
+            if new_data_dict.get("flag", True):
+                dump_array.append(new_data_dict)
+        new_pkl_name = 'proc_' + pkl_name
+        dump_path = os.path.join(dest_dir, new_pkl_name)
+        self.pickledump(dump_array, dump_path)
+        return new_pkl_name
         
-        pkl_files = os.listdir(src_dir)
-        print(pkl_files)
-        for pkl in pkl_files:
-            dump_array = []
-            if pkl not in self.seen_pkls:
-                print(os.path.join(src_dir, pkl))
-                data_in = open(os.path.join(src_dir, pkl), 'rb')
-                data_array = pickle.load(data_in)
-                for i, data_dict in enumerate(data_array):
-                    try:
-                        new_data_dict = self.oracle.fix(data_dict)
-                    except Exception as e:
-                        print(e)
-                        new_data_dict["flag"] = False
-                    if new_data_dict.get("flag", True):
-                        dump_array.append(new_data_dict)
-                dump_path = os.path.join(dest_dir, 'proc_' + pkl)
-                self.pickledump(dump_array, dump_path)
-                self.seen_pkls.append(pkl)
-
-    def apply_funcs(self, src_dir, dest_dir, funclist):
+    def apply_funcs(self, src_dir, pkl_name, dest_dir, funclist):
         """
-        Apply a series of functions 
+        Apply a series of functions and RET new pkl name
         """
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
         pkl_files = os.listdir(src_dir)
-        print(pkl_files)
-        for pkl in pkl_files:
-            dump_array = []
-            if pkl not in self.seen_pkls:
-                print(os.path.join(src_dir, pkl))
-                data_in = open(os.path.join(src_dir, pkl), 'rb')
-                data_array = pickle.load(data_in)
-                for i, data_dict in enumerate(data_array):
-                    new_data_dict = self.dutils.apply_flist(data_dict, funclist, w_rosdict=True)
-                    if new_data_dict.get("flag", True):
-                        dump_array.append(new_data_dict)
-                dump_path = os.path.join(dest_dir, pkl)
-                self.pickledump(dump_array, dump_path)
-                self.seen_pkls.append(pkl)
+        data_in = open(os.path.join(src_dir, pkl_name), 'rb')
+        data_array = pickle.load(data_in)
+        dump_array = []
+        for i, data_dict in enumerate(data_array):
+            new_data_dict = self.dutils.apply_flist(data_dict, funclist, w_rosdict=True)
+            if new_data_dict.get("flag", True):
+                dump_array.append(new_data_dict)
+        new_pkl_name = pkl_name
+        dump_path = os.path.join(dest_dir, new_pkl_name)
+        self.pickledump(dump_array, dump_path)
+        self.seen_pkls.append(new_pkl_name)
+        return new_pkl_name

@@ -35,7 +35,7 @@ class ExperienceRecorder(threading.Thread):
         self.lidar_sub = rospy.Subscriber(record_topics['lidar_topic'], LaserScan, self.lidar_callback)
         self.steer_sub = rospy.Subscriber(record_topics['steer_topic'], AckermannDriveStamped, self.steer_callback)
         self.cam_sub = rospy.Subscriber(record_topics['camera_topic'], Image, self.cam_callback)
-	self.joy_sub = rospy.Subscribed('/vesc/joy', Joy, self.joy_callback)
+	    self.joy_sub = rospy.Subscribed('/vesc/joy', Joy, self.joy_callback)
 
         #other stuff
         self.latest_obs = {}
