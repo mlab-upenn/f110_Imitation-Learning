@@ -8,11 +8,13 @@ import msgpack_numpy as m
 __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 
 class ExperienceServer(threading.Thread):
-    def __init__(self, open_port='tcp://*:5555'):
-        self.zmq_context = zmq.Context()
-        self.zmq_socket = self.zmq_context.socket(zmq.ROUTER)
-        self.zmq_socket.bind(open_port)
-        threading.Thread.__init__(self)
+    def __init__(self, open_port='tcp://*:5555', debug=False):
+        
+        if not debug:
+            self.zmq_context = zmq.Context()
+            self.zmq_socket = self.zmq_context.socket(zmq.ROUTER)
+            self.zmq_socket.bind(open_port)
+            threading.Thread.__init__(self)
 
         #Visualizer & Data Utils
         self.vis = Metric_Visualizer()
@@ -24,6 +26,7 @@ class ExperienceServer(threading.Thread):
             os.makedirs(self.exp_path)
         self.funclist = session["online"]["funclist"]
         print("EXPERIENCE PATH:", self.exp_path)
+        self.debug = debug
 
     def show_msg(self, fullmsg):
         for i in range(len(fullmsg)):
@@ -42,11 +45,11 @@ class ExperienceServer(threading.Thread):
                 cv2.imshow('BatchImages', cv_img)
                 cv2.waitKey(0)
         
-    def dostuff(self, fullmsg, debug=False):
+    def dostuff(self, fullmsg):
         """
         NEEDS A BETTER NAME - But basically takes fullmsg & does stuff with it, kind of like how Stepper 'does stuff' with the OG data
         """
-        if not debug:
+        if not self.debug:
             self.online_learner.save_batch_to_pickle(fullmsg, os.path.join(self.exp_path, 'raw'))
 
         #fix steering angles to use follow the gap
@@ -61,6 +64,9 @@ class ExperienceServer(threading.Thread):
         #Make dataset & dataloader from processed batches
         
 
+        #Use dataloader as input to NN
+
+        #Return final trained model
 
     def run(self):
         while True:
