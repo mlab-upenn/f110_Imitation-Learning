@@ -71,3 +71,5 @@ class Online(object):
                 dump_path = os.path.join(dest_dir, 'proc_' + pkl)
                 self.pickledump(dump_array, dump_path)
                 self.seen_pkls.append(pkl)
+
+    def online_learner(self, src_dir, dest_dir, funclist):

@@ -32,16 +32,23 @@ def cropVertical(args, src_dict, ros_dict=None):
     assert (len(args) == 2),"Incorrect sized argument to cropVertical"
     cropStart = args[0]
     cropEnd = args[1]
-    dest_dict = src_dict
-    src_img = src_dict.get("img")
-    src_row = src_dict.get("row")
+    if ros_dict:
+        dest_dict = ros_dict
+        src_img = ros_dict.get("img")
+    else:
+        dest_dict = src_dict
+        src_img = src_dict.get("img")
+
     if cropEnd < 0:
         dest_dict["img"] = src_img[cropStart:, :, :]
     elif cropEnd > 0:
         dest_dict["img"] = src_img[cropStart:cropEnd, :, :]
     else:
         raise Exception('bad args cropvertical')
-    return changeName(dest_dict, 'cropV')
+    if ros_dict:
+        return dest_dict
+    else:
+        return changeName(dest_dict, 'cropV')
 
 def rot90(args, src_dict, ros_dict=None):
     assert (len(args) == 1),"Incorrect sized argument to rot90"
