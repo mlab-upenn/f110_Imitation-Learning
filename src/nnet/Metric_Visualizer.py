@@ -166,7 +166,7 @@ class Metric_Visualizer(object):
         """
         #convert lidar data to x,y coordinates
         x_ranges, y_ranges = self.data_utils.lidar_polar_to_cart(lidar_dict)
-        lidar_frame = np.ones((500, 500, 3)) * 100
+        lidar_frame = np.ones((500, 500, 3)) * 75
         cx = 250
         cy = 450
         rangecheck = lambda x, y: abs(x) < 1000. and abs(y) < 1000.

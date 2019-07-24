@@ -45,10 +45,10 @@ class ExperienceServer(threading.Thread):
         """
         NEEDS A BETTER NAME - But basically takes fullmsg & does stuff with it, kind of like how Stepper 'does stuff' with the OG data
         """
-        self.online_learner.save_batch_to_pickle(fullmsg, self.exp_path)
+        self.online_learner.save_batch_to_pickle(fullmsg, os.path.join(self.exp_path, 'raw'))
 
         #fix steering angles to use follow the gap
-        self.online_learner.fix_steering(self.exp_path)
+        self.online_learner.fix_steering(os.path.join(self.exp_path, 'raw'), os.path.join(self.exp_path, 'proc'))
         
         #for now, visualize batches live (do tensorboard stuff soon)
         self.vis.vid_from_online_dir(self.exp_path, 0, 0, show_steer=True, units='rad', live=True)
