@@ -195,10 +195,3 @@ class Stepper(object):
         elif insn_type =="combine":
             self.exec_combine(curr_step)
             self.curr_step_idx += 1
-
-s = Stepper()
-s.step()
-s.step()
-s.step()
-s.step()
-s.writer.close()
