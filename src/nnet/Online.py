@@ -93,3 +93,10 @@ class Online(object):
         self.pickledump(dump_array, dump_path)
         self.seen_pkls.append(new_pkl_name)
         return new_pkl_name
+    
+    def get_online_dataloader(self, src_dir, pkl_name, online_dataset):
+        """
+        online_dataset: unintialized datasets
+        """
+        dset = online_dataset(os.path.join(src_dir, pkl_name))
+        

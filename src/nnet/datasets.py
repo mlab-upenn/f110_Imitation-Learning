@@ -4,6 +4,7 @@ from nnet.Data_Utils import Data_Utils
 from torch.utils.data import Dataset
 from torchvision import transforms, utils
 import pandas as pd
+__author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 
 class SteerDataset(Dataset):
     """
@@ -57,8 +58,8 @@ class SteerDataset_ONLINE(Dataset):
         Returns dictionary {"img":Tensor, C X H x W, "angle":float 1-Tensor}
         """
         data_dict = self.data_array[idx]
-        cv_img = data_dict
+        cv_img = data_dict.get("img")
         ts_angle = torch.Tensor(data_dict["steer"]["steering_angle"]).float()
         ts_img = torch.from_numpy(cv_img).permute(2, 0, 1).float()
-        data_dict = {"img":ts_img, "angle":ts_angle}
-        return data_dict
+        new_data_dict = {"img":ts_img, "angle":ts_angle}
+        return new_data_dict

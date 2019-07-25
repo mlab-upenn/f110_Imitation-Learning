@@ -7,6 +7,7 @@ import pandas as pd
 from tabulate import tabulate
 from steps import session
 from tensorboardX import SummaryWriter
+__author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 
 class Metric_Visualizer(object):
     """
@@ -123,7 +124,7 @@ class Metric_Visualizer(object):
             frame[0:lidar_rows, img_cols:frame_cols, :] = lidar_frame
             return frame
 
-    def vid_from_pklpath(self, pklpath, dpath, stepname, idx, show_steer=True, units='rad', live=True):
+    def vid_from_pklpath(self, pklpath, stepname, idx, show_steer=True, units='rad', live=True):
         """
         Visualize a batch from pkl_path
         """

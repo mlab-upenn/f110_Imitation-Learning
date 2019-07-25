@@ -2,6 +2,7 @@ import time, cv2, zmq, msgpack, threading, os
 from nnet.Online import Online
 from nnet.Metric_Visualizer import Metric_Visualizer
 from nnet.Data_Utils import Data_Utils
+from nnet.datasets import *
 from steps import session
 import numpy as np
 import msgpack_numpy as m
@@ -62,7 +63,7 @@ class ExperienceServer(threading.Thread):
         self.vis.vid_from_pklpath(os.path.join(self.exp_path, 'proc', pkl_name), 0, 0, show_steer=True, units='rad', live=True)
 
         #Make dataset & dataloader from processed batches
-        
+        dataloader = self.get_online_dataloader(os.path.join(self.exp_path, 'proc'), pkl_name, SteerDataset_ONLINE)
 
         #Use dataloader as input to NN
 
