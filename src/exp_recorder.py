@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
-import roslib, rospy, cv2, sys, math, time, json
+import roslib, rospy, cv2, sys, math, time, json, os
 from sensor_msgs.msg import Image, LaserScan, Joy
 from cv_bridge import CvBridge, CvBridgeError
 from ackermann_msgs.msg import AckermannDriveStamped, AckermannDrive
@@ -58,7 +58,7 @@ class ExperienceRecorder(threading.Thread):
 	elif auton_button:
 	    self.curr_recording = 'autonomous'
 	else:
-	    self.curr_recording = ''
+	    self.curr_recording = '          '
 
     def lidar_callback(self, data):
         lidar = dict(
@@ -77,7 +77,14 @@ class ExperienceRecorder(threading.Thread):
 		)
 		self.latest_obs['steer'] = steer
     
-
+    def save_model(self, model_dump):
+	modelpath = '/home/nvidia/datasets/avfone/models/'
+	if not os.path.exists(modelpath):
+	    os.makedirs(modelpath)
+	f = open(os.path.join(modelpath, 'model'), 'w')
+	f.write(model_dump)
+	f.close()
+	
     def cam_callback(self, data):
 	sys.stdout.write("\rcurr_recording: %s" %self.curr_recording)
 	sys.stdout.flush()
@@ -97,10 +104,12 @@ class ExperienceRecorder(threading.Thread):
                     shape=cv_img.shape,
                 )
                 cv_md_dump = msgpack.dumps(cv_md)
-                self.curr_batch += [self.batchcount, lidar_dump, steer_dump, cv_md_dump, cv_img]
+                self.curr_batch += [lidar_dump, steer_dump, cv_md_dump, cv_img]
                 self.latest_obs = {}
                 if (len(self.curr_batch) / 4.0 % 8.0) == 0:
                     sys.stdout.write(" ||| Sending out batch %s" % self.batchcount)
+		    batchcount_dump = msgpack.dumps(self.batchcount)
+	            self.curr_batch = [batchcount_dump] + self.curr_batch
 		    sys.stdout.flush()
                     self.zmq_socket.send_multipart(self.curr_batch, copy=False)
 		    self.curr_batch = []
@@ -114,7 +123,9 @@ class ExperienceRecorder(threading.Thread):
             sockets = dict(poll.poll(10000))
             if self.zmq_socket in sockets:
                 msg = self.zmq_socket.recv_multipart()
-		print("RECVD NN %s" % msg)
+		batchnum = msgpack.loads(msg[0], encoding="utf-8")
+		print("\n RECVD NN FOR BATCH %s" % batchnum)
+		self.save_model(msg[1])
 
 def main(args):
     rospy.init_node("ExperienceRecorder", anonymous=True)
