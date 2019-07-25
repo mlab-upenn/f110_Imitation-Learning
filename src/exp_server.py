@@ -69,14 +69,15 @@ class ExperienceServer(threading.Thread):
         #Send model back
         modelpath = trainer.get_model_path()
         with open(modelpath, 'rb') as binary_file:
-            model_dump = bytes(binary_file)
+            model_dump = bytes(binary_file.read())
         return model_dump
 
     def run(self):
         while True:
             fullmsg = self.zmq_socket.recv_multipart()
             print('IDENT:', fullmsg[0])
-            print('RECVD BATCH:', fullmsg[1])
+            batchnum = msgpack.loads(fullmsg[1], encoding="utf-8")
+            print('RECVD BATCH:', batchnum)
 
             #Do stuff with fullmsg & get an nn
             model_dump = self.dostuff(fullmsg[2:])

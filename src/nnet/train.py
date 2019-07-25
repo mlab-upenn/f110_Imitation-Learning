@@ -181,6 +181,7 @@ class Trainer(object):
         if self.hasLinear(dummy_net):
             #find the right shape of fc layer
             fc_shape = self.get_fc_shape(dummy_net, dataset)
+            print("FCSHAPEIS", fc_shape)
             net = model(args_dict={"fc_shape":fc_shape})
         else:
             net = model()
@@ -192,7 +193,7 @@ class Trainer(object):
         return net
     
     def get_model_path(self):
-        modelpath = os.path.join(self.logpath_prefix, str('best_valid_model'))
+        modelpath = os.path.join(self.logpath_prefix, str('best_train_model'))
         return modelpath
 
 def main():
