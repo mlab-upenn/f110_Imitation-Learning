@@ -99,4 +99,5 @@ class Online(object):
         online_dataset: unintialized datasets
         """
         dset = online_dataset(os.path.join(src_dir, pkl_name))
-        
+        dataloader = torch.utils.data.DataLoader(dset, batch_size=5, shuffle=True)
+        return dset, dataloader

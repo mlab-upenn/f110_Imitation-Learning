@@ -14,7 +14,7 @@ class Trainer(object):
     """
     Handles training & associated functions
     """
-    def __init__(self):
+    def __init__(self, online=False, pklpath=None):
         #Set random seeds
         seed = 6582
         torch.manual_seed(seed)
@@ -25,13 +25,10 @@ class Trainer(object):
         self.sess_path = None
         self.datapath = None
         self.gconf = None
-        self.config, dataset, net, optim, loss_func, num_epochs, bs = self.configure_train() #sets sess_path, datapath & gconf
-        train_dataloader, valid_dataloader = self.get_dataloaders(dataset, bs)
+        self.config, dataset, net, optim, loss_func, num_epochs, bs = self.configure_train(online=online, pklpath=pklpath) #sets sess_path, datapath & gconf
+        train_dataloader, valid_dataloader = self.get_dataloaders(dataset, bs, online=online)
         
         #Make Writer & Visualize
-        logdir = os.path.join(self.sess_path, "logs")
-        self.train_id = len(os.listdir(logdir))
-        self.logpath_prefix = os.path.join(logdir, str(self.train_id), )
         self.writer = SummaryWriter(logdir=self.logpath_prefix)
         self.vis = Metric_Visualizer(self.sess_path, self.writer)
     
@@ -71,7 +68,7 @@ class Trainer(object):
         print(f"----{time.time() - t0} seconds----")
         return total_epoch_loss
 
-    def TRAIN(self, net, num_epochs, optim, loss_func, train_dataloader, valid_dataloader):
+    def TRAIN(self, net, num_epochs, optim, loss_func, train_dataloader, valid_dataloader=None):
         """
         Main training loop over epochs
         """
@@ -80,29 +77,35 @@ class Trainer(object):
         for epoch in range(num_epochs):
             print("Starting epoch: {}".format(epoch))
             train_epoch_loss = self.loss_pass(net, loss_func, train_dataloader, epoch, optim, op='train')
-            valid_epoch_loss = self.loss_pass(net, loss_func, valid_dataloader, epoch, optim, op='valid')
+            if valid_dataloader:
+                valid_epoch_loss = self.loss_pass(net, loss_func, valid_dataloader, epoch, optim, op='valid')
             print("----------------EPOCH{}STATS:".format(epoch))
             print("TRAIN LOSS:{}".format(train_epoch_loss))
-            print("VALIDATION LOSS:{}".format(valid_epoch_loss))
+            if valid_dataloader:
+                print("VALIDATION LOSS:{}".format(valid_epoch_loss))
             print("----------------------------")
 
             if best_train_loss > train_epoch_loss:
                 best_train_loss = train_epoch_loss
                 torch.save(net.state_dict(), os.path.join(self.logpath_prefix, str('best_train_model')))
 
-            if best_valid_loss > valid_epoch_loss:
+            if valid_dataloader and best_valid_loss > valid_epoch_loss:
                 best_valid_loss = valid_epoch_loss
                 torch.save(net.state_dict(), os.path.join(self.logpath_prefix, str('best_valid_model')))
 
             self.writer.add_scalar('Train Loss', train_epoch_loss, epoch)
-            self.writer.add_scalar('Valid Loss', valid_epoch_loss, epoch)
+            if valid_dataloader:
+                self.writer.add_scalar('Valid Loss', valid_epoch_loss, epoch)
         self.vis.log_training(self.config, self.train_id, best_train_loss, best_valid_loss)
         self.writer.close()
             
-    def get_dataloaders(self, dataset, bs):
+    def get_dataloaders(self, dataset, bs, online=False):
         """
         Get train and valid dataloader based on vsplit parameter defined in steps.session 
         """
+        if online:
+            dataloader = torch.utils.data.DataLoader(dataset, batch_size=bs, shuffle=True)
+            return dataloader, None
         vsplit = self.gconf("vsplit")
         dset_size = len(dataset)
         idxs = list(range(dset_size))
@@ -118,21 +121,27 @@ class Trainer(object):
         valid_dataloader = DataLoader(dataset, batch_size=bs, sampler=val_sampler)
         return train_dataloader, valid_dataloader
 
-    def configure_train(self):
+    def configure_train(self, online=False, pklpath=None, continue_training=False):
         """
         Get initialized parameters for training
         """
         params = session.get("params")
         config = session.get("train")
         self.sess_path = os.path.join(params.get("abs_path"), params.get("sess_root"), str(config.get("sess_id")))
-        self.datapath = os.path.join(params.get("abs_path"), params.get("sess_root"), str(config.get("sess_id")), config.get("foldername"))
+        if online:
+            self.datapath = pklpath
+        else:
+            self.datapath = os.path.join(params.get("abs_path"), params.get("sess_root"), str(config.get("sess_id")), config.get("foldername"))
         print("Datapath", self.datapath)
 
         #get training parameters from file
         self.gconf = lambda key: config.get(key)
+        logdir = os.path.join(self.sess_path, "models")
+        self.train_id = len(os.listdir(logdir))
+        self.logpath_prefix = os.path.join(logdir, str(self.train_id), )
         model = self.gconf("model")
         dataset = self.gconf("dataset")(self.datapath)
-        net = self.make_net(model, dataset)
+        net = self.make_net(model, dataset, continue_training=continue_training)
         lr = self.gconf("lr")
         optim = self.gconf("optimizer")(net.parameters(), lr=lr)
         loss_func = self.gconf("loss_func")
@@ -161,7 +170,7 @@ class Trainer(object):
         out = out.view(1, -1)
         return out.shape[1]
     
-    def make_net(self, model, dataset):
+    def make_net(self, model, dataset, continue_training=False):
         """
         Return an initialized neural net & fix the first fully connected layer to match the image input size
         """
@@ -172,7 +181,15 @@ class Trainer(object):
             net = model(args_dict={"fc_shape":fc_shape})
         else:
             net = model()
-        return net.to(device)
+        net = net.to(device)
+        if continue_training:
+            modelpath = os.path.join(self.logpath_prefix, str('best_train_model'))
+            if os.path.exists(modelpath):
+                net.load_state_dict(torch.load(modelpath))
+        return net
+    
+    def get_train_id(self):
+        return self.train_id
 
 def main():
     trainer = Trainer()

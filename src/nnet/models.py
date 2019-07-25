@@ -18,8 +18,8 @@ class NVIDIA_ConvNet(nn.Module):
         )
         
         self.fc = nn.Sequential(
-            nn.Linear(args_dict["fc_shape"], 1164), 
-            nn.Linear(1164, 100), 
+            nn.Linear(args_dict["fc_shape"], 500), 
+            nn.Linear(500, 100), 
             nn.Linear(100, 50),
             nn.Linear(50, 10), 
             nn.Linear(10, 1)
