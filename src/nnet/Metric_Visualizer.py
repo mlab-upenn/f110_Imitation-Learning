@@ -1,12 +1,16 @@
 import os, cv2, math, sys, json, torch, pdb, random, pickle
 import numpy as np
 import matplotlib.pyplot as plt
-import moviepy.editor as mpy
 from nnet.Data_Utils import Data_Utils
-import pandas as pd 
-from tabulate import tabulate
 from steps import session
-from tensorboardX import SummaryWriter
+try:
+   import moviepy.editor as mpy
+   import pandas as pd 
+   from tabulate import tabulate
+   from tensorboardX import SummaryWriter
+except ImportError:
+     print("Cannot use full features of Metric Visualizer without moviepy, pandas, tabulate & tensorboardX")
+
 __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 
 class Metric_Visualizer(object):
@@ -236,7 +240,7 @@ class Metric_Visualizer(object):
     def text_table(self, dpath, labelname, foldername='', angle_unit='', global_step=0):
         df = self.data_utils.get_df(dpath)
         h, w = self.data_utils._get_image_size(dpath)
-        text = f"Folder | Shape | Units | Num Images\n-----|-----|-----|-----\n{foldername}|({h}, {w})|{angle_unit}|{len(df)}"
+        text = "Folder | Shape | Units | Num Images\n-----|-----|-----|-----\n{foldername}|({h}, {w})|{angle_unit}|{lendf}".format(h=h, w=w, angle_unit=angle_unit, lendf=len(df))
         self.writer.add_text(labelname, text, global_step=global_step)
         
     def visualize_batch(self,ts_imgbatch, ts_anglebatch, ts_predanglebatch, global_step=0):
@@ -270,7 +274,7 @@ class Metric_Visualizer(object):
         global_step: The "step" value to log into tensorboard (this allows for the cool slider functionality)
         units: 'rad' or 'deg'
         """
-        labelname = f"STEP-{curr_step}"
+        labelname = "STEP-{curr_step}".format(curr_step=curr_step)
         dpath = os.path.join(datadir, folder)
         self.plot_anglehist(dpath, labelname, global_step)
         if self.gvis("vis_type") == 'video':

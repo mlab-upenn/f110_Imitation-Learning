@@ -14,7 +14,7 @@ __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 
 class ExperienceRecorder(threading.Thread):
     """
-    Opens zmq DEALIER socket & sends 'experiences' over
+    Opens zmq DEALER socket & sends 'experiences' over
     ATM: Records Lidar, Camera & Steer (cmd_mux)
     """
     def __init__(self, connect_to='tcp://195.0.0.7:5555', only_record='both'
@@ -22,7 +22,7 @@ class ExperienceRecorder(threading.Thread):
                                   'camera_topic':'/usb_cam/image_raw',
                                   'steer_topic':'/vesc/low_level/ackermann_cmd_mux/output'}):
         """
-        only_record: 'autonomous', 'joystick', or 'both'
+        only_record: choose to only record navigation commands from 'autonomous', 'joystick', or 'both'
         """
         #important zmq initialization stuff
         self.zmq_context = zmq.Context()
@@ -50,7 +50,7 @@ class ExperienceRecorder(threading.Thread):
         #Multithreading stuff
 	threading.Thread.__init__(self) 
 
-    def joy_callback(self, data): #just sets the bit auton_button = data.buttons[5]
+    def joy_callback(self, data): #just sets the currently active button 
 	auton_button = data.buttons[5]
 	joy_button = data.buttons[4]
 	if joy_button:
@@ -89,8 +89,8 @@ class ExperienceRecorder(threading.Thread):
 	sys.stdout.write("\rcurr_recording: %s" %self.curr_recording)
 	sys.stdout.flush()
         if "lidar" in self.latest_obs and "steer" in self.latest_obs:
+            #Add every 10 frames to batch
             if self.framecount % 10 == 0:
-                #Add every 10 full frames to batch
                 lidar_dump = msgpack.dumps(self.latest_obs["lidar"])
                 steer_dump = msgpack.dumps(self.latest_obs["steer"])
                 try:

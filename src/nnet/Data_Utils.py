@@ -1,10 +1,18 @@
+from __future__ import print_function
 import os, json, pdb, cv2, math, random, pickle, msgpack
-import msgpack_numpy as m
+try:
+    import msgpack_numpy as m
+except ImportError:
+   print("cannot use full functionality of DATA_UTILS without msgpack_numpy")
+
 import numpy as np
 from functools import partial
 import pandas as pd
 import json
-from detection.yolov3 import YoloDetection
+try:
+	from detection.yolov3 import YoloDetection
+except ImportError:
+	print("Could not import  YOLO")
 
 class Data_Utils(object):
     """
@@ -31,9 +39,10 @@ class Data_Utils(object):
         elif 'choosename' in op:
             #you need to take care that there are no name conflicts here
             if os.path.exists(os.path.join(dest_datadir, op)):
-                print(f"WARNING: FOLDER {op} already exists in PATH:{dest_datadir}")
+                print("WARNING: FOLDER {op} already exists in PATH:{dest_datadir}".format(op=op, dest_datadir=dest_datadir))
+
             strlist = op.split('|')
-            assert(len(strlist) == 2), "Incorrect formatting for op = {op}"
+            assert(len(strlist) == 2), "Incorrect formatting for op = {op}".format(op=op)
             new_folder = strlist[1]
         return new_folder, os.path.join(dest_datadir, new_folder)
 
@@ -104,7 +113,7 @@ class Data_Utils(object):
         preview: if true, shows fewer entries
         op: if 'aug', augment current dataset instead of creating a whole new one & moving it elsewhere (IF SO, SRC_DATADIR MUST = DEST_DATADIR)
         """
-        assert((op =='aug' and src_datadir == dest_datadir) or (op != 'aug')), f"MOVE Error: If op={op}, src_datadir = dest_datadir"
+        assert((op =='aug' and src_datadir == dest_datadir) or (op != 'aug')), "MOVE Error: If op={op}, src_datadir = dest_datadir".format(op=op, src_datadir=src_datadir)
 
         if not os.path.exists(dest_datadir):
             os.makedirs(dest_datadir)

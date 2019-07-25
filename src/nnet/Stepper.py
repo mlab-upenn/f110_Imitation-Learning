@@ -1,6 +1,10 @@
+from __future__ import print_function
 import os, json, glob, pdb, cv2
-import pandas as pd
-from tensorboardX import SummaryWriter
+try:
+    import pandas as pd
+    from tensorboardX import SummaryWriter
+except ImportError:
+    print("WARNING:Cannot use STEPS fully without these packages")
 from nnet.Metric_Visualizer import Metric_Visualizer
 from nnet.Data_Utils import Data_Utils
 import steps
@@ -58,32 +62,32 @@ class Stepper(object):
         for folder in dlist:
             dpath = os.path.join(ver_path, folder)
             #Ensure folder exists
-            assert(os.path.exists(dpath)),f"B_VER Error: Folder {folder} cannot be found in {ver_path}"
+            assert(os.path.exists(dpath)),"B_VER Error: Folder {folder} cannot be found in {ver_path}".format(folder=folder, ver_path=ver_path)
             
             csvpath  = os.path.join(dpath, 'data.csv')
             #Check for data.csv
-            assert(os.path.isfile(csvpath)),f"B_VER Error: data.csv could not be found in {dpath}"
+            assert(os.path.isfile(csvpath)),"B_VER Error: data.csv could not be found in {dpath}".format(dpath=dpath)
 
             #Verify 4 columns in csv
             df = pd.read_csv(csvpath)
-            assert(len(df.columns) == 4),f"B_VER Error: Need four columns in data.csv in {csvpath}"
+            assert(len(df.columns) == 4),"B_VER Error: Need four columns in data.csv in {csvpath}".format(csvpath=csvpath)
 
             #The number of jpg files in this directory should equal num rows
             num_jpgs = len(glob.glob1(dpath, "*.jpg"))
-            assert(len(df) == num_jpgs),F"B_VER Error: num_jpgs in {dpath} must = num_rows in data.csv"
+            assert(len(df) == num_jpgs),"B_VER Error: num_jpgs in {dpath} must = num_rows in data.csv".format(dpath=dpath)
 
             #Index the first 20 and last 20, and ensure that those images exist
             for i in range(20):
                 img_name = df.iloc[i, 0]
                 framepath = os.path.join(dpath, img_name)
                 frame = cv2.imread(framepath)
-                assert(os.path.isfile(framepath)), F"B_VER Error: frame {framepath} is not a path, but is in the csv"
+                assert(os.path.isfile(framepath)), "B_VER Error: frame {framepath} is not a path, but is in the csv".format(framepath=framepath)
 
             for i in range(20):
                 img_name = df.iloc[-i, 0]
                 framepath = os.path.join(dpath, img_name)
                 frame = cv2.imread(framepath)
-                assert(os.path.isfile(framepath)), F"B_VER Error: frame {framepath} is not a path, but is in the csv"
+                assert(os.path.isfile(framepath)), "B_VER Error: frame {framepath} is not a path, but is in the csv".format(framepath=framepath)
     
     def default_vis(self, curr_step):
         #visualize data in tensorboard
@@ -101,7 +105,7 @@ class Stepper(object):
         self.dlist = curr_step["dlist"] 
         raw_datadir= os.path.join(self.params_dict["abs_path"], self.params_dict["raw_data"])
         self.B_VER(raw_datadir, self.dlist)
-        print(f"PASSED B_VER FOR STEP {self.curr_step_idx}")
+        print("PASSED B_VER FOR STEP {curr_step_idx}".format(curr_step_idx=self.curr_step_idx))
         dest_datadir = self.sess_path
         filter_funclist = curr_step["funclist"]
         #move & filter each folder
