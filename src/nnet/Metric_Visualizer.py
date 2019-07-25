@@ -240,7 +240,7 @@ class Metric_Visualizer(object):
     def text_table(self, dpath, labelname, foldername='', angle_unit='', global_step=0):
         df = self.data_utils.get_df(dpath)
         h, w = self.data_utils._get_image_size(dpath)
-        text = "Folder | Shape | Units | Num Images\n-----|-----|-----|-----\n{foldername}|({h}, {w})|{angle_unit}|{lendf}".format(h=h, w=w, angle_unit=angle_unit, lendf=len(df))
+        text = "Folder | Shape | Units | Num Images\n-----|-----|-----|-----\n{foldername}|({h}, {w})|{angle_unit}|{lendf}".format(foldername=foldername, h=h, w=w, angle_unit=angle_unit, lendf=len(df))
         self.writer.add_text(labelname, text, global_step=global_step)
         
     def visualize_batch(self,ts_imgbatch, ts_anglebatch, ts_predanglebatch, global_step=0):
