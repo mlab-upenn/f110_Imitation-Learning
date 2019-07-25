@@ -68,19 +68,21 @@ class ExperienceServer(threading.Thread):
 
         #Send model back
         modelpath = trainer.get_model_path()
-        model_in = open(modelpath, 'rb')
-        pdb.set_trace()
+        with open(modelpath, 'rb') as binary_file:
+            model_dump = bytes(binary_file)
+        return model_dump
 
     def run(self):
         while True:
             fullmsg = self.zmq_socket.recv_multipart()
             print('IDENT:', fullmsg[0])
+            print('RECVD BATCH:', fullmsg[1])
 
             #Do stuff with fullmsg & get an nn
-            self.dostuff(fullmsg[1:])
-            msg = b'NN for experience %s' % (fullmsg[0])
+            model_dump = self.dostuff(fullmsg[2:])
+
             #Include where i'm sending also as a multipart
-            self.zmq_socket.send_multipart([fullmsg[0],msg, b'Hello', b'mister', b'lioa'])
+            self.zmq_socket.send_multipart([fullmsg[0], fullmsg[1], model_dump])
 
 server = ExperienceServer()
 server.start()
