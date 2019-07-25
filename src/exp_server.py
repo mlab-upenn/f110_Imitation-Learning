@@ -1,7 +1,8 @@
-import time, cv2, zmq, msgpack, threading, os
+import time, cv2, zmq, msgpack, threading, os, pdb
 from nnet.Online import Online
 from nnet.Metric_Visualizer import Metric_Visualizer
 from nnet.Data_Utils import Data_Utils
+from nnet.train import Trainer
 from nnet.datasets import *
 from steps import session
 import numpy as np
@@ -46,13 +47,13 @@ class ExperienceServer(threading.Thread):
                 cv2.imshow('BatchImages', cv_img)
                 cv2.waitKey(0)
         
-    def dostuff(self, fullmsg):
+    def dostuff(self, fullmsg, pkl_name=None):
         """
         NEEDS A BETTER NAME - But basically takes fullmsg & does stuff with it, kind of like how Stepper 'does stuff' with the OG data
         """
         if not self.debug:
             pkl_name = self.online_learner.save_batch_to_pickle(fullmsg, os.path.join(self.exp_path, 'raw'))
-
+        
         #fix steering angles to use follow the gap
         pkl_name = self.online_learner.fix_steering(os.path.join(self.exp_path, 'raw'), pkl_name, os.path.join(self.exp_path, 'proc'))
         
@@ -62,12 +63,13 @@ class ExperienceServer(threading.Thread):
         #for now, visualized processed batches live (TODO:Tensorboard Support)
         self.vis.vid_from_pklpath(os.path.join(self.exp_path, 'proc', pkl_name), 0, 0, show_steer=True, units='rad', live=True)
 
-        #Make dataset & dataloader from processed batches
-        dataloader = self.get_online_dataloader(os.path.join(self.exp_path, 'proc'), pkl_name, SteerDataset_ONLINE)
+        #Train Model
+        trainer = Trainer(online=True, pklpath=os.path.join(self.exp_path, 'proc', pkl_name), train_id=0)
 
-        #Use dataloader as input to NN
-
-        #Return final trained model
+        #Send model back
+        modelpath = trainer.get_model_path()
+        model_in = open(modelpath, 'rb')
+        pdb.set_trace()
 
     def run(self):
         while True:

@@ -134,7 +134,7 @@ class Metric_Visualizer(object):
             frame = self.frame_from_datadict(data_dict)
             if live:
                 cv2.imshow('FrameBatch', frame)
-                cv2.waitKey(200) 
+                cv2.waitKey(50) 
 
     def vid_from_online_dir(self, dpath, stepname, idx, show_steer=False, units='rad', live=False):
         """

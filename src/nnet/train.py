@@ -14,7 +14,7 @@ class Trainer(object):
     """
     Handles training & associated functions
     """
-    def __init__(self, online=False, pklpath=None):
+    def __init__(self, online=False, pklpath=None, train_id=None):
         #Set random seeds
         seed = 6582
         torch.manual_seed(seed)
@@ -25,7 +25,8 @@ class Trainer(object):
         self.sess_path = None
         self.datapath = None
         self.gconf = None
-        self.config, dataset, net, optim, loss_func, num_epochs, bs = self.configure_train(online=online, pklpath=pklpath) #sets sess_path, datapath & gconf
+        self.train_id = train_id
+        self.config, dataset, net, optim, loss_func, num_epochs, bs = self.configure_train(online=online, pklpath=pklpath, continue_training=online) #sets sess_path, datapath & gconf
         train_dataloader, valid_dataloader = self.get_dataloaders(dataset, bs, online=online)
         
         #Make Writer & Visualize
@@ -134,10 +135,12 @@ class Trainer(object):
             self.datapath = os.path.join(params.get("abs_path"), params.get("sess_root"), str(config.get("sess_id")), config.get("foldername"))
         print("Datapath", self.datapath)
 
+        logdir = os.path.join(self.sess_path, "models")
+        if self.train_id is None:
+            self.train_id = len(os.listdir(logdir))  
+
         #get training parameters from file
         self.gconf = lambda key: config.get(key)
-        logdir = os.path.join(self.sess_path, "models")
-        self.train_id = len(os.listdir(logdir))
         self.logpath_prefix = os.path.join(logdir, str(self.train_id), )
         model = self.gconf("model")
         dataset = self.gconf("dataset")(self.datapath)
@@ -188,8 +191,9 @@ class Trainer(object):
                 net.load_state_dict(torch.load(modelpath))
         return net
     
-    def get_train_id(self):
-        return self.train_id
+    def get_model_path(self):
+        modelpath = os.path.join(self.logpath_prefix, str('best_valid_model'))
+        return modelpath
 
 def main():
     trainer = Trainer()

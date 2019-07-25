@@ -91,11 +91,11 @@ session = {
         "loss_func":nn.functional.l1_loss,
         "optimizer":torch.optim.Adam,
         "num_epochs":5,
-        "batch_size":4,
+        "batch_size":5,
         "sess_id": 0,
         "foldername":"main",
-        "vsplit":0.1,
-        "dataset":SteerDataset
+        "vsplit":0.0,
+        "dataset":SteerDataset_ONLINE
     },
     "online":
     {
