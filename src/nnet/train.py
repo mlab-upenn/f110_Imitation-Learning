@@ -7,8 +7,10 @@ from steps import session
 import numpy as np
 from nnet.Metric_Visualizer import Metric_Visualizer
 from nnet.models import NVIDIA_ConvNet
-from tensorboardX import SummaryWriter
-
+try:
+    from tensorboardX import SummaryWriter
+except ImportError:
+    print("cannot fully use Trainer without tensorboardX")
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
 class Trainer(object):
     """
@@ -43,7 +45,7 @@ class Trainer(object):
         if op == 'valid':
             torch.set_grad_enabled(False)
             
-        print(f"STARTING {op} EPOCH{epoch}")
+        print("STARTING {op} EPOCH{epoch}".format(op=op, epoch=epoch))
         t0 = time.time()
         total_epoch_loss = 0
         for i, input_dict in enumerate(loader):
@@ -65,8 +67,8 @@ class Trainer(object):
                 self.vis.visualize_batch(ts_imgbatch, ts_anglebatch, ts_predanglebatch, global_step=epoch)
         if op == 'valid':
             torch.set_grad_enabled(True)
-        print(f"FINISHED {op} EPOCH{epoch}")
-        print(f"----{time.time() - t0} seconds----")
+        print("FINISHED {op} EPOCH{epoch}".format(op=op, epoch=epoch))
+        print("----{time.time() - t0} seconds----".format(op=op, epoch=epoch))
         return total_epoch_loss
 
     def TRAIN(self, net, num_epochs, optim, loss_func, train_dataloader, valid_dataloader=None):
