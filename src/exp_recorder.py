@@ -65,8 +65,8 @@ class ExperienceRecorder(threading.Thread):
         else:
             self.curr_recording = '          '
 	
-	if self.wait:
-	    self.curr_recording = 'waiting'
+        if self.wait:
+            self.curr_recording = 'waiting'
 
     def lidar_callback(self, data):
         lidar = dict(

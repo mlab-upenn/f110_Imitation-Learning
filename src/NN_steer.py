@@ -42,7 +42,7 @@ class NN_Steer(object):
         self.bridge = CvBridge()
         self.dutils = Data_Utils()
         self.funclist = session["online"]["funclist"]
-        self.steer_history = deque(maxlen=1000) #history of steers, useful for resets
+        self.steer_history = deque(maxlen=500) #history of steers, useful for resets
         self.wait = False
 
     def recv_signal(self, data):
@@ -80,7 +80,7 @@ class NN_Steer(object):
         if not self.wait:
             if abs(data.drive.steering_angle - 0.05) != 0.0:
                 steer_dict = {"angle":data.drive.steering_angle, "speed":data.drive.speed}
-                for i in range(20):
+                for i in range(40):
                     self.steer_history.append(steer_dict)
 
     def get_drive_msg(self, angle, vel, flip_angle=1.0):
@@ -104,13 +104,6 @@ class NN_Steer(object):
         print("REVERSE {rev_angle}".format(rev_angle = rev_angle))
         drive_msg = self.get_drive_msg(rev_angle, rev_speed)
         self.steer_pub.publish(drive_msg)
-
-                    
-        #for i in range(10):
-         #   rev_angle = 0.0
-          #  rev_speed = -1.0
-           # drive_msg = self.get_drive_msg(rev_angle, rev_speed)
-            #self.steer_pub.publish(drive_msg)    
 
     def cam_callback(self, data):
         if not self.wait:
