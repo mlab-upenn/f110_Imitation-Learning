@@ -14,6 +14,7 @@ try:
 except ImportError:
 	print("Could not import  YOLO")
 
+__author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 class Data_Utils(object):
     """
     Move around & augment data 

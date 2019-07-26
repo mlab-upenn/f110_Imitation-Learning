@@ -68,7 +68,7 @@ class Trainer(object):
         if op == 'valid':
             torch.set_grad_enabled(True)
         print("FINISHED {op} EPOCH{epoch}".format(op=op, epoch=epoch))
-        print("----{time.time() - t0} seconds----".format(op=op, epoch=epoch))
+        print("----{now} seconds----".format(now=time.time()-t0, op=op, epoch=epoch))
         return total_epoch_loss
 
     def TRAIN(self, net, num_epochs, optim, loss_func, train_dataloader, valid_dataloader=None):
