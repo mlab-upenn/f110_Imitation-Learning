@@ -63,6 +63,7 @@ class ExperienceServer(threading.Thread):
         #for now, visualized processed batches live (TODO:Tensorboard Support)
         self.vis.vid_from_pklpath(os.path.join(self.exp_path, 'proc', pkl_name), 0, 0, show_steer=True, units='rad', live=True)
 
+        train_path = os.path.join(self.exp_path, 'proc', pkl_name)
         #Train Model
         trainer = Trainer(online=True, pklpath=os.path.join(self.exp_path, 'proc', pkl_name), train_id=0)
 
