@@ -4,6 +4,7 @@ from __future__ import print_function
 import roslib, rospy, cv2, sys, math, time, json, os
 from sensor_msgs.msg import Image, LaserScan, Joy
 from cv_bridge import CvBridge, CvBridgeError
+from std_msgs.msg import String
 from ackermann_msgs.msg import AckermannDriveStamped, AckermannDrive
 from rospy_message_converter import json_message_converter
 import zmq, msgpack, threading
@@ -24,7 +25,7 @@ class ExperienceRecorder(threading.Thread):
         """
         only_record: choose to only record navigation commands from 'autonomous', 'joystick', or 'both'
         """
-        #important zmq initialization stuff
+        #important zmq initialization stuff to connect to server
         self.zmq_context = zmq.Context()
         self.zmq_socket = self.zmq_context.socket(zmq.DEALER)
         self.zmq_socket.connect(connect_to)
@@ -37,6 +38,10 @@ class ExperienceRecorder(threading.Thread):
         self.cam_sub = rospy.Subscriber(record_topics['camera_topic'], Image, self.cam_callback)
         self.joy_sub = rospy.Subscriber('/vesc/joy', Joy, self.joy_callback)
 
+        #Publish a String to signal NN-Steer env
+        self.env_signal_pub = rospy.Publisher("/env_signal", String, queue_size=10)
+        self.env_signal_sub = rospy.Subscriber("/env_signal", String, self.recv_signal)
+
         #other stuff
         self.latest_obs = {}
         self.curr_batch = []
@@ -46,7 +51,7 @@ class ExperienceRecorder(threading.Thread):
         self.bridge = CvBridge()
         self.only_record = only_record
         self.curr_recording = '' #either autonomous, joystick or both
-
+        self.wait = False
         #Multithreading stuff
         threading.Thread.__init__(self) 
 
@@ -90,10 +95,15 @@ class ExperienceRecorder(threading.Thread):
         f.close()
 	
     def cam_callback(self, data):
-        sys.stdout.write("\rcurr_recording: %s" %self.curr_recording)
+        if self.wait:
+            status_str = 'waiting'
+        else:
+            status_str = self.curr_recording
+
+        sys.stdout.write("\rcurr_recording: %s" % status_str)
         sys.stdout.flush()
-        if "lidar" in self.latest_obs and "steer" in self.latest_obs:
-            #Add every 10 frames to batch
+        if "lidar" in self.latest_obs and "steer" in self.latest_obs and not self.wait:
+            #Add every 5 frames to batch
             if self.framecount % 5 == 0:
                 lidar_dump = msgpack.dumps(self.latest_obs["lidar"])
                 steer_dump = msgpack.dumps(self.latest_obs["steer"])
@@ -110,7 +120,7 @@ class ExperienceRecorder(threading.Thread):
                 cv_md_dump = msgpack.dumps(cv_md)
                 self.curr_batch += [lidar_dump, steer_dump, cv_md_dump, cv_img]
                 self.latest_obs = {}
-                if (len(self.curr_batch) / 4.0 % 32.0) == 0:
+                if(len(self.curr_batch) / 4.0 % 32.0) == 0:
                     sys.stdout.write(" ||| Sending out batch %s" % self.batchcount)
                     batchcount_dump = msgpack.dumps(self.batchcount)
                     self.curr_batch = [batchcount_dump] + self.curr_batch
@@ -129,14 +139,31 @@ class ExperienceRecorder(threading.Thread):
                 msg = self.zmq_socket.recv_multipart()
                 batchnum = msgpack.loads(msg[0], encoding="utf-8")
                 print("\n RECVD NN FOR BATCH %s" % batchnum)
+                
+                #do stuff after receiving NN
                 self.save_model(msg[1])
+                self.send_signal('update_nn')
+
+    def recv_signal(self, data):
+        signal_str = data.data
+        if 'reset' in signal_str:
+            self.wait = True
+        if 'continue' in signal_str:
+            self.wait = False
+
+    def send_signal(self, signal_str):
+        """
+        Possible Signals read by NN_Steer:
+        update_nn, reset
+        """
+        self.env_signal_pub.Publish(signal_str)
 
 def main(args):
     rospy.init_node("ExperienceRecorder", anonymous=True)
     sender = ExperienceRecorder(connect_to="tcp://195.0.0.7:5555", only_record='autonomous')
     sender.daemon = True
     sender.start()
-    rospy.sleep(0.2)
+    rospy.sleep(0.1)
     rospy.spin()
 
 if __name__ == '__main__':
