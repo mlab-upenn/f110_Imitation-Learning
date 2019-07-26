@@ -104,3 +104,8 @@ class NN_Steer(object):
         print("DEVICE:{device}".format(device=device))
         print("NETWORK:")
         print(net)
+
+if __name__ == "__main__":
+    rospy.init_node("nn_steer", anonymous=True)
+    rospy.sleep(0.1)
+    rospy.spin()
