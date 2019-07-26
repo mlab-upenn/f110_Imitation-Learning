@@ -68,6 +68,7 @@ class NN_Steer(object):
         #if not, then reset
         if tooclose(r1, 0.15) or tooclose(r2, 0.3) or tooclose(r3, 0.15):
             self.send_signal('reset')
+            print("RESETTING ENV")
             self.env_reset()
             self.send_signal('continue')
 
@@ -92,6 +93,7 @@ class NN_Steer(object):
             steer_dict = backtrack[-1 * i]  
             rev_angle = -1.0 * steer_dict["angle"]
             rev_speed = -1.0 * sign(steer_dict["speed"])
+            print("REVERSE {rev_angle}".format(rev_angle = rev_angle))
             drive_msg = self.get_drive_msg(rev_angle, rev_speed)
             self.steer_pub(drive_msg)
 
