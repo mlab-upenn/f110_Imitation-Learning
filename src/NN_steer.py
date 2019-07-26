@@ -37,6 +37,7 @@ class NN_Steer(object):
         self.bridge = CvBridge()
         self.dutils = Data_Utils()
         self.funclist = session["online"]["funclist"]
+        self.t0 = time.time()
 
     def lidar_callback(self, data):
         pass
@@ -45,6 +46,13 @@ class NN_Steer(object):
         pass
     
     def cam_callback(self, data):
+
+        #update neural-net every minute
+        t1 = time.time()
+        if (t1 - self.t0) > 60:
+            self.load_net()
+            self.t0 = time.time()
+
         if self.framecount % self.sample_interval == 0:
             try:
                 cv_img = self.bridge.imgmsg_to_cv2(data, "bgr8")
