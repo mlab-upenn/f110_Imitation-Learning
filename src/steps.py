@@ -100,7 +100,7 @@ session = {
     "online":
     {
         "sess_id": 0,
-	"modelpath":'/home/nvidia/datasets/avfone/models/model' #on f110
+	    "models_dir":'/home/nvidia/datasets/avfone/models/'
         ,"funclist":
                 [
                     p(cropVertical, [100, 200]),
