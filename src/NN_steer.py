@@ -84,6 +84,9 @@ class NN_Steer(object):
             new_data_dict = self.dutils.apply_flist(src_dict, self.funclist, w_rosdict=True)
             cv_img = new_data_dict["img"]
 
+            cv2.imshow('Testing IMG', cv_img)
+            cv2.waitKey(0)
+
             #Dataset preprocessing
             ts_img = torch.from_numpy(cv_img).permute(2, 0, 1).float()
             ts_img = ts_img[None]
