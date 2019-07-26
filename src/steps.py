@@ -88,7 +88,7 @@ session = {
     {
         "model":NVIDIA_ConvNet,
         "lr":1e-3,
-        "loss_func":nn.functional.l1_loss,
+        "loss_func":nn.functional.mse_loss,
         "optimizer":torch.optim.Adam,
         "num_epochs":5,
         "batch_size":5,

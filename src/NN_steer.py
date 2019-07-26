@@ -30,7 +30,7 @@ class NN_Steer(object):
         self.lidar_sub = rospy.Subscriber('/scan', LaserScan, self.lidar_callback)
         self.cam_sub = rospy.Subscriber('/usb_cam/image_raw', Image, self.cam_callback)
         self.steer_sub = rospy.Subscriber('/vesc/low_level/ackermann_cmd_mux/output', AckermannDriveStamped, self.steer_callback)
-        self.steer_pub = rospy.Publisher("vesc/high_level/ackermann_cmd_mux/input/nav_0", AckermannDriveStamped, queue_size=1)
+        self.steer_pub = rospy.Publisher("vesc/high_level/ackermann_cmd_mux/input/nav_0", AckermannDriveStamped, queue_size=10)
         self.env_signal_pub = rospy.Publisher("/env_signal", String, queue_size=10)
         self.env_signal_sub = rospy.Subscriber("/env_signal", String, self.recv_signal)
 
