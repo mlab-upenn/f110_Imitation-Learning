@@ -70,6 +70,10 @@ class ExperienceRecorder(threading.Thread):
         
     def steer_callback(self, data):
         if self.curr_recording == self.only_record or self.only_record == 'both':
+            if data.drive.steering_angle > 0.34:
+                data.drive.steering_angle = 0.34
+            elif data.drive.steering_angle < -0.34:
+                data.drive.steering_angle = -0.34
             steer = dict(
                 steering_angle = -1.0 * data.drive.steering_angle, 
                 steering_angle_velocity = data.drive.steering_angle_velocity,

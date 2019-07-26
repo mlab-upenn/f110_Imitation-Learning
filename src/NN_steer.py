@@ -27,9 +27,9 @@ class NN_Steer(object):
 
         #Setup Subscribers & Publishers
         self.lidar_sub = rospy.Subscriber('/scan', LaserScan, self.lidar_callback)
-        self.steer_sub = rospy.Subscriber('/usb_cam/image_raw', AckermannDriveStamped, self.steer_callback)
-        self.cam_sub = rospy.Subscriber('/vesc/low_level/ackermann_cmd_mux/output', Image, self.cam_callback)
-        self.steer_pub = rospy.Publishers("vesc/high_level/ackermann_cmd_mux/input/nav_0", AckermannDriveStamped, queue_size=1)
+        self.cam_sub = rospy.Subscriber('/usb_cam/image_raw', Image, self.cam_callback)
+        self.steer_sub = rospy.Subscriber('/vesc/low_level/ackermann_cmd_mux/output', AckermannDriveStamped, self.steer_callback)
+        self.steer_pub = rospy.Publisher("vesc/high_level/ackermann_cmd_mux/input/nav_0", AckermannDriveStamped, queue_size=1)
 
         #At what interval should we sample to get a steering angle
         self.sample_interval = 4
@@ -49,7 +49,7 @@ class NN_Steer(object):
 
         #update neural-net every minute
         t1 = time.time()
-        if (t1 - self.t0) > 60:
+        if (t1 - self.t0) > 60.0:
             self.load_net()
             self.t0 = time.time()
 
@@ -58,19 +58,20 @@ class NN_Steer(object):
                 cv_img = self.bridge.imgmsg_to_cv2(data, "bgr8")
             except CvBridgeError as e:
                 print(e)
-
-            ts_img = self.NN_preprocess(cv_img)
-
-            #use net to get predicted angle
-            ts_angle_pred = self.net(ts_img)
             
+            ts_img = self.NN_preprocess(cv_img)
+            input_dict = {"img":ts_img}
+            #use net to get predicted angle
+            output_dict = self.net(input_dict)
+            ts_angle_pred = output_dict["angle"]
+            print(ts_angle_pred.item())
             #Send to car
             angle_pred = ts_angle_pred.item()
-            vel = 1
+            vel = 5
             drive_msg = AckermannDriveStamped()
             drive_msg.header.stamp = rospy.Time.now()
             drive_msg.header.frame_id = "odom" 
-            drive_msg.drive.steering_angle = -1.0 * angle_pred.item()
+            drive_msg.drive.steering_angle = -1.0 * angle_pred
             drive_msg.drive.speed = vel
             self.steer_pub.publish(drive_msg)
 
@@ -84,16 +85,13 @@ class NN_Steer(object):
             new_data_dict = self.dutils.apply_flist(src_dict, self.funclist, w_rosdict=True)
             cv_img = new_data_dict["img"]
 
-            cv2.imshow('Testing IMG', cv_img)
-            cv2.waitKey(0)
-
             #Dataset preprocessing
             ts_img = torch.from_numpy(cv_img).permute(2, 0, 1).float()
             ts_img = ts_img[None]
-            return ts_img
+            return ts_img.to(device)
 
     def load_net(self, model_name='model'):
-        modelpath = os.path.join(session["online"]["modelpath"], model_name)
+        modelpath = os.path.join(session["online"]["models_dir"], model_name)
         net = NVIDIA_ConvNet()
         if os.path.exists(modelpath):
             net.load_state_dict(torch.load(modelpath))
@@ -107,5 +105,6 @@ class NN_Steer(object):
 
 if __name__ == "__main__":
     rospy.init_node("nn_steer", anonymous=True)
+    nnsteer = NN_Steer()
     rospy.sleep(0.1)
     rospy.spin()
