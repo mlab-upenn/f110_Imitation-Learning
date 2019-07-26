@@ -49,7 +49,7 @@ class NN_Steer(object):
 
         #update neural-net every minute
         t1 = time.time()
-        if (t1 - self.t0) > 60.0:
+        if (t1 - self.t0) > 25.0:
             self.load_net()
             self.t0 = time.time()
 
@@ -67,7 +67,7 @@ class NN_Steer(object):
             print(ts_angle_pred.item())
             #Send to car
             angle_pred = ts_angle_pred.item()
-            vel = 5
+            vel = 0
             drive_msg = AckermannDriveStamped()
             drive_msg.header.stamp = rospy.Time.now()
             drive_msg.header.frame_id = "odom" 

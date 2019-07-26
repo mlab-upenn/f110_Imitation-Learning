@@ -51,7 +51,7 @@ class ExperienceRecorder(threading.Thread):
         threading.Thread.__init__(self) 
 
     def joy_callback(self, data): #just sets the currently active button 
-        auton_button = data.buttons[5]
+        auton_button = data.buttons[1]
         joy_button = data.buttons[4]
         if joy_button:
             self.curr_recording = 'joystick'
@@ -94,7 +94,7 @@ class ExperienceRecorder(threading.Thread):
         sys.stdout.flush()
         if "lidar" in self.latest_obs and "steer" in self.latest_obs:
             #Add every 10 frames to batch
-            if self.framecount % 10 == 0:
+            if self.framecount % 5 == 0:
                 lidar_dump = msgpack.dumps(self.latest_obs["lidar"])
                 steer_dump = msgpack.dumps(self.latest_obs["steer"])
                 try:
@@ -110,7 +110,7 @@ class ExperienceRecorder(threading.Thread):
                 cv_md_dump = msgpack.dumps(cv_md)
                 self.curr_batch += [lidar_dump, steer_dump, cv_md_dump, cv_img]
                 self.latest_obs = {}
-                if (len(self.curr_batch) / 4.0 % 8.0) == 0:
+                if (len(self.curr_batch) / 4.0 % 32.0) == 0:
                     sys.stdout.write(" ||| Sending out batch %s" % self.batchcount)
                     batchcount_dump = msgpack.dumps(self.batchcount)
                     self.curr_batch = [batchcount_dump] + self.curr_batch
@@ -133,7 +133,7 @@ class ExperienceRecorder(threading.Thread):
 
 def main(args):
     rospy.init_node("ExperienceRecorder", anonymous=True)
-    sender = ExperienceRecorder(connect_to="tcp://195.0.0.7:5555", only_record='joystick')
+    sender = ExperienceRecorder(connect_to="tcp://195.0.0.7:5555", only_record='autonomous')
     sender.daemon = True
     sender.start()
     rospy.sleep(0.2)
