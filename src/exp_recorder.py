@@ -97,24 +97,24 @@ class ExperienceRecorder(threading.Thread):
                     cv_img = self.bridge.imgmsg_to_cv2(data, "bgr8")
                 except CvBridgeError as e:
                     print(e)
-        cv_img = cv2.resize(cv_img, None, fx=0.5, fy=0.5)
-        cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            cv_md = dict(
+                cv_img = cv2.resize(cv_img, None, fx=0.5, fy=0.5)
+                cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                cv_md = dict(
                 dtype=str(cv_img.dtype),
                 shape=cv_img.shape,
-            )
-            cv_md_dump = msgpack.dumps(cv_md)
-            self.curr_batch += [lidar_dump, steer_dump, cv_md_dump, cv_img]
-            self.latest_obs = {}
-            if (len(self.curr_batch) / 4.0 % 8.0) == 0:
-                sys.stdout.write(" ||| Sending out batch %s" % self.batchcount)
-        batchcount_dump = msgpack.dumps(self.batchcount)
-            self.curr_batch = [batchcount_dump] + self.curr_batch
-        sys.stdout.flush()
-                self.zmq_socket.send_multipart(self.curr_batch, copy=False)
-        self.curr_batch = []
-        self.batchcount+=1
-    self.framecount+=1
+                )
+                cv_md_dump = msgpack.dumps(cv_md)
+                self.curr_batch += [lidar_dump, steer_dump, cv_md_dump, cv_img]
+                self.latest_obs = {}
+                if (len(self.curr_batch) / 4.0 % 8.0) == 0:
+                    sys.stdout.write(" ||| Sending out batch %s" % self.batchcount)
+                    batchcount_dump = msgpack.dumps(self.batchcount)
+                    self.curr_batch = [batchcount_dump] + self.curr_batch
+                    sys.stdout.flush()
+                    self.zmq_socket.send_multipart(self.curr_batch, copy=False)
+                    self.curr_batch = []
+                    self.batchcount+=1
+            self.framecount+=1
 
     def run(self):
         poll = zmq.Poller()
@@ -123,9 +123,9 @@ class ExperienceRecorder(threading.Thread):
             sockets = dict(poll.poll(10000))
             if self.zmq_socket in sockets:
                 msg = self.zmq_socket.recv_multipart()
-		batchnum = msgpack.loads(msg[0], encoding="utf-8")
-		print("\n RECVD NN FOR BATCH %s" % batchnum)
-		self.save_model(msg[1])
+                batchnum = msgpack.loads(msg[0], encoding="utf-8")
+                print("\n RECVD NN FOR BATCH %s" % batchnum)
+                self.save_model(msg[1])
 
 def main(args):
     rospy.init_node("ExperienceRecorder", anonymous=True)

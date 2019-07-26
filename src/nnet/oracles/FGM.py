@@ -93,10 +93,10 @@ class FGM(object):
 
         angle = safest_theta
 
-        if (angle > 0.32):
-            angle = 0.32
-        if (angle < -0.32):
-            angle = -0.32
+        if (angle > 0.34):
+            angle = 0.34
+        if (angle < -0.34):
+            angle = -0.34
 
         data_dict["steer"]["steering_angle"] = -1.0 * angle
         return data_dict
