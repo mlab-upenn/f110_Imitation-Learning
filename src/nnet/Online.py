@@ -5,6 +5,7 @@ from nnet.Data_Utils import Data_Utils
 from steps import session
 from nnet.oracles.FGM import FGM
 from nnet.Metric_Visualizer import Metric_Visualizer
+
 __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 
 class Online(object):
