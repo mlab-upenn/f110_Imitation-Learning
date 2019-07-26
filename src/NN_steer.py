@@ -5,6 +5,7 @@ import numpy as np
 from nnet.models import *
 from steps import session
 from nnet.Data_Utils import Data_Utils
+from collections import deque
 
 #ROS Dependencies
 import roslib, rospy
@@ -25,15 +26,14 @@ class NN_Steer(object):
         
         self.load_net(model_name=model_name) #updates self.net
 
-
         #Setup Subscribers & Publishers
         self.lidar_sub = rospy.Subscriber('/scan', LaserScan, self.lidar_callback)
         self.cam_sub = rospy.Subscriber('/usb_cam/image_raw', Image, self.cam_callback)
         self.steer_sub = rospy.Subscriber('/vesc/low_level/ackermann_cmd_mux/output', AckermannDriveStamped, self.steer_callback)
-        self.steer_pub = rospy.Publisher("vesc/high_level/ackermann_cmd_mux/input/nav_0", AckermannDriveStamped, queue_size=10)
+        self.steer_pub = rospy.Publisher("vesc/high_level/ackermann_cmd_mux/input/nav_0", AckermannDriveStamped, queue_size=12)
         self.env_signal_pub = rospy.Publisher("/env_signal", String, queue_size=10)
         self.env_signal_sub = rospy.Subscriber("/env_signal", String, self.recv_signal)
-
+	
         #At what interval should we sample to get a steering angle
         self.sample_interval = 4
         self.framecount = 0
@@ -42,40 +42,47 @@ class NN_Steer(object):
         self.bridge = CvBridge()
         self.dutils = Data_Utils()
         self.funclist = session["online"]["funclist"]
-        self.steer_history = [] #history of steers, useful for resets
+        self.steer_history = deque(maxlen=1000) #history of steers, useful for resets
+        self.wait = False
 
     def recv_signal(self, data):
         signal_str = data.data
         if 'update_nn' in signal_str:
-            self.load_net
+            self.load_net()
 
     def send_signal(self, signal_str):
-        rospy.env_signal_pub.Publish(signal_str)
+        self.env_signal_pub.publish(signal_str)
 
     def lidar_callback(self, data):
         ranges = data.ranges
         angle_min = data.angle_min
-        angle_incr = data.angle_incr
-        d2reg= lambda deg_start, deg_end : ranges[int(angle_min + angle_incr * (deg_start * math.pi/180.0)) : int(angle_min + angle_incr * (deg_end* math.pi/180.0))]
-
-        tooclose = lambda r, min_range : min(r) <= min_range
+        angle_incr = data.angle_increment
+        rfrac = lambda st, en : ranges[int(st*len(ranges)):int(en*len(ranges))]
+        tooclose = lambda r, min_range : np.nanmin(r[r != -np.inf]) <= min_range
 
         #ensure that boundaries are met in each region
-        r1 = d2reg(0, 45.0)
-        r2 = d2reg(45.0, 135.0)
-        r3 = d2reg(135.0, 179.0)
+        r1 = rfrac(0, 1./4.)
+        r2 = rfrac(1./4., 3./4.)
+        r3 = rfrac(3./4., 1.)
 
         #if not, then reset
-        if tooclose(r1, 0.15) or tooclose(r2, 0.3) or tooclose(r3, 0.15):
+        if tooclose(r1, 0.4) or tooclose(r2, 0.6) or tooclose(r3, 0.4):
+            self.wait = True
             self.send_signal('reset')
             print("RESETTING ENV")
             self.env_reset()
+
+        else:
             self.send_signal('continue')
+            self.wait = False
 
     def steer_callback(self, data):
-        steer_dict = {'angle':data.drive.steering_angle, 'speed':data.drive.speed}
-        self.steer_history.append([steer_dict])
-    
+        if not self.wait:
+            if abs(data.drive.steering_angle - 0.05) != 0.0:
+                steer_dict = {"angle":data.drive.steering_angle, "speed":data.drive.speed}
+                for i in range(20):
+                    self.steer_history.append(steer_dict)
+
     def get_drive_msg(self, angle, vel, flip_angle=1.0):
         drive_msg = AckermannDriveStamped()
         drive_msg.header.stamp = rospy.Time.now()
@@ -85,37 +92,47 @@ class NN_Steer(object):
         return drive_msg
 
     def env_reset(self):
-        backtrack = min(10, len(self.steer_history))
-        curr_steer_history = self.steer_history.copy()
         sign = lambda x: (1, -1)[x < 0]
+        default_steer_dict = {"angle":0.0, "speed":1.0}
+        try:
+            steer_dict = self.steer_history.pop()
+        except:
+            steer_dict = default_steer_dict
 
-        for i in range(backtrack):
-            steer_dict = backtrack[-1 * i]  
-            rev_angle = -1.0 * steer_dict["angle"]
-            rev_speed = -1.0 * sign(steer_dict["speed"])
-            print("REVERSE {rev_angle}".format(rev_angle = rev_angle))
-            drive_msg = self.get_drive_msg(rev_angle, rev_speed)
-            self.steer_pub(drive_msg)
+        rev_angle = steer_dict["angle"]
+        rev_speed = -1.0
+        print("REVERSE {rev_angle}".format(rev_angle = rev_angle))
+        drive_msg = self.get_drive_msg(rev_angle, rev_speed)
+        self.steer_pub.publish(drive_msg)
+
+                    
+        #for i in range(10):
+         #   rev_angle = 0.0
+          #  rev_speed = -1.0
+           # drive_msg = self.get_drive_msg(rev_angle, rev_speed)
+            #self.steer_pub.publish(drive_msg)    
 
     def cam_callback(self, data):
-        if self.framecount % self.sample_interval == 0:
-            try:
-                cv_img = self.bridge.imgmsg_to_cv2(data, "bgr8")
-            except CvBridgeError as e:
-                print(e)
-            
-            ts_img = self.NN_preprocess(cv_img)
-            input_dict = {"img":ts_img}
-            #use net to get predicted angle
-            output_dict = self.net(input_dict)
-            ts_angle_pred = output_dict["angle"]
-            print(ts_angle_pred.item())
+        if not self.wait:
+            if self.framecount % self.sample_interval == 0:
+                try:
+                    cv_img = self.bridge.imgmsg_to_cv2(data, "bgr8")
+                except CvBridgeError as e:
+                    print(e)
+                
+                ts_img = self.NN_preprocess(cv_img)
+                input_dict = {"img":ts_img}
+                #use net to get predicted angle
+                output_dict = self.net(input_dict)
+                ts_angle_pred = output_dict["angle"]
+                print(ts_angle_pred.item())
 
-            #Send to car
-            angle_pred = ts_angle_pred.item()
-            vel = 0
-            driv_msg = self.get_drive_msg(angle_pred, vel, flip=-1.0)
-            self.steer_pub.publish(drive_msg)
+                #Send to car
+                angle_pred = ts_angle_pred.item()
+                vel = 1
+                drive_msg = self.get_drive_msg(angle_pred, vel, flip_angle=-1.0)
+                self.steer_pub.publish(drive_msg)
+            self.framecount += 1
 
     def NN_preprocess(self, cv_img):
             #basic serverside preprocess

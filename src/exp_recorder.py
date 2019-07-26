@@ -64,6 +64,9 @@ class ExperienceRecorder(threading.Thread):
             self.curr_recording = 'autonomous'
         else:
             self.curr_recording = '          '
+	
+	if self.wait:
+	    self.curr_recording = 'waiting'
 
     def lidar_callback(self, data):
         lidar = dict(
@@ -95,12 +98,7 @@ class ExperienceRecorder(threading.Thread):
         f.close()
 	
     def cam_callback(self, data):
-        if self.wait:
-            status_str = 'waiting'
-        else:
-            status_str = self.curr_recording
-
-        sys.stdout.write("\rcurr_recording: %s" % status_str)
+        sys.stdout.write("\rcurr_recording: %s" % self.curr_recording)
         sys.stdout.flush()
         if "lidar" in self.latest_obs and "steer" in self.latest_obs and not self.wait:
             #Add every 5 frames to batch
@@ -120,7 +118,7 @@ class ExperienceRecorder(threading.Thread):
                 cv_md_dump = msgpack.dumps(cv_md)
                 self.curr_batch += [lidar_dump, steer_dump, cv_md_dump, cv_img]
                 self.latest_obs = {}
-                if(len(self.curr_batch) / 4.0 % 32.0) == 0:
+                if(len(self.curr_batch) / 4.0 % 16.0) == 0:
                     sys.stdout.write(" ||| Sending out batch %s" % self.batchcount)
                     batchcount_dump = msgpack.dumps(self.batchcount)
                     self.curr_batch = [batchcount_dump] + self.curr_batch
@@ -156,11 +154,11 @@ class ExperienceRecorder(threading.Thread):
         Possible Signals read by NN_Steer:
         update_nn, reset
         """
-        self.env_signal_pub.Publish(signal_str)
+        self.env_signal_pub.publish(signal_str)
 
 def main(args):
     rospy.init_node("ExperienceRecorder", anonymous=True)
-    sender = ExperienceRecorder(connect_to="tcp://195.0.0.7:5555", only_record='autonomous')
+    sender = ExperienceRecorder(connect_to="tcp://195.0.0.2:5555", only_record='autonomous')
     sender.daemon = True
     sender.start()
     rospy.sleep(0.1)
