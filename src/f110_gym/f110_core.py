@@ -14,13 +14,47 @@ from cv_bridge import CvBridge, CvBridgeError
 
 __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 
-class f110Env(object):
+class Env(object):
+    """
+    Stripped down version from OpenaiGym
+    """
+    # Set this in SOME subclasses
+    metadata = {'render.modes': []}
+    reward_range = (-float('inf'), float('inf'))
+    spec = None
+
+    # Set these in ALL subclasses
+    action_space = None
+    observation_space = None
+
+    def step(self, action):
+        """Run one timestep of the environment's dynamics. When end of
+        episode is reached, you are responsible for calling `reset()`
+        to reset this environment's state.
+        Accepts an action and returns a tuple (observation, reward, done, info).
+        Args:
+            action (object): an action provided by the agent
+        Returns:
+            observation (object): agent's observation of the current environment
+            reward (float) : amount of reward returned after previous action
+            done (bool): whether the episode has ended, in which case further step() calls will return undefined results
+            info (dict): contains auxiliary diagnostic information (helpful for debugging, and sometimes learning)
+        """
+        raise NotImplementedError
+
+    def reset(self):
+        """Resets the state of the environment and returns an initial observation.
+        Returns: 
+            observation (object): the initial observation.
+        """
+        raise NotImplementedError
+
+
+class f110Env(Env):
     """
     Implements a Gym Environment & neccessary funcs for the F110 Autonomous RC Car(similar structure to gym.Env or gym.Wrapper)
     """
     def __init__(self):
-        super(f110Env, self).__init__()
-
         #At least need LIDAR, IMG & STEER for everything here to work 
         self.obs_info = {
             'lidar': {'topic':'/scan', 'type':LaserScan, 'callback':self.lidar_callback},
@@ -32,7 +66,7 @@ class f110Env(object):
 
         self.sublist = self.setup_subs(self.obs_info)
 
-        #Subscribe to joy (to access train_button) & pubish to ackermann
+        #Subscribe to joy (to access record_button) & pubish to ackermann
         self.joy_sub = rospy.Subscriber('/vesc/joy', Joy, self.joy_callback)        
         self.drive_pub = rospy.Publisher("vesc/high_level/ackermann_cmd_mux/input/nav_0", AckermannDriveStamped, queue_size=4) 
 
@@ -136,8 +170,8 @@ class f110Env(object):
             self.latest_reading_dict["lidar"] = lidar 
     
     def joy_callback(self, data):
-        train_button = data.buttons[1]
-        if train_button:
+        record_button = data.buttons[1]
+        if record_button:
             self.record = True
         else:
             self.record = False
