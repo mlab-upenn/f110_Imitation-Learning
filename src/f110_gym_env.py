@@ -67,7 +67,7 @@ class f110_gym_env(object):
                 steering_angle_velocity = data.drive.steering_angle_velocity,
                 speed = data.drive.speed
             )
-            self.latest_reading_dict['steer'] = steer
+            self.latest_reading_dict["steer"] = steer
 
     def lidar_callback(self, data):
         if self.record:
@@ -76,7 +76,7 @@ class f110_gym_env(object):
                 angle_increment = data.angle_increment,
                 ranges = data.ranges
             )
-            self.latest_reading_dict['lidar'] = lidar 
+            self.latest_reading_dict["lidar"] = lidar 
     
     def set_status_str(self, prefix=''):
         status_str = ''
@@ -90,13 +90,17 @@ class f110_gym_env(object):
     
     def is_reading_complete(self):
         #checks if all the readings are present in latest_reading_dict
-        base_check = 'lidar' in self.latest_reading_dict and 'steer' in self.latest_reading_dict and 'img' in self.latest_reading_dict
+        base_check = "lidar" in self.latest_reading_dict and "steer" in self.latest_reading_dict and "img" in self.latest_reading_dict
         return base_check
 
     def base_preprocessing(self, cv_img):
         cv_img = cv2.resize(cv_img, None, fx=0.5, fy=0.5)
         cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
         return cv_img
+
+    def update_latest_obs(self):
+        self.latest_obs.append(self.latest_reading_dict)
+        self.latest_reading_dict = {}
 
     def img_callback(self, data):
         self.set_status_str(prefix='\r')
@@ -107,5 +111,7 @@ class f110_gym_env(object):
                 cv_img = self.bridge.imgmsg_to_cv2(data, "bgr8")
             except CvBridgeError as e:
                 print(e) 
-
             cv_img  = self.base_preprocessing(cv_img)
+            self.latest_reading_dict["img"] = cv_img
+
+            self.update_latest_obs()
