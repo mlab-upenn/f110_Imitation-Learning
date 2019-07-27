@@ -16,10 +16,11 @@ __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 
 class f110Env(object):
     """
-    Implements a Gym Environment & neccessary funcs for the F110 Autonomous RC Car(similar structure to gym.wrappers)
+    Implements a Gym Environment & neccessary funcs for the F110 Autonomous RC Car(similar structure to gym.Env or gym.Wrapper)
     """
     def __init__(self):
-        
+        super(f110Env, self).__init__()
+
         #At least need LIDAR, IMG & STEER for everything here to work 
         self.obs_info = {
             'lidar': {'topic':'/scan', 'type':LaserScan, 'callback':self.lidar_callback},
@@ -44,6 +45,9 @@ class f110Env(object):
         self.bridge = CvBridge()
         self.history= deque(maxlen=500) #for reversing during reset
 
+        #GYM Properties (set in subclasses)
+        self.observation_space = '{"lidar": {}, "img" : {}, "steer":{}}'
+        self.action_space = '{"speed":float, "angle":float}'
     ############ GYM METHODS ###################################
 
     def _get_obs(self):
@@ -232,5 +236,54 @@ class f110Env(object):
 
     class f110Wrapper(f110Env):
         """
-        Wraps the environment to allow a modular transformation of 
+        Wraps the f110Env to allow a modular transformation.
+        
+        This class is the base class for all wrappers. The subclasses can override some methods to change behaviour of the original f110Env w/out touching the original code
         """
+        def __init__(self, env):
+            f110Env.__init__(self)
+            self.env = env
+            self.action_space = self.env.action_space
+            self.observation_space = self.env.observation_space
+
+        def step(self, action):
+            return self.env.step(action)
+
+        def reset(self, **kwargs):
+            return self.env.reset(**kwargs)
+        
+        def compute_reward(self, info):
+            return self.env.get_reward()
+    
+    class f110ObservationWrapper(f110Wrapper):
+        def reset(self, **kwargs):
+            obs = self.env.reset(**kwargs)
+            return self.observation(obs)
+
+        def observation(self, obs):
+            return obs
+
+    class f110RewardWrapper(f110Wrapper):
+        def reset(self, **kwargs):
+            return self.env.reset(**kwargs)
+        
+        def step(self, action):
+            observation, reward, done, info = self.env.step(action)
+            return observation, self.reward(reward), done, info
+        
+        def reward(self, reward):
+            return reward
+    
+    class f110ActionWrapper(f110Wrapper):
+        def reset(self, **kwargs):
+            return self.env.reset(**kwargs)
+        
+        def step(self, action):
+            return self.env.step(self.action(action))
+
+        def action(self, action):
+            return action
+        
+        def reverse_action(self, action):
+            raise NotImplementedError
+
