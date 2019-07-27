@@ -2,7 +2,6 @@
 from __future__ import print_function
 import os, sys, cv2, math, time
 import numpy as np
-from steps import session
 from collections import deque
 
 #ROS Dependencies
@@ -131,6 +130,13 @@ class f110_gym_env(object):
                 ranges = data.ranges
             )
             self.latest_reading_dict["lidar"] = lidar 
+    
+    def joy_callback(self, data):
+        train_button = data.buttons[1]
+        if train_button:
+            self.record = True
+        else:
+            self.record = False
 
     def set_status_str(self, prefix=''):
         status_str = ''
@@ -222,5 +228,4 @@ class f110_gym_env(object):
             tc = False
 
         return tc
-
     ############ ROS HANDLING METHODS ###################################
