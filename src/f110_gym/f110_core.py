@@ -91,7 +91,7 @@ class f110Env(Env):
         obs_dict = self.latest_obs[-1]
         return obs_dict
         
-    def reset(self):
+    def reset(self, **kwargs):
         """
         Reverse until we're not 'tooclose'
         """
@@ -268,14 +268,13 @@ class f110Env(Env):
         return tc
     ############ ROS HANDLING METHODS ###################################
 
-class f110Wrapper(f110Env):
+class f110Wrapper(Env):
     """
     Wraps the f110Env to allow a modular transformation.
     
     This class is the base class for all wrappers. The subclasses can override some methods to change behaviour of the original f110Env w/out touching the original code
     """
     def __init__(self, env):
-        f110Env.__init__(self)
         self.env = env
         self.action_space = self.env.action_space
         self.observation_space = self.env.observation_space
@@ -295,7 +294,7 @@ class f110ObservationWrapper(f110Wrapper):
         return self.observation(obs)
 
     def observation(self, obs):
-        return obs
+        raise NotImplementedError
 
 class f110RewardWrapper(f110Wrapper):
     def reset(self, **kwargs):
@@ -306,7 +305,7 @@ class f110RewardWrapper(f110Wrapper):
         return observation, self.reward(reward), done, info
     
     def reward(self, reward):
-        return reward
+        raise NotImplementedError
 
 class f110ActionWrapper(f110Wrapper):
     def reset(self, **kwargs):
@@ -316,7 +315,7 @@ class f110ActionWrapper(f110Wrapper):
         return self.env.step(self.action(action))
 
     def action(self, action):
-        return action
+        raise NotImplementedError
     
     def reverse_action(self, action):
         raise NotImplementedError
