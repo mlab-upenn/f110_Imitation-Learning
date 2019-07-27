@@ -14,7 +14,7 @@ from cv_bridge import CvBridge, CvBridgeError
 
 __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 
-class f110_gym_env(object):
+class f110_gym(object):
     """
     Implements a Gym Environment & neccessary funcs for the F110 Autonomous RC Car(similar structure to gym.wrappers)
     """
