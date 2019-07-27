@@ -45,6 +45,51 @@ class f110_gym_env(object):
         self.bridge = CvBridge()
         self.history= deque(maxlen=500) #for reversing during reset
 
+    ############ GYM METHODS ###################################
+
+    def _get_obs(self):
+        """
+        Returns latest observation (TODO:DECIDE IF I WANT TO RET JUST ONE OR MORE OBS)
+        """
+        obs_dict = self.latest_obs[-1]
+        return obs_dict
+        
+    def reset(self):
+        """
+        Reverse until we're not 'tooclose'
+        """
+        if self.tooclose():
+            self.record = False
+            self.reverse()
+        else:
+            self.record = True
+        
+        #TODO: consider sleeping a few milliseconds?
+        return self._get_obs()
+
+    def get_reward(self):
+        """
+        TODO:Implement reward functionality
+        """
+        return 0
+
+    def step(self, action):
+        """
+        Action should be a steer_dict = {"angle":float, "speed":float}
+        """
+        #execute action
+        drive_msg = self.get_drive_msg(action.get("angle"), action.get("speed"), flip_angle=-1.0)
+        self.drive_pub.pubish(drive_msg)
+
+        #get reward & check if done & return
+        reward = self.get_reward()
+        done = self.tooclose()
+        info = ''
+        return self._get_obs, reward, done, info
+
+    ############ GYM METHODS ###################################
+
+    ############ ROS HANDLING METHODS ###################################
     def setup_subs(self, obs_info):
         """
         Initializes subscribers w/ obs_info & returns a list of subscribers
@@ -124,12 +169,12 @@ class f110_gym_env(object):
             self.latest_reading_dict["img"] = cv_img
             self.update_latest_obs()
 
-    def get_drive_msg(self, angle, vel, flip_angle=1.0):
+    def get_drive_msg(self, angle, speed, flip_angle=1.0):
         drive_msg = AckermannDriveStamped()
         drive_msg.header.stamp = rospy.Time.now()
         drive_msg.header.frame_id = "odom" 
         drive_msg.drive.steering_angle = flip_angle * angle
-        drive_msg.drive.speed = vel
+        drive_msg.drive.speed = speed
         return drive_msg
 
     def reverse(self):
@@ -177,31 +222,5 @@ class f110_gym_env(object):
             tc = False
 
         return tc
-        
-    ############ GYM METHODS ###################################
 
-    def _get_obs(self):
-        """
-        Returns latest observation (TODO:DECIDE IF I WANT TO RET JUST ONE OR MORE OBS)
-        """
-        obs_dict = self.latest_obs[-1]
-        return obs_dict
-        
-    def reset(self):
-        """
-        Reverse until we're not 'tooclose'
-        """
-        if self.tooclose():
-            self.record = False
-            self.reverse()
-        else:
-            self.record = True
-        
-        #consider sleeping a few milliseconds?
-        return self._get_obs()
-
-    def step(self, action):
-        """
-        Action should be a steer_dict = {"angle":float, "speed":float}
-        """
-        
+    ############ ROS HANDLING METHODS ###################################
