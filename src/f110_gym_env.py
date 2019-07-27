@@ -43,6 +43,7 @@ class f110_gym_env(object):
 
         #misc
         self.bridge = CvBridge()
+        self.history= deque(maxlen=500) #for reversing during reset
 
     def setup_subs(self, obs_info):
         """
@@ -54,6 +55,12 @@ class f110_gym_env(object):
         for topic in obs_info:
             sublist.append(makesub(obs_info[topic]))
         return sublist
+
+    def add_to_history(self, data):
+        if abs(data.drive.steering_angle - 0.05) != 0.0:
+            steer_dict = {"angle":data.drive.steering_angle, "speed":data.drive.speed}
+            for i in range(40):
+                self.history.append(steer_dict) 
     
     def steer_callback(self, data):
         if self.record:
@@ -69,6 +76,8 @@ class f110_gym_env(object):
             )
             self.latest_reading_dict["steer"] = steer
 
+        self.add_to_history(data) #add steering commands to history
+
     def lidar_callback(self, data):
         if self.record:
             lidar = dict(
@@ -77,7 +86,7 @@ class f110_gym_env(object):
                 ranges = data.ranges
             )
             self.latest_reading_dict["lidar"] = lidar 
-    
+
     def set_status_str(self, prefix=''):
         status_str = ''
         if self.record:
@@ -113,5 +122,67 @@ class f110_gym_env(object):
                 print(e) 
             cv_img  = self.base_preprocessing(cv_img)
             self.latest_reading_dict["img"] = cv_img
-
             self.update_latest_obs()
+
+    def get_drive_msg(self, angle, vel, flip_angle=1.0):
+        drive_msg = AckermannDriveStamped()
+        drive_msg.header.stamp = rospy.Time.now()
+        drive_msg.header.frame_id = "odom" 
+        drive_msg.drive.steering_angle = flip_angle * angle
+        drive_msg.drive.speed = vel
+        return drive_msg
+
+    def reverse(self):
+        """
+        Uses self.history to back out
+        """
+        sign = lambda x: (1, -1)[x < 0]
+        default_steer_dict = {"angle":0.0, "speed":1.0}
+        try:
+            steer_dict = self.history.pop()
+        except:
+            steer_dict = default_steer_dict
+
+        rev_angle = steer_dict["angle"]
+        rev_speed = -1.0
+        print("REVERSE {rev_angle}".format(rev_angle = rev_angle))
+        drive_msg = self.get_drive_msg(rev_angle, rev_speed)
+        self.drive_pub.publish(drive_msg)
+    
+    def tooclose(self):
+        """
+        Uses self.latest_obs to determine if we are too_close (currently uses LIDAR)
+        """
+        tc = True
+        if len(self.latest_obs) > 0:
+
+            reading = self.latest_obs[-1]
+
+            #Use LIDAR Reading to check if we're too close
+            lidar = reading["lidar"]
+            ranges = lidar.get("ranges")
+            angle_min = lidar.get("angle_min")
+            angle_incr = lidar.get("angle_incr")
+            rfrac = lambda st, en : ranges[int(st*len(ranges)):int(en*len(ranges))]
+            mindist = lambda r, min_range : np.nanmin(r[r != -np.inf]) <= min_range
+            #ensure that boundaries are met in each region
+            r1 = rfrac(0, 1./4.)
+            r2 = rfrac(1./4., 3./4.)
+            r3 = rfrac(3./4., 1.) 
+            if mindist(r1, 0.4) or mindist(r2, 0.6) or mindist(r3, 0.4):
+                tc = True
+            else:
+                tc = False
+        else:
+            tc = False
+
+        return tc
+        
+    ############ GYM METHODS ###################################
+
+    def reset(self, **kwargs):
+        """
+        Reverse until we're not 'tooclose'
+        """
+        if self.tooclose():
+            
