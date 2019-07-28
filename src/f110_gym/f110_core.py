@@ -55,6 +55,7 @@ class f110Env(Env):
     Implements a Gym Environment & neccessary funcs for the F110 Autonomous RC Car(similar structure to gym.Env or gym.Wrapper)
     """
     def __init__(self):
+        rospy.init_node("Gym_Recorder", anonymous=True)
         #At least need LIDAR, IMG & STEER for everything here to work 
         self.obs_info = {
             'lidar': {'topic':'/scan', 'type':LaserScan, 'callback':self.lidar_callback},
@@ -64,16 +65,16 @@ class f110Env(Env):
             'steer':{'topic':'/vesc/low_level/ackermann_cmd_mux/output', 'type':AckermannDriveStamped, 'callback':self.steer_callback}
         }
 
-        self.sublist = self.setup_subs(self.obs_info)
+        self.setup_subs()
 
-        #Subscribe to joy (to access record_button) & pubish to ackermann
+        #Subscribe to joy (to access record_button) & publish to ackermann
         self.joy_sub = rospy.Subscriber('/vesc/joy', Joy, self.joy_callback)        
         self.drive_pub = rospy.Publisher("vesc/high_level/ackermann_cmd_mux/input/nav_0", AckermannDriveStamped, queue_size=4) 
 
         #one observation is '4' consecutive readings
         self.latest_obs = deque(maxlen=4)         
         self.latest_reading_dict = {}
-        self.record = False
+        self.record = True
         self.last_step_time = time.time()
 
         #misc
@@ -81,14 +82,16 @@ class f110Env(Env):
         self.history= deque(maxlen=500) #for reversing during reset
 
         #GYM Properties (set in subclasses)
-        self.observation_space = {'lidar': {'angle_min':0.0, 'angle_increment':0.0, 'ranges':[1.0, 2.0]}, 'img':np.zeros(5, 5, 3), 'steer':{'steering_angle':0.0} }
-        self.action_space = '{"speed":float, "angle":float}'
+        self.observation_space = {}
+        self.action_space = {}
     ############ GYM METHODS ###################################
 
     def _get_obs(self):
         """
         Returns latest observation 
         """
+        while(len(self.latest_obs) == 0):
+            rospy.sleep(0.01)
         obs_dict = self.latest_obs[-1]
         return obs_dict
         
@@ -96,15 +99,16 @@ class f110Env(Env):
         """
         Reverse until we're not 'tooclose'
         """
+        print("RESETTING_ENV")
         # if self.tooclose():
         #     self.record = False
         #     self.reverse()
         # else:
         #     self.record = True
-        self.record = False
+        #self.record = False
         while(self.tooclose()):
             self.reverse()
-
+        self.record = True
         #TODO: consider sleeping a few milliseconds?
         return self._get_obs()
 
@@ -120,27 +124,28 @@ class f110Env(Env):
         """
         #execute action
         drive_msg = self.get_drive_msg(action.get("angle"), action.get("speed"), flip_angle=-1.0)
-        self.drive_pub.pubish(drive_msg)
+        self.drive_pub.publish(drive_msg)
 
         #get reward & check if done & return
         reward = self.get_reward()
         done = self.tooclose()
         info = ''
-        return self._get_obs, reward, done, info
+        return self._get_obs(), reward, done, info
 
     ############ GYM METHODS ###################################
 
     ############ ROS HANDLING METHODS ###################################
-    def setup_subs(self, obs_info):
+    def setup_subs(self):
         """
         Initializes subscribers w/ obs_info & returns a list of subscribers
         """
+        obs_info = self.obs_info
         makesub = lambda subdict : rospy.Subscriber(subdict['topic'], subdict['type'], subdict['callback']) 
 
         sublist = []
         for topic in obs_info:
             sublist.append(makesub(obs_info[topic]))
-        return sublist
+        self.sublist = sublist
 
     def add_to_history(self, data):
         if abs(data.drive.steering_angle - 0.05) != 0.0:
@@ -192,7 +197,7 @@ class f110Env(Env):
     
     def is_reading_complete(self):
         #checks if all the readings are present in latest_reading_dict
-        base_check = "lidar" in self.latest_reading_dict and "steer" in self.latest_reading_dict and "img" in self.latest_reading_dict
+        base_check = "lidar" in self.latest_reading_dict and "steer" in self.latest_reading_dict
         return base_check
 
     def base_preprocessing(self, cv_img):
