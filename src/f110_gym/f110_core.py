@@ -87,7 +87,7 @@ class f110Env(Env):
 
     def _get_obs(self):
         """
-        Returns latest observation (TODO:DECIDE IF I WANT TO RET JUST ONE OR MORE OBS)
+        Returns latest observation 
         """
         obs_dict = self.latest_obs[-1]
         return obs_dict
@@ -96,12 +96,15 @@ class f110Env(Env):
         """
         Reverse until we're not 'tooclose'
         """
-        if self.tooclose():
-            self.record = False
+        # if self.tooclose():
+        #     self.record = False
+        #     self.reverse()
+        # else:
+        #     self.record = True
+        self.record = False
+        while(self.tooclose()):
             self.reverse()
-        else:
-            self.record = True
-        
+
         #TODO: consider sleeping a few milliseconds?
         return self._get_obs()
 
@@ -193,8 +196,6 @@ class f110Env(Env):
         return base_check
 
     def base_preprocessing(self, cv_img):
-        # cv_img = cv2.resize(cv_img, None, fx=0.5, fy=0.5)
-        # cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
         return cv_img
 
     def update_latest_obs(self):
@@ -212,6 +213,8 @@ class f110Env(Env):
                 print(e) 
             cv_img  = self.base_preprocessing(cv_img)
             self.latest_reading_dict["img"] = cv_img
+
+            #at this point, the reading must be done
             self.update_latest_obs()
 
     def get_drive_msg(self, angle, speed, flip_angle=1.0):
