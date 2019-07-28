@@ -10,7 +10,7 @@ __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 
 env = f110Env()
 obs = env.reset()
-while True:
+for i in range(100):
     random_action = {"angle":0.2, "speed":1.0}
     obs, reward, done, info = env.step(random_action)
     cv_img = obs["img"]
