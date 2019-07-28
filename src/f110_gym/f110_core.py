@@ -42,7 +42,7 @@ class Env(object):
         """
         raise NotImplementedError
 
-    def reset(self):
+    def reset(self, **kwargs):
         """Resets the state of the environment and returns an initial observation.
         Returns: 
             observation (object): the initial observation.
@@ -74,13 +74,14 @@ class f110Env(Env):
         self.latest_obs = deque(maxlen=4)         
         self.latest_reading_dict = {}
         self.record = False
+        self.last_step_time = time.time()
 
         #misc
         self.bridge = CvBridge()
         self.history= deque(maxlen=500) #for reversing during reset
 
         #GYM Properties (set in subclasses)
-        self.observation_space = '{"lidar": {}, "img" : {}, "steer":{}}'
+        self.observation_space = {'lidar': {'angle_min':0.0, 'angle_increment':0.0, 'ranges':[1.0, 2.0]}, 'img':np.zeros(5, 5, 3), 'steer':{'steering_angle':0.0} }
         self.action_space = '{"speed":float, "angle":float}'
     ############ GYM METHODS ###################################
 
@@ -192,8 +193,8 @@ class f110Env(Env):
         return base_check
 
     def base_preprocessing(self, cv_img):
-        cv_img = cv2.resize(cv_img, None, fx=0.5, fy=0.5)
-        cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        # cv_img = cv2.resize(cv_img, None, fx=0.5, fy=0.5)
+        # cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
         return cv_img
 
     def update_latest_obs(self):
@@ -290,10 +291,10 @@ class f110Wrapper(Env):
 
 class f110ObservationWrapper(f110Wrapper):
     def reset(self, **kwargs):
-        obs = self.env.reset(**kwargs)
-        return self.observation(obs)
+        observation = self.env.reset(**kwargs)
+        return self.observation(observation)
 
-    def observation(self, obs):
+    def observation(self, observation):
         raise NotImplementedError
 
 class f110RewardWrapper(f110Wrapper):
