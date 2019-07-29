@@ -19,6 +19,7 @@ class ExperienceSender():
         myid = b'0'
         self.zmq_socket.identity = myid.encode('ascii')
         self.num_batch = 0
+        self.recv_loop_running = False
         m.patch()
         
     def obs_to_dump(self, obs_array, serial_func):
@@ -27,15 +28,34 @@ class ExperienceSender():
             dump_array += serial_func(obs_dict)
         return dump_array
     
-    def send_recv(self, dump_array, recv_callback):
-        pass
+    def recv(self, recv_callback, wait_for_recv):
+        """Polls ROUTER repeatedly for a message
+        """
+        poll = zmq.Poller()
+        poll.register(self.zmq_socket, zmq.POLLIN)
+        while True:
+            sockets = dict(poll.poll(10000))
+            if self.zmq_socket in sockets:
+                msg = self.zmq_socket.recv_multipart()
+                header_dict = msgpack.loads(msg[0], encoding="utf-8")
+                print("\n RECVD NN FOR BATCH %s" % header_dict.get("batchnum"))
+                recv_callback(msg[1:])
+                if wait_for_recv:
+                    self.recv_loop_running = False
+                    break
 
-    def send_obs(self, obs_array, serial_func, recv_callback, header_dict = {}):
+    def send_obs(self, obs_array, serial_func, recv_callback, header_dict = {}, wait_for_recv=False):
+        """Sends an observation to server
+        recv_callback is a func to be executed on reply, obs_array is an array of obs_dicts, serial_func is the function used to serialize each dict in the obs_array
+        """
         dump_array = self.obs_to_dump(obs_array, serial_func)
         header_dict['batchnum'] = self.num_batch
         header_dump = [msgpack.dumps(header_dict)]
         dump_array = header_dump + dump_array
-        p = Process(target=self.send_recv, args=(dump_array, recv_callback))
-        p.start()
-        p.join()
+        if not self.recv_loop_running:
+            p = Process(target=self.recv, args=(recv_callback, wait_for_recv))
+            p.start()
+            self.recv_loop_running = True
+        if wait_for_recv:
+            p.join()
         self.num_batch += 1
