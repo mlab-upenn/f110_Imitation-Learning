@@ -29,7 +29,7 @@ class ExperienceServer(threading.Thread):
     def run(self):
         while True:
             msg_dump_arr = self.zmq_socket.recv_multipart()
-            header_dict = msgpack.loads(msg_dump_arr[1], encoding="utf-8")
+            header_dict = msgpack.loads(msg_dump_arr[1], encoding="utj-8")
             print('RECV BATCH:', header_dict.get("batchnum"))
             obs_array = self.dump_to_obs(msg_dump_arr[2:])
             reply_dump_array = self.recv_callback(obs_array)
