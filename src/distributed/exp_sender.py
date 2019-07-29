@@ -10,7 +10,7 @@ __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 class ExperienceSender():
     """ Opens zmq DEALER socket & sends 'experiences' over from the environment
     """
-    def __init__(self, connect_to='tcp://195.0.0.7:5555'):
+    def __init__(self, connect_to='tcp://195.0.0.3:5555'):
 
         #important zmq initialization stuff to connect to server
         self.zmq_context = zmq.Context()
@@ -18,7 +18,7 @@ class ExperienceSender():
         self.zmq_socket.connect(connect_to)
         myid = b'0'
         self.zmq_socket.identity = myid.encode('ascii')
-        self.num_batch = 0
+        self.batchnum = 0
         self.recv_loop_running = False
         m.patch()
         
@@ -49,9 +49,10 @@ class ExperienceSender():
         recv_callback is a func to be executed on reply, obs_array is an array of obs_dicts, serial_func is the function used to serialize each dict in the obs_array
         """
         dump_array = self.obs_to_dump(obs_array, serial_func)
-        header_dict['batchnum'] = self.num_batch
+        header_dict['batchnum'] = self.batchnum
         header_dump = [msgpack.dumps(header_dict)]
         dump_array = header_dump + dump_array
+        print("\n SENT BATCH:: %s" % self.batchnum)
         self.zmq_socket.send_multipart(dump_array, copy=False)
         if not self.recv_loop_running:
             p = Process(target=self.recv, args=(recv_callback, wait_for_recv))
@@ -59,4 +60,4 @@ class ExperienceSender():
             self.recv_loop_running = True
         if wait_for_recv:
             p.join()
-        self.num_batch += 1
+        self.batchnum += 1

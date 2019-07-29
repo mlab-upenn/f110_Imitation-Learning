@@ -61,7 +61,7 @@ class f110Env(Env):
     Implements a Gym Environment & neccessary funcs for the F110 Autonomous RC Car(similar structure to gym.Env or gym.Wrapper)
     """
     def __init__(self):
-        rospy.init_node("Gym_Recorder", anonymous=True)
+        rospy.init_node("Gym_Recorder", anonymous=True, disable_signals=True)
         #At least need LIDAR, IMG & STEER for everything here to work 
         self.obs_info = {
             'lidar': {'topic':'/scan', 'type':LaserScan, 'callback':self.lidar_callback},
@@ -80,7 +80,7 @@ class f110Env(Env):
         #one observation is '4' consecutive readings
         self.latest_obs = deque(maxlen=4)         
         self.latest_reading_dict = {}
-        self.record = True
+        self.record = False
         self.last_step_time = time.time()
 
         #misc
@@ -131,8 +131,9 @@ class f110Env(Env):
         #get reward & check if done & return
         reward = self.get_reward()
         done = self.tooclose()
-        info = ''
-        return self._get_obs(), reward, done, info
+        obs = self._get_obs()
+        info = {'record':self.record}
+        return obs, reward, done, info
     
     def serialize_obs(self):
         """ Currently assume obs consists of sensor [lidar, steer, img]
@@ -171,29 +172,27 @@ class f110Env(Env):
                 self.history.append(steer_dict) 
     
     def steer_callback(self, data):
-        if self.record:
-            if data.drive.steering_angle > 0.34:
-                data.drive.steering_angle = 0.34
-            elif data.drive.steering_angle < -0.34:
-                data.drive.steering_angle = -0.34
+        if data.drive.steering_angle > 0.34:
+            data.drive.steering_angle = 0.34
+        elif data.drive.steering_angle < -0.34:
+            data.drive.steering_angle = -0.34
 
-            steer = dict(
-                steering_angle = -1.0 * data.drive.steering_angle, 
-                steering_angle_velocity = data.drive.steering_angle_velocity,
-                speed = data.drive.speed
-            )
-            self.latest_reading_dict["steer"] = steer
+        steer = dict(
+            steering_angle = -1.0 * data.drive.steering_angle, 
+            steering_angle_velocity = data.drive.steering_angle_velocity,
+            speed = data.drive.speed
+        )
+        self.latest_reading_dict["steer"] = steer
 
         self.add_to_history(data) #add steering commands to history
 
     def lidar_callback(self, data):
-        if self.record:
-            lidar = dict(
-                angle_min = data.angle_min,
-                angle_increment = data.angle_increment,
-                ranges = data.ranges
-            )
-            self.latest_reading_dict["lidar"] = lidar 
+        lidar = dict(
+            angle_min = data.angle_min,
+            angle_increment = data.angle_increment,
+            ranges = data.ranges
+        )
+        self.latest_reading_dict["lidar"] = lidar 
     
     def joy_callback(self, data):
         record_button = data.buttons[1]
@@ -228,7 +227,7 @@ class f110Env(Env):
         self.set_status_str(prefix='\r')
 
         #img_callback adds latest_reading to the self.lates_obs
-        if self.is_reading_complete() and self.record:
+        if self.is_reading_complete():
             try:
                 cv_img = self.bridge.imgmsg_to_cv2(data, "bgr8")
             except CvBridgeError as e:
@@ -260,7 +259,7 @@ class f110Env(Env):
 
         rev_angle = steer_dict["angle"]
         rev_speed = -1.0
-        print("REVERSE {rev_angle}".format(rev_angle = rev_angle))
+        #print("REVERSE {rev_angle}".format(rev_angle = rev_angle))
         drive_msg = self.get_drive_msg(rev_angle, rev_speed)
         self.drive_pub.publish(drive_msg)
     
