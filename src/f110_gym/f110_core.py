@@ -56,10 +56,6 @@ class Env(object):
         """Returns a function that allows you to serialize each observation as a multipart"""
         raise NotImplementedError
     
-    def deserialize_obs(self):
-        """Returns a partial function that allows you to deserialize each observation as a multipart"""
-        raise NotImplementedError
-
 class f110Env(Env):
     """
     Implements a Gym Environment & neccessary funcs for the F110 Autonomous RC Car(similar structure to gym.Env or gym.Wrapper)
@@ -153,18 +149,6 @@ class f110Env(Env):
             multipart_msg = [lidar_dump, steer_dump, cv_md_dump, cv_img]
             return multipart_msg
         return _ser
-    
-    def deserialize_obs(self):
-        def _deser(multipart_msg):
-            lidar = msgpack.loads(multipart_msg[0], encoding="utf-8")
-            steer = msgpack.unpackb(multipart_msg[1], encoding="utf-8")
-            md = msgpack.unpackb(multipart_msg[2])
-            cv_img = multipart_msg[3]
-            cv_img = np.frombuffer(cv_img, dtype=md[b'dtype'])
-            cv_img = cv_img.reshape(md[b'shape'])
-            obs_dict = {"img":cv_img, "lidar":lidar, "steer":steer}
-            return obs_dict
-        return _deser
     ############ GYM METHODS ###################################
 
     ############ ROS HANDLING METHODS ###################################
@@ -341,8 +325,6 @@ class f110ObservationWrapper(f110Wrapper):
     def serialize_obs(self):
         raise NotImplementedError
     
-    def deserialize_obs(self):
-        raise NotImplementedError
 
 class f110RewardWrapper(f110Wrapper):
     def reset(self, **kwargs):
