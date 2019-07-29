@@ -52,6 +52,7 @@ class ExperienceSender():
         header_dict['batchnum'] = self.num_batch
         header_dump = [msgpack.dumps(header_dict)]
         dump_array = header_dump + dump_array
+        self.zmq_socket.send_multipart(dump_array, copy=False)
         if not self.recv_loop_running:
             p = Process(target=self.recv, args=(recv_callback, wait_for_recv))
             p.start()
