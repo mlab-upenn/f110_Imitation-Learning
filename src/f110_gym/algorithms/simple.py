@@ -8,7 +8,7 @@ import numpy as np
 
 __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 
-env = f110Env()
+env = make_imitation_env()
 obs = env.reset()
 for i in range(100):
     random_action = {"angle":0.2, "speed":1.0}

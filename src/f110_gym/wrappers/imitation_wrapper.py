@@ -40,7 +40,7 @@ class PreprocessImg(f110ObservationWrapper):
                 new_obs["img"] = cv_img
         return new_obs
 
-def make_imitation_env(self, skip=10):
+def make_imitation_env(skip=10):
     env = f110Env()
     env = PreprocessImg(env)
     env = SkipEnv(env)
