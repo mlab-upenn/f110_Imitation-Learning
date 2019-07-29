@@ -28,6 +28,7 @@ class Env(object):
     # Set these in ALL subclasses
     action_space = None
     observation_space = None
+    ser_msg_length = 0
 
     def step(self, action):
         """Run one timestep of the environment's dynamics. When end of
@@ -91,8 +92,10 @@ class f110Env(Env):
         self.history= deque(maxlen=500) #for reversing during reset
 
         #GYM Properties (set in subclasses)
-        self.observation_space = {}
-        self.action_space = {}
+        self.observation_space = ['lidar', 'steer', 'img']
+        self.action_space = ['steering_angle', 'speed']
+        self.ser_msg_length = 4
+
     ############ GYM METHODS ###################################
 
     def _get_obs(self):
@@ -149,13 +152,19 @@ class f110Env(Env):
             cv_md_dump = msgpack.dumps(cv_md)
             multipart_msg = [lidar_dump, steer_dump, cv_md_dump, cv_img]
             return multipart_msg
-        
         return _ser
     
     def deserialize_obs(self):
-        def _deser(obs_dict):
-            
-        
+        def _deser(multipart_msg):
+            lidar = msgpack.loads(multipart_msg[0], encoding="utf-8")
+            steer = msgpack.unpackb(multipart_msg[1], encoding="utf-8")
+            md = msgpack.unpackb(multipart_msg[2])
+            cv_img = multipart_msg[3]
+            cv_img = np.frombuffer(cv_img, dtype=md[b'dtype'])
+            cv_img = cv_img.reshape(md[b'shape'])
+            obs_dict = {"img":cv_img, "lidar":lidar, "steer":steer}
+            return obs_dict
+        return _deser
     ############ GYM METHODS ###################################
 
     ############ ROS HANDLING METHODS ###################################
@@ -327,6 +336,12 @@ class f110ObservationWrapper(f110Wrapper):
         return self.observation(observation)
 
     def observation(self, observation):
+        raise NotImplementedError
+    
+    def serialize_obs(self):
+        raise NotImplementedError
+    
+    def deserialize_obs(self):
         raise NotImplementedError
 
 class f110RewardWrapper(f110Wrapper):
