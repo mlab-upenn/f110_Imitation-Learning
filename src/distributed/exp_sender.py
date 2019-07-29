@@ -57,10 +57,10 @@ class ExperienceSender():
         self.zmq_socket.send_multipart(dump_array, copy=False)
         if not self.recv_loop_running:
             pass       
-            #p = Process(target=self.recv, args=(recv_callback, wait_for_recv))
-            #p.start()
-            #self.recv_loop_running = True
+            p = Process(target=self.recv, args=(recv_callback, wait_for_recv))
+            p.start()
+            self.recv_loop_running = True
         if wait_for_recv:
             pass
-            #p.join()
+            p.join()
         self.batchnum += 1

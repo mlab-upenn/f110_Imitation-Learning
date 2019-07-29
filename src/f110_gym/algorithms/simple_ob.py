@@ -21,7 +21,7 @@ def main():
         obs, reward, done, info = env.step(random_action)
         if info.get("record"):
             obs_array.append(obs)
-        if len(obs_array) % 500 == 0 and len(obs_array) > 0:
+        if len(obs_array) % 8 == 0 and len(obs_array) > 0:
             sender.send_obs(obs_array, env.serialize_obs(), update_nn, header_dict={'env':'f110Env'})
             obs_array = []
         if done:

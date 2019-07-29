@@ -217,6 +217,8 @@ class f110Env(Env):
         return base_check
 
     def base_preprocessing(self, cv_img):
+        cv_img = cv2.resize(cv_img, None, fx=0.5, fy=0.5)
+        cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
         return cv_img
 
     def update_latest_obs(self):
