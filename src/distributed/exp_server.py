@@ -20,7 +20,7 @@ class ExperienceServer(threading.Thread):
         """Convert a multipart msg dump into an array of obs_dicts
         """
         obs_array = []
-        for i in range(msg_dump_arr):
+        for i in range(len(msg_dump_arr)):
             if i % self.deser_length == 0:
                 obs_dict = self.deser_func(msg_dump_arr[i:self.deser_length-1])
                 obs_array.append(obs_dict)
