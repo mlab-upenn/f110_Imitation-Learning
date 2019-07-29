@@ -19,7 +19,7 @@ class ExperienceServer(threading.Thread):
         while True:
             multipart_msg = self.zmq_socket.recv_multipart()
             header_dict = msgpack.loads(multipart_msg[1], encoding="utf-8")
-            print('RECVD BATCH:', header_dict.get("batchnum"))
+            print('RECV BATCH:', header_dict.get("batchnum"))
             dump_msg = self.recv_callback(multipart_msg[2:])
             dump_array = [multipart_msg[0], multipart_msg[1], dump_msg]
             self.zmq_socket.send_multipart(dump_array)
