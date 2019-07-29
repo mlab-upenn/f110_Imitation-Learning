@@ -99,7 +99,7 @@ class f110Env(Env):
         Returns latest observation 
         """
         while(len(self.latest_obs) == 0):
-            rospy.sleep(0.01)
+            rospy.sleep(0.1)
         obs_dict = self.latest_obs[-1]
         return obs_dict
         
@@ -151,7 +151,6 @@ class f110Env(Env):
             return multipart_msg
         return _ser
     ############ GYM METHODS ###################################
-
     ############ ROS HANDLING METHODS ###################################
     def setup_subs(self):
         """

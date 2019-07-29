@@ -2,7 +2,7 @@
 from __future__ import print_function
 import numpy as np
 import zmq, msgpack
-from multiprocessing import Process
+from threading import Thread
 import msgpack_numpy as m
 
 __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
@@ -53,14 +53,9 @@ class ExperienceSender():
         header_dump = [msgpack.dumps(header_dict)]
         dump_array = header_dump + dump_array
         print("\n SENT BATCH: %s" % self.batchnum)
-        print(len(dump_array))
         self.zmq_socket.send_multipart(dump_array, copy=False)
-        if not self.recv_loop_running:
-            pass       
-            p = Process(target=self.recv, args=(recv_callback, wait_for_recv))
+        if not self.recv_loop_running:    
+            p = Thread(target=self.recv, args=(recv_callback, wait_for_recv))
             p.start()
             self.recv_loop_running = True
-        if wait_for_recv:
-            pass
-            p.join()
         self.batchnum += 1
