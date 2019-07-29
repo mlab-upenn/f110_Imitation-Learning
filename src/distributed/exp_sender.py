@@ -10,7 +10,7 @@ __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 class ExperienceSender():
     """ Opens zmq DEALER socket & sends 'experiences' over from the environment
     """
-    def __init__(self, connect_to='tcp://195.0.0.3:5555'):
+    def __init__(self, connect_to="tcp://195.0.0.3:5555"):
 
         #important zmq initialization stuff to connect to server
         self.zmq_context = zmq.Context()
@@ -52,12 +52,15 @@ class ExperienceSender():
         header_dict['batchnum'] = self.batchnum
         header_dump = [msgpack.dumps(header_dict)]
         dump_array = header_dump + dump_array
-        print("\n SENT BATCH:: %s" % self.batchnum)
+        print("\n SENT BATCH: %s" % self.batchnum)
+        print(len(dump_array))
         self.zmq_socket.send_multipart(dump_array, copy=False)
         if not self.recv_loop_running:
-            p = Process(target=self.recv, args=(recv_callback, wait_for_recv))
-            p.start()
-            self.recv_loop_running = True
+            pass       
+            #p = Process(target=self.recv, args=(recv_callback, wait_for_recv))
+            #p.start()
+            #self.recv_loop_running = True
         if wait_for_recv:
-            p.join()
+            pass
+            #p.join()
         self.batchnum += 1

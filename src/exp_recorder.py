@@ -158,7 +158,7 @@ class ExperienceRecorder(threading.Thread):
 
 def main(args):
     rospy.init_node("ExperienceRecorder", anonymous=True)
-    sender = ExperienceRecorder(connect_to="tcp://195.0.0.2:5555", only_record='autonomous')
+    sender = ExperienceRecorder(connect_to="tcp://195.0.0.3:5555", only_record='autonomous')
     sender.daemon = True
     sender.start()
     rospy.sleep(0.1)
