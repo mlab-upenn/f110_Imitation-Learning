@@ -2,6 +2,8 @@
 from __future__ import print_function
 import os, sys, cv2, math, time
 import numpy as np
+import msgpack
+import msgpack_numpy as m
 from collections import deque
 
 #ROS Dependencies
@@ -49,6 +51,13 @@ class Env(object):
         """
         raise NotImplementedError
 
+    def serialize_obs(self):
+        """Returns a function that allows you to serialize each observation as a multipart"""
+        raise NotImplementedError
+    
+    def deserialize_obs(self):
+        """Returns a partial function that allows you to deserialize each observation as a multipart"""
+        raise NotImplementedError
 
 class f110Env(Env):
     """
@@ -125,7 +134,28 @@ class f110Env(Env):
         done = self.tooclose()
         info = ''
         return self._get_obs(), reward, done, info
-
+    
+    def serialize_obs(self):
+        """ Currently assume obs consists of sensor [lidar, steer, img]
+        """
+        def _ser(obs_dict):
+            lidar_dump = msgpack.dumps(obs_dict["lidar"])
+            steer_dump = msgpack.dumps(obs_dict["steer"])
+            cv_img = obs_dict["img"]
+            cv_md = dict(
+            dtype=str(cv_img.dtype),
+            shape=cv_img.shape,
+            )
+            cv_md_dump = msgpack.dumps(cv_md)
+            multipart_msg = [lidar_dump, steer_dump, cv_md_dump, cv_img]
+            return multipart_msg
+        
+        return _ser
+    
+    def deserialize_obs(self):
+        def _deser(obs_dict):
+            
+        
     ############ GYM METHODS ###################################
 
     ############ ROS HANDLING METHODS ###################################
