@@ -11,13 +11,17 @@ __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
 
 def main():
     env = make_imitation_env()
+    #env = f110Env()
     obs = env.reset()
+    #print(obs["img"].shape)
+    count = 0
     while True:
         random_action = {"angle":0.2, "speed":1.0}
         obs, reward, done, info = env.step(random_action)
         cv_img = obs["img"]
         cv2.imshow('latestimg', cv_img)
         cv2.waitKey(2)
+	count+=1
         if done:
             obs = env.reset() 
 
