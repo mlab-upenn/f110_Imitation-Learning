@@ -25,17 +25,19 @@ def deserialize_obs():
 
 
 def batch_callback(exp_path, obs_array):
-    """Takes the deserialized obs_array and performs simple training operations on it"""
+    """Takes the deserialized obs_array and performs simple training operations on it
+    REMEMBER: You need to send a list back.
+    """
     online_learner = Online()
     vis = Metric_Visualizer()
     pkl_name = online_learner.save_obsarray_to_pickle(obs_array, os.path.join(exp_path, 'raw'))
-    vis.vid_from_pklpath(os.path.join(exp_path, 'proc', pkl_name), 0, 0, show_steer=True, units='rad', live=True)
-    trainer = Trainer(online=True, pklpath=os.path.join(exp_path, 'proc', pkl_name), train_id=0)
+    vis.vid_from_pklpath(os.path.join(exp_path, 'raw', pkl_name), 0, 0, show_steer=True, units='rad', live=True)
+    trainer = Trainer(online=True, pklpath=os.path.join(exp_path, 'raw', pkl_name), train_id=0)
     #Send model back
     modelpath = trainer.get_model_path()
     with open(modelpath, 'rb') as binary_file:
         model_dump = bytes(binary_file.read())
-    return model_dump
+    return [model_dump]
 
 def get_exp_path():
     exp_path = os.path.join(session["params"]["abs_path"], session["params"]["sess_root"], str(session["online"]["sess_id"]), "exp")
