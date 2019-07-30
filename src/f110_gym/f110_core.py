@@ -101,6 +101,7 @@ class f110Env(Env):
         while(len(self.latest_obs) == 0):
             rospy.sleep(0.1)
         obs_dict = self.latest_obs[-1]
+        #self.latest_obs.clear()
         return obs_dict
         
     def reset(self, **kwargs):
@@ -252,7 +253,7 @@ class f110Env(Env):
         Uses self.history to back out
         """
         sign = lambda x: (1, -1)[x < 0]
-        default_steer_dict = {"angle":0.0, "speed":1.0}
+        default_steer_dict = {"angle":0.0, "speed":-1.0}
         try:
             steer_dict = self.history.pop()
         except:
@@ -260,7 +261,7 @@ class f110Env(Env):
 
         rev_angle = steer_dict["angle"]
         rev_speed = -1.0
-        #print("REVERSE {rev_angle}".format(rev_angle = rev_angle))
+        print("REVERSE {rev_angle}".format(rev_angle = rev_angle))
         drive_msg = self.get_drive_msg(rev_angle, rev_speed)
         self.drive_pub.publish(drive_msg)
     

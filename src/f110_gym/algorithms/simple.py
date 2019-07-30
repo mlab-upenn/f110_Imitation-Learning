@@ -10,10 +10,9 @@ __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
 
 
 def main():
-    env = make_imitation_env()
-    #env = f110Env()
+    #env = make_imitation_env()
+    env = f110Env()
     obs = env.reset()
-    #print(obs["img"].shape)
     count = 0
     while True:
         random_action = {"angle":0.2, "speed":1.0}
