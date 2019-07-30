@@ -1,5 +1,4 @@
 from f110_gym.f110_core import f110Env, f110ActionWrapper, f110ObservationWrapper, f110Wrapper
-import cv2
 
 class SkipEnv(f110Wrapper):
     def __init__(self, env, skip=10):
@@ -9,7 +8,6 @@ class SkipEnv(f110Wrapper):
         
     def step(self, action):
         """Repeat action & sum reward"""
-        print("IN SKIPENV STEP")
         total_reward = 0.0
         done = None
         for i in range(self._skip):
