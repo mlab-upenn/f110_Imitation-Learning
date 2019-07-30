@@ -22,7 +22,7 @@ class ExperienceServer(threading.Thread):
         obs_array = []
         for i in range(len(msg_dump_arr)):
             if i % self.deser_length == 0:
-                obs_dict = self.deser_func(msg_dump_arr[i:self.deser_length-1])
+                obs_dict = self.deser_func(msg_dump_arr[i:i + self.deser_length])
                 obs_array.append(obs_dict)
         return obs_array
 

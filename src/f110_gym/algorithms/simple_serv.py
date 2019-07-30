@@ -19,10 +19,9 @@ def deserialize_obs():
     return _deser
 
 def show_msg(obs_array):
-    print(len(obs_array))
     randomstuff= {'NN':'dingus'}
     dump = msgpack.dumps(randomstuff)
-    return dump
+    return [dump]
 
 serv = ExperienceServer(show_msg, deserialize_obs(), 4)
 serv.start()
