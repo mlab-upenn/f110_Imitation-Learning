@@ -10,8 +10,8 @@ __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
 
 
 def main():
-    #env = make_imitation_env()
-    env = f110Env()
+    env = make_imitation_env()
+    #env = f110Env()
     obs = env.reset()
     count = 0
     while True:
@@ -22,6 +22,7 @@ def main():
         cv2.waitKey(2)
 	count+=1
         if done:
+            print("ISDONE")
             obs = env.reset() 
 
 if __name__ == '__main__':

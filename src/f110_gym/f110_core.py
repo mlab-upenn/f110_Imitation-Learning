@@ -71,16 +71,12 @@ class f110Env(Env):
             'steer':{'topic':'/vesc/low_level/ackermann_cmd_mux/output', 'type':AckermannDriveStamped, 'callback':self.steer_callback}
         }
 
-        self.setup_subs()
 
-        #Subscribe to joy (to access record_button) & publish to ackermann
-        self.joy_sub = rospy.Subscriber('/vesc/joy', Joy, self.joy_callback)        
-        self.drive_pub = rospy.Publisher("vesc/high_level/ackermann_cmd_mux/input/nav_0", AckermannDriveStamped, queue_size=4) 
-
-        #one observation is '4' consecutive readings
+        #one observation could be 4 consecutive readings, so init deque for safety
         self.latest_obs = deque(maxlen=4)         
         self.latest_reading_dict = {}
         self.record = False
+        self.rev = False
         self.last_step_time = time.time()
 
         #misc
@@ -92,6 +88,12 @@ class f110Env(Env):
         self.action_space = ['steering_angle', 'speed']
         self.ser_msg_length = 4
 
+        self.setup_subs()
+
+        #Subscribe to joy (to access record_button) & publish to ackermann
+        self.joy_sub = rospy.Subscriber('/vesc/joy', Joy, self.joy_callback)        
+        self.drive_pub = rospy.Publisher("vesc/high_level/ackermann_cmd_mux/input/nav_0", AckermannDriveStamped, queue_size=4) 
+
     ############ GYM METHODS ###################################
 
     def _get_obs(self):
@@ -101,7 +103,6 @@ class f110Env(Env):
         while(len(self.latest_obs) == 0):
             rospy.sleep(0.1)
         obs_dict = self.latest_obs[-1]
-        #self.latest_obs.clear()
         return obs_dict
         
     def reset(self, **kwargs):
@@ -109,11 +110,16 @@ class f110Env(Env):
         Reverse until we're not 'tooclose'
         """
         print("\n RESETTING_ENV")
+        self.record = False
+        self.rev = True
+        obs = self._get_obs()
         while(self.tooclose()):
             self.reverse()
         self.record = True
+        self.rev = False
         #TODO: consider sleeping a few milliseconds?
-        return self._get_obs()
+        self.latest_obs.clear()
+        return obs
 
     def get_reward(self):
         """
@@ -130,10 +136,11 @@ class f110Env(Env):
         self.drive_pub.publish(drive_msg)
 
         #get reward & check if done & return
+        obs = self._get_obs()
         reward = self.get_reward()
         done = self.tooclose()
-        obs = self._get_obs()
         info = {'record':self.record}
+        self.latest_obs.clear()
         return obs, reward, done, info
     
     def serialize_obs(self):
@@ -166,11 +173,11 @@ class f110Env(Env):
         self.sublist = sublist
 
     def add_to_history(self, data):
-        if abs(data.drive.steering_angle - 0.05) != 0.0:
+        if abs(data.drive.steering_angle) > 0.05 and data.drive.steering_angle < -0.05 and data.drive.steering_angle is not None:
             steer_dict = {"angle":data.drive.steering_angle, "speed":data.drive.speed}
             for i in range(40):
                 self.history.append(steer_dict) 
-    
+
     def steer_callback(self, data):
         if data.drive.steering_angle > 0.34:
             data.drive.steering_angle = 0.34
@@ -261,7 +268,7 @@ class f110Env(Env):
 
         rev_angle = steer_dict["angle"]
         rev_speed = -1.0
-        print("REVERSE {rev_angle}".format(rev_angle = rev_angle))
+        #print("REVERSE {rev_angle}".format(rev_angle = rev_angle))
         drive_msg = self.get_drive_msg(rev_angle, rev_speed)
         self.drive_pub.publish(drive_msg)
     
