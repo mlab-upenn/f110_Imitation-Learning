@@ -35,4 +35,5 @@ class ExperienceServer(threading.Thread):
             obs_array = self.dump_to_obs(msg_dump_arr[2:])
             reply_dump_array = self.recv_callback(obs_array)
             dump_array = [msg_dump_arr[0], msg_dump_arr[1]] + reply_dump_array
+            print('SENT BATCH:', header_dict.get("batchnum"))
             self.zmq_socket.send_multipart(dump_array)
