@@ -107,7 +107,7 @@ class f110Env(Env):
         """
         Reverse until we're not 'tooclose'
         """
-        print("RESETTING_ENV")
+        print("\n RESETTING_ENV")
         while(self.tooclose()):
             self.reverse()
         self.record = True
