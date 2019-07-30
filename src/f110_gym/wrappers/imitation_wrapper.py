@@ -29,7 +29,7 @@ class PreprocessImg(f110ObservationWrapper):
         self.observation_space = self.env.observation_space
 
     def observation(self, obs):
-        """ For now, Resize & Crop any 'img' observations """
+        """ For now, Crop any 'img' observations, in future, add input funclist array to preprocess"""
         new_obs = obs
         for sensor in obs:
             if 'img' in sensor:

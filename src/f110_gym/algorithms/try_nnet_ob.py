@@ -8,8 +8,17 @@ import numpy as np
 
 __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
 
-def update_nn(reply):
-    print(reply)
+def save_model(model_dump):
+    modelpath = '/home/nvidia/datasets/avfone/models/'
+    if not os.path.exists(modelpath):
+        os.makedirs(modelpath)
+    f = open(os.path.join(modelpath, 'model'), 'w')
+    f.write(model_dump)
+    f.close()
+
+def update_nn(reply_dump):
+    model_dump = reply_dump[0]
+    save_model(model_dump)
 
 def main():
     env = f110Env()
