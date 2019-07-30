@@ -2,7 +2,7 @@ import time, cv2, zmq, msgpack, threading, os, pdb
 from nnet.Online import Online
 from nnet.Metric_Visualizer import Metric_Visualizer
 from nnet.Data_Utils import Data_Utils
-from nnet.train import Trainer
+from nnet.Trainer import Trainer
 from nnet.datasets import *
 from steps import session
 import numpy as np

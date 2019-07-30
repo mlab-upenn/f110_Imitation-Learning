@@ -3,7 +3,7 @@ from distributed.exp_server import ExperienceServer
 import cv2, random, threading, msgpack, os
 from nnet.Online import Online
 from nnet.Metric_Visualizer import Metric_Visualizer
-from nnet.train import Trainer
+from nnet.Trainer import Trainer
 from functools import partial
 import msgpack_numpy as m
 import numpy as np
