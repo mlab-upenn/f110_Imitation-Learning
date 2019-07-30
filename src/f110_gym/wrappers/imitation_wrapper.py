@@ -25,6 +25,7 @@ class PreprocessImg(f110ObservationWrapper):
 
     def __init__(self, env):
         f110ObservationWrapper.__init__(self, env)
+        self.env = env
         self.observation_space = self.env.observation_space
 
     def observation(self, obs):
@@ -36,6 +37,9 @@ class PreprocessImg(f110ObservationWrapper):
                 cv_img = cv_img[100:200, :, :]
                 new_obs["img"] = cv_img
         return new_obs
+
+    def serialize_obs(self):
+        return self.env.serialize_obs()
 
 def make_imitation_env(skip=10):
     env = f110Env()

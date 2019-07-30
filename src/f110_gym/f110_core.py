@@ -318,6 +318,10 @@ class f110ObservationWrapper(f110Wrapper):
     def reset(self, **kwargs):
         observation = self.env.reset(**kwargs)
         return self.observation(observation)
+    
+    def step(self, action):
+        observation, reward, done, info = self.env.step(action)
+        return self.observation(observation), reward, done, info
 
     def observation(self, observation):
         raise NotImplementedError
