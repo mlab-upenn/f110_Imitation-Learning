@@ -18,7 +18,6 @@ def save_model(model_dump):
     f.close()
 
 def update_nn(reply_dump):
-    print("RECV Model")
     model_dump = reply_dump[0]
     save_model(model_dump)
 

@@ -34,7 +34,7 @@ class ExperienceSender():
         poll = zmq.Poller()
         poll.register(self.zmq_socket, zmq.POLLIN)
         while True:
-            sockets = dict(poll.poll(10000))
+            sockets = dict(poll.poll(1000))
             if self.zmq_socket in sockets:
                 msg = self.zmq_socket.recv_multipart()
                 header_dict = msgpack.loads(msg[0], encoding="utf-8")
@@ -56,6 +56,7 @@ class ExperienceSender():
         self.zmq_socket.send_multipart(dump_array, copy=False)
         if not self.recv_loop_running:    
             p = Thread(target=self.recv, args=(recv_callback, wait_for_recv))
+            p.daemon = True
             p.start()
             self.recv_loop_running = True
         self.batchnum += 1

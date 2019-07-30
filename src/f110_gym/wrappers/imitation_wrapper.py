@@ -1,4 +1,5 @@
 from f110_gym.f110_core import f110Env, f110ActionWrapper, f110ObservationWrapper, f110Wrapper
+import cv2
 
 class SkipEnv(f110Wrapper):
     def __init__(self, env, skip=10):
@@ -34,8 +35,6 @@ class PreprocessImg(f110ObservationWrapper):
         for sensor in obs:
             if 'img' in sensor:
                 cv_img = obs[sensor]
-                cv_img = cv2.resize(cv_img, None, fx=0.5, fy=0.5)
-                cv_img = cv2.rotate(cv_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
                 cv_img = cv_img[100:200, :, :]
                 new_obs["img"] = cv_img
         return new_obs
