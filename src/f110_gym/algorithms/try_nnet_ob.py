@@ -3,7 +3,7 @@ from __future__ import print_function
 from f110_gym.wrappers.imitation_wrapper import make_imitation_env
 from f110_gym.f110_core import f110Env
 from distributed.exp_sender import ExperienceSender
-import rospy, cv2, random, threading
+import rospy, cv2, random, threading, os
 import numpy as np
 
 __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
@@ -17,6 +17,7 @@ def save_model(model_dump):
     f.close()
 
 def update_nn(reply_dump):
+    print("RECV Model")
     model_dump = reply_dump[0]
     save_model(model_dump)
 
