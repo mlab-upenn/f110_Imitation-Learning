@@ -53,7 +53,7 @@ class ExperienceServer(threading.Thread):
         NEEDS A BETTER NAME - But basically takes fullmsg & does stuff with it, kind of like how Stepper 'does stuff' with the OG data
         """
         if not self.debug:
-            pkl_name = self.online_learner.save_batch_to_pickle(fullmsg, os.path.join(self.exp_path, 'raw'))
+            pkl_name = self.online_learner.save_obsdump_to_pickle(fullmsg, os.path.join(self.exp_path, 'raw'))
         
         #fix steering angles to use follow the gap
         pkl_name = self.online_learner.fix_steering(os.path.join(self.exp_path, 'raw'), pkl_name, os.path.join(self.exp_path, 'proc'))

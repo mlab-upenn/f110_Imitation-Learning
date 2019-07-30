@@ -28,9 +28,20 @@ class Online(object):
         dump_out = open(dump_path, "wb")
         pickle.dump(dump_array, dump_out)
 
-    def save_batch_to_pickle(self, fullmsg, dest_dir):
+    def save_obsarray_to_pickle(self, obs_array, dest_dir):
+        """ Saves deserialized dump to a pkl file in self.online_sess_dir
         """
-        Saves batch to a pkl file in self.online_sess_dir
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
+        dump_array = obs_array
+        pkl_name = 'batch' + str(len(os.listdir(dest_dir)))
+        dump_path = os.path.join(dest_dir, pkl_name)
+        self.pickledump(dump_array, dump_path)
+        return pkl_name
+
+    def save_obsdump_to_pickle(self, fullmsg, dest_dir):
+        """
+        Saves serialized dump to a pkl file in self.online_sess_dir
         """
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
