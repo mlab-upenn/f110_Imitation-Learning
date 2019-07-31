@@ -7,7 +7,7 @@ from f110_gym.f110_core import f110Env
 from f110_gym.distributed.exp_sender import ExperienceSender
 
 #Misc
-import rospy, cv2, random, threading, torch, os
+import rospy, cv2, random, threading, torch, os, time
 from collections import deque
 from nnet.models import NVIDIA_ConvNet
 from oracles.FGM import FGM
@@ -21,7 +21,7 @@ class f110_ReplayBuffer(object):
     """
     Generic Replay Buff implementation. Stores experiences from the F110 & returns sample batches
     """
-    def __init__(self, maxsize=500000, batch_size=16):
+    def __init__(self, maxsize=500000, batch_size=8):
         super(f110_ReplayBuffer, self).__init__()
         self.maxsize, self.bs = maxsize, batch_size
         self.buffer = deque(maxlen=maxsize)
@@ -117,3 +117,14 @@ class SSIL_ob(object):
                 sender.send(obs_array, self.env.serialize_obs(), self.server_callback)
             except:
                 pass
+            time.sleep(2)
+
+def main():
+    print("Hello There")
+
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        rospy.signal_shutdown('Done')
+        pass
