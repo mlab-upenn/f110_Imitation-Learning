@@ -12,7 +12,7 @@ from f110_repbuf import f110_ReplayBuffer
 #Misc
 import rospy, cv2, random, threading, torch, os, time
 from collections import deque
-from nnet.models import NVIDIA_ConvNet
+from models import NVIDIA_ConvNet
 from oracles.FGM import FGM
 import numpy as np
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
@@ -87,21 +87,31 @@ class SSIL_ob(object):
     def send_batches(self):
         """Handles sending batches of experiences sampled from the replay buffer to the Server for training """
         while True:
+            itsg = False
             try:
                 obs_array, _, _, _,  = self.repbuf.sample()
-                sender.send(obs_array, self.env.serialize_obs(), self.server_callback)
+                print("LENGTH", len(obs_array))
+                print("KEYS", obs_array[0].keys())
+                itsg = True               
             except:
+                print("Cant send batches")
                 pass
+            
+            if itsg:
+                self.serv_sender.send_obs(obs_array, self.env.serialize_obs(), self.server_callback)
             time.sleep(2)
 
 def main():
     ssil = SSIL_ob()
     #Launch two threads
-    gym_thread = threading.Thread(target=ssil.run_policy)
+    #gym_thread = threading.Thread(target=ssil.run_policy)
     server_thread = threading.Thread(target=ssil.send_batches)
-    gym_thread.start()
+    #gym_thread.daemon = True
+    server_thread.daemon = True
+    #gym_thread.start()
     server_thread.start()
-    gym_thread.join()
+    ssil.run_policy() #run policy on the main thread
+    server_thread.join()
 
 if __name__ == '__main__':
     try:

@@ -9,7 +9,7 @@ class f110_ReplayBuffer(object):
     """
     Generic Replay Buff implementation. Stores experiences from the F110 & returns sample batches
     """
-    def __init__(self, maxsize=500000, batch_size=8):
+    def __init__(self, maxsize=500000, batch_size=4):
         super(f110_ReplayBuffer, self).__init__()
         self.maxsize, self.bs = maxsize, batch_size
         self.buffer = deque(maxlen=maxsize)
@@ -21,6 +21,7 @@ class f110_ReplayBuffer(object):
         """
         self.buffer.append((obs_dict, action, reward, done))
         self.count = min(self.maxsize, self.count+1)
+        print(self.count)
 
     def sample(self):
         """
@@ -29,6 +30,6 @@ class f110_ReplayBuffer(object):
         if self.count <= self.bs:
             raise Exception('Not Enough Elements to Sample batch')
         else:
-            ob, ac, re, do = zip(*random.sample(self.buffer, self.bs))
-            obs_batch, action_batch, reward_batch, done_batch  = map(lambda x: list(x), [ob, ac, re, do])
-            return obs_batch, action_batch, reward_batch, done_batch
+	    ob, ac, re, do = zip(*random.sample(self.buffer, self.bs))
+	    obs_batch, action_batch, reward_batch, done_batch  = map(lambda x: list(x), [ob, ac, re, do])
+	    return obs_batch, action_batch, reward_batch, done_batch
