@@ -7,12 +7,13 @@ from f110_gym.f110_core import f110Env
 from f110_gym.distributed.exp_sender import ExperienceSender
 
 #Misc
-import rospy, cv2, random, threading, torch
+import rospy, cv2, random, threading, torch, os
 from collections import deque
 from nnet.models import NVIDIA_ConvNet
 from oracles.FGM import FGM
 import numpy as np
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
+modelpath = '/home/nvidia/datasets/avfone/models/'
 
 __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
 
@@ -37,9 +38,12 @@ class f110_ReplayBuffer(object):
         """
         Uniformly samples the buffer for 'batch_size' experiences & returns them
         """
-        ob, ac, re, do = zip(*random.sample(self.buffer, self.bs))
-        obs_batch, action_batch, reward_batch, done_batch  = map(lambda x: list(x), [ob, ac, re, do])
-        return obs_batch, action_batch, reward_batch, done_batch
+        if self.count <= self.bs:
+            raise Exception('Not Enough Elements to Sample batch')
+        else:
+            ob, ac, re, do = zip(*random.sample(self.buffer, self.bs))
+            obs_batch, action_batch, reward_batch, done_batch  = map(lambda x: list(x), [ob, ac, re, do])
+            return obs_batch, action_batch, reward_batch, done_batch
 
 class SSIL_ob(object):
     """
@@ -51,6 +55,7 @@ class SSIL_ob(object):
         self.oracle = FGM()
         self.serv_sender = ExperienceSender()
         self.repbuf = f110_ReplayBuffer()
+        self.env = make_imitation_env()
 
     def gymobs_to_inputdict(self, obs_dict):
         """ Utility to convert gym observation to an input dictionary into the neural network"""
@@ -81,13 +86,34 @@ class SSIL_ob(object):
             obs_dict = next_obs_dict
             if done:
                 obs_dict = env.reset()
+    
+    def save_model(self, model_dump):
+        if not os.path.exists(modelpath):
+            os.makedirs(modelpath)
+        f = open(os.path.join(modelpath, 'model'), 'w')
+        f.write(model_dump)
+        f.close()
 
-def main():
-    pass
+    def update_nn(self):
+        if os.path.exists(modelpath):
+            self.model.load_state_dict(torch.load(modelpath))
+        self.model.to(device)
+        self.model.to(eval)
+        print("LOADED MODEL")
+        print("DEVICE:{device}".format(device=device))
+        print("MODEL:")
+        print(self.model)
 
-if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        rospy.signal_shutdown('Done')
-        pass
+    def server_callback(self, reply_dump):
+        """When the server returns something, this function will get called from another thread"""
+        self.save_model(reply_dump[0])
+        self.update_nn()
+
+    def send_batches(self):
+        """Handles sending batches of experiences sampled from the replay buffer to the Server for training """
+        while True:
+            try:
+                obs_array, _, _, _,  = self.repbuf.sample()
+                sender.send(obs_array, self.env.serialize_obs(), self.server_callback)
+            except:
+                pass
