@@ -1,8 +1,0 @@
-{"Yolo_params":
-	{
-		"cfg":"cfg/yolov3-spp.cfg",
-		"data-cfg":"data/coco.data",
-		"weights": "weights/yolov3-spp.weights"
-	}
-
-}
