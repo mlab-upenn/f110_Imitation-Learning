@@ -6,6 +6,9 @@ from f110_gym.wrappers.imitation_wrapper import make_imitation_env
 from f110_gym.f110_core import f110Env
 from f110_gym.distributed.exp_sender import ExperienceSender
 
+#Common Imports
+from f110_repbuf import f110_ReplayBuffer
+
 #Misc
 import rospy, cv2, random, threading, torch, os, time
 from collections import deque
@@ -16,34 +19,6 @@ device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
 modelpath = '/home/nvidia/datasets/avfone/models/'
 
 __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
-
-class f110_ReplayBuffer(object):
-    """
-    Generic Replay Buff implementation. Stores experiences from the F110 & returns sample batches
-    """
-    def __init__(self, maxsize=500000, batch_size=8):
-        super(f110_ReplayBuffer, self).__init__()
-        self.maxsize, self.bs = maxsize, batch_size
-        self.buffer = deque(maxlen=maxsize)
-        self.count = 0 #keep track of elements
-    
-    def add(self, obs_dict, action, reward, done):
-        """
-        Add an experience to Replay Buffer
-        """
-        self.buffer.append((obs_dict, action, reward, done))
-        self.count = min(self.maxsize, self.count+1)
-
-    def sample(self):
-        """
-        Uniformly samples the buffer for 'batch_size' experiences & returns them
-        """
-        if self.count <= self.bs:
-            raise Exception('Not Enough Elements to Sample batch')
-        else:
-            ob, ac, re, do = zip(*random.sample(self.buffer, self.bs))
-            obs_batch, action_batch, reward_batch, done_batch  = map(lambda x: list(x), [ob, ac, re, do])
-            return obs_batch, action_batch, reward_batch, done_batch
 
 class SSIL_ob(object):
     """
@@ -120,7 +95,13 @@ class SSIL_ob(object):
             time.sleep(2)
 
 def main():
-    print("Hello There")
+    ssil = SSIL_ob()
+    #Launch two threads
+    gym_thread = threading.Thread(target=ssil.run_policy)
+    server_thread = threading.Thread(target=ssil.send_batches)
+    gym_thread.start()
+    server_thread.start()
+    gym_thread.join()
 
 if __name__ == '__main__':
     try:
