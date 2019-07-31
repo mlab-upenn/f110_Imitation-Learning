@@ -153,5 +153,4 @@ class SSIL_server(object):
         num_epochs = 10
         bs = 16
         return model, dataset, optim, loss_func, num_epochs, bs
-
     #####TRAIN FUNCTIONS ###################
