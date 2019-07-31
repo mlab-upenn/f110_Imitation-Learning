@@ -61,11 +61,11 @@ class FGM(object):
         else:
             return int(edge_i)
 
-    def fix(self, data_dict):
+    def fix(self, obs_dict):
         """
-        Relabel a ROS data_dict with the FGM
+        Relabel a F110 Gym obs_dict with FGM
         """
-        lidar_data = data_dict["lidar"]
+        lidar_data = obs_dict["lidar"]
         ranges = lidar_data.get("ranges")
         angle_min = lidar_data.get("angle_min")
         angle_incr = lidar_data.get("angle_increment")
@@ -100,5 +100,5 @@ class FGM(object):
         if (angle < -0.34):
             angle = -0.34
 
-        data_dict["steer"]["steering_angle"] = -1.0 * angle
-        return data_dict
+        obs_dict["steer"]["angle"] = -1.0 * angle
+        return obs_dict
