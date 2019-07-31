@@ -30,6 +30,7 @@ class SSIL_ob(object):
         self.oracle = FGM()
         self.serv_sender = ExperienceSender()
         self.repbuf = f110_ReplayBuffer()
+        self.record = False
         self.env = make_imitation_env()
 
     def gymobs_to_inputdict(self, obs_dict):
@@ -56,8 +57,13 @@ class SSIL_ob(object):
             action = self.get_action(self.gymobs_to_inputdict(obs_dict))
             next_obs_dict, reward, done, info = env.step(action)
             if info.get("record"):
-                obs_dict = self.oracle.fix(obs_dict)
-                self.repbuf.add(obs_dict, action, reward, done)
+                self.record = True
+                ret_dict = self.oracle.fix(obs_dict)
+                #print(ret_dict["steer"])
+                self.repbuf.add(ret_dict, action, reward, done)
+            else:
+                self.record = False
+
             obs_dict = next_obs_dict
             if done:
                 obs_dict = env.reset()
@@ -71,7 +77,7 @@ class SSIL_ob(object):
 
     def update_nn(self):
         if os.path.exists(modelpath):
-            self.model.load_state_dict(torch.load(modelpath))
+            self.model.load_state_dict(torch.load(modelpath, 'model'))
         self.model.to(device)
         self.model.to(eval)
         print("LOADED MODEL")
@@ -90,8 +96,6 @@ class SSIL_ob(object):
             itsg = False
             try:
                 obs_array, _, _, _,  = self.repbuf.sample()
-                print("LENGTH", len(obs_array))
-                print("KEYS", obs_array[0].keys())
                 itsg = True               
             except:
                 print("Cant send batches")
@@ -99,7 +103,7 @@ class SSIL_ob(object):
             
             if itsg:
                 self.serv_sender.send_obs(obs_array, self.env.serialize_obs(), self.server_callback)
-            time.sleep(2)
+            time.sleep(10)
 
 def main():
     ssil = SSIL_ob()

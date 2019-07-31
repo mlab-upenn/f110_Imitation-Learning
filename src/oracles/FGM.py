@@ -92,7 +92,6 @@ class FGM(object):
         safest_i = self.find_safest_point(start_i, end_i, refined_ranges)
         safest_theta = angle_min + safest_i * angle_incr
         centerdist = min(3.0, refined_ranges[safest_i])
-
         angle = safest_theta
 
         if (angle > 0.34):

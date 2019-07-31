@@ -21,7 +21,7 @@ class f110_ReplayBuffer(object):
         """
         self.buffer.append((obs_dict, action, reward, done))
         self.count = min(self.maxsize, self.count+1)
-        print(self.count)
+        print('||| BUFSIZE:', self.count)
 
     def sample(self):
         """
