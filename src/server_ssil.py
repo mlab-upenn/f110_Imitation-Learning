@@ -50,7 +50,7 @@ class SSIL_server(object):
         self.modelpath = self.get_model_path()
         m.patch()
 
-        self.train_writer = SummaryWriter(logdir=os.path.join(self.exp_path, 'models'))
+        self.train_writer = SummaryWriter(logdir=self.modelpath)
         self.train_vis = Metric_Visualizer(writer=self.train_writer)
 
     def get_exp_path(self):
@@ -61,7 +61,7 @@ class SSIL_server(object):
         return exp_path
     
     def get_model_path(self):
-        model_path = os.path.join(self.exp_path, "models", "model")
+        model_path = os.path.join(self.exp_path, "models")
         return model_path
 
     def ob_callback(self, obs_array):
@@ -72,7 +72,7 @@ class SSIL_server(object):
         self.train_model(os.path.join(self.exp_path, 'data', pkl_name))
 
         #Send model back
-        with open(self.modelpath, 'rb') as binary_file:
+        with open(os.path.join(self.modelpath, "model"), 'rb') as binary_file:
             model_dump = bytes(binary_file.read())
         return [model_dump]
 
@@ -119,7 +119,7 @@ class SSIL_server(object):
             print("loss:{}".format(ts_loss.item()))
             total_epoch_loss += ts_loss.item() 
             if i % 20 == 0:
-                self.vis.visualize_batch(ts_imgbatch, ts_anglebatch, ts_predanglebatch, global_step=epoch)
+                self.train_vis.visualize_batch(ts_imgbatch, ts_anglebatch, ts_predanglebatch, global_step=epoch)
         if op == 'valid':
             torch.set_grad_enabled(True)
         print("FINISHED {op} EPOCH{epoch}".format(op=op, epoch=epoch))
@@ -143,8 +143,8 @@ class SSIL_server(object):
         model = NVIDIA_ConvNet().to(device)
 
         #check for existing model to load
-        if os.path.exists(self.modelpath):
-            model.load_state_dict(torch.load(self.modelpath))
+        if os.path.exists(os.path.join(self.modelpath, "model")):
+            model.load_state_dict(torch.load(os.path.join(self.modelpath, "model")))
 
         dataset = SteerDataset_ONLINE(pkl_path)
         lr = 1e-3
@@ -153,4 +153,11 @@ class SSIL_server(object):
         num_epochs = 10
         bs = 16
         return model, dataset, optim, loss_func, num_epochs, bs
+    
+    def start_serv(self):
+        self.serv.start()
+        self.serv.join()
     #####TRAIN FUNCTIONS ###################
+
+ssil_serv = SSIL_server()
+ssil_serv.start_serv()
