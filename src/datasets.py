@@ -9,7 +9,7 @@ __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 
 class SteerDataset(Dataset):
     """
-    Returns img, steering_angle pairs CVS
+    Returns img, angle pairs CVS
     """
     def __init__(self, datapath, transforms=None):
         """
@@ -60,7 +60,7 @@ class SteerDataset_ONLINE(Dataset):
         """
         data_dict = self.data_array[idx]
         cv_img = data_dict.get("img")
-        ts_angle = torch.Tensor([data_dict["steer"]["steering_angle"]]).float()
+        ts_angle = torch.Tensor([data_dict["steer"]["angle"]]).float()
         ts_img = torch.from_numpy(cv_img).permute(2, 0, 1).float()
         new_data_dict = {"img":ts_img, "angle":ts_angle}
         return new_data_dict
