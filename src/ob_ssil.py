@@ -47,7 +47,7 @@ class SSIL_ob(object):
         out_dict = self.model(input_dict)
         angle_pred = out_dict["angle"].item()
         vel = 1.0
-        return {"angle":angle_pred, "speed":1.0}
+        return {"angle":angle_pred, "speed":0.0}
 
     def run_policy(self):
         """ Uses self.model to run the policy onboard & adds experiences to the replay buffer """
@@ -78,9 +78,9 @@ class SSIL_ob(object):
 
     def update_nn(self):
         if os.path.exists(modelpath):
-            self.model.load_state_dict(torch.load(modelpath, 'model'))
+            self.model.load_state_dict(torch.load(os.path.join(modelpath, 'model')))
         self.model.to(device)
-        self.model.to(eval)
+        self.model.eval()
         print("LOADED MODEL")
         print("DEVICE:{device}".format(device=device))
         print("MODEL:")
@@ -101,8 +101,8 @@ class SSIL_ob(object):
             except:
                 print("Cant send batches")
                 pass
-            
-            if itsg:
+            print("\n IS SENDING", self.record)
+            if itsg and self.record:
                 self.serv_sender.send_obs(obs_array, self.env.serialize_obs(), self.server_callback)
             time.sleep(10)
 
