@@ -53,13 +53,14 @@ class SSIL_ob(object):
         """ Uses self.model to run the policy onboard & adds experiences to the replay buffer """
         env = make_imitation_env()
         obs_dict = env.reset()
+        #print(obs_dict)
         while True:
             action = self.get_action(self.gymobs_to_inputdict(obs_dict))
             next_obs_dict, reward, done, info = env.step(action)
             if info.get("record"):
                 self.record = True
+                #print(obs_dict["steer"])
                 ret_dict = self.oracle.fix(obs_dict)
-                #print(ret_dict["steer"])
                 self.repbuf.add(ret_dict, action, reward, done)
             else:
                 self.record = False
