@@ -108,13 +108,9 @@ class SSIL_ob(object):
 
 def main():
     ssil = SSIL_ob()
-    #Launch two threads
-    #gym_thread = threading.Thread(target=ssil.run_policy)
     server_thread = threading.Thread(target=ssil.send_batches)
-    #gym_thread.daemon = True
     server_thread.daemon = True
-    #gym_thread.start()
-    server_thread.start()
+    server_thread.start() #run recording on another thread
     ssil.run_policy() #run policy on the main thread
     server_thread.join()
 
