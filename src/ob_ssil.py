@@ -2,7 +2,7 @@
 from __future__ import print_function
 
 #f110_gym imports
-from f110_gym.wrappers.imitation_wrapper import make_imitation_env
+from wrappers.imitation_wrapper import make_imitation_env
 from f110_gym.f110_core import f110Env
 from f110_gym.distributed.exp_sender import ExperienceSender
 
@@ -18,7 +18,7 @@ import numpy as np
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
 modelpath = '/home/nvidia/datasets/avfone/models/'
 
-__author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
+__author__ = 'Dhruv karthik <dhruvkar@seas.upenn.edu>'
 
 class SSIL_ob(object):
     """
