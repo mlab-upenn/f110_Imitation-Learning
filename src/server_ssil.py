@@ -24,7 +24,7 @@ import msgpack_numpy as m
 import numpy as np
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
 
-__author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
+__author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
 
 def deserialize_obs():
     def _deser(multipart_msg):

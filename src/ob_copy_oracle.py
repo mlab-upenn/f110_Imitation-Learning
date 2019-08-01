@@ -13,7 +13,6 @@ from oracles.FGM import FGM
 import rospy, cv2, random, threading, os, time
 from collections import deque
 import numpy as np
-modelpath = '/home/nvidia/datasets/avfone/models/'
 
 __author__ = 'Dhruv karthik <dhruvkar@seas.upenn.edu>'
 
