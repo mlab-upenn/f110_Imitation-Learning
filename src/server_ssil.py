@@ -1,8 +1,8 @@
 from __future__ import print_function
 from f110_gym.distributed.exp_server import ExperienceServer
 import cv2, random, threading, msgpack, os, time
-from datasets import SteerDataset_ONLINE
-from models import NVIDIA_ConvNet
+from common.datasets import SteerDataset_ONLINE
+from common.models import NVIDIA_ConvNet
 
 #torch imports
 import torch

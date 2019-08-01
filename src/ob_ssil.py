@@ -7,13 +7,13 @@ from f110_gym.f110_core import f110Env
 from f110_gym.distributed.exp_sender import ExperienceSender
 
 #Common Imports
-from f110_repbuf import f110_ReplayBuffer
+from common.f110_repbuf import f110_ReplayBuffer
+from common.models import NVIDIA_ConvNet
+from oracles.FGM import FGM
 
 #Misc
 import rospy, cv2, random, threading, torch, os, time
 from collections import deque
-from models import NVIDIA_ConvNet
-from oracles.FGM import FGM
 import numpy as np
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
 modelpath = '/home/nvidia/datasets/avfone/models/'
