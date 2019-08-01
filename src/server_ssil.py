@@ -22,6 +22,7 @@ except ImportError:
 from functools import partial
 import msgpack_numpy as m
 import numpy as np
+
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
 
 __author__ = 'Dhruv Karthik <dhruvkar@seas.upenn.edu>'
@@ -48,6 +49,7 @@ class SSIL_server(object):
         self.serv = ExperienceServer(self.ob_callback, deserialize_obs(), 4)
         self.exp_path = self.get_exp_path()
         self.modelpath = self.get_model_path()
+        self.modelname = 'nvidia_model'
         m.patch()
 
         self.train_writer = SummaryWriter(logdir=self.modelpath)
@@ -69,10 +71,10 @@ class SSIL_server(object):
 
         self.vis.vid_from_pklpath(os.path.join(self.exp_path, 'data', pkl_name), 0, 0, show_steer=True, units='rad', live=True)
 
-        self.train_model(os.path.join(self.exp_path, 'data', pkl_name))
+        self.train_model([os.path.join(self.exp_path, 'data', pkl_name)])
 
         #Send model back
-        with open(os.path.join(self.modelpath, "model"), 'rb') as binary_file:
+        with open(os.path.join(self.modelpath, "train_" + self.modelname), 'rb') as binary_file:
             model_dump = bytes(binary_file.read())
         return [model_dump]
 
@@ -92,7 +94,7 @@ class SSIL_server(object):
             print("TRAIN LOSS:{}".format(train_epoch_loss))
             if best_train_loss > train_epoch_loss:
                 best_train_loss = train_epoch_loss
-                torch.save(model.state_dict(), os.path.join(self.modelpath, str('model')))
+                torch.save(model.state_dict(), os.path.join(self.modelpath, self.modelname))
             #potentially do some tensorboard logging
         self.train_writer.close()
 
@@ -143,8 +145,8 @@ class SSIL_server(object):
         model = NVIDIA_ConvNet().to(device)
 
         #check for existing model to load
-        if os.path.exists(os.path.join(self.modelpath, "model")):
-            model.load_state_dict(torch.load(os.path.join(self.modelpath, "model")))
+        if os.path.exists(os.path.join(self.modelpath, self.modelname)):
+            model.load_state_dict(torch.load(os.path.join(self.modelpath, self.modelname)))
 
         dataset = SteerDataset_ONLINE(pkl_path)
         lr = 1e-3
