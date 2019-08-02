@@ -23,16 +23,17 @@ class Copy_Oracle(object):
     def __init__(self):
         self.serv_sender = ExperienceSender()
         self.record = False
-        self.env = make_imitation_env()
+        self.env = make_imitation_env(skip=2)
         self.oracle = FGM()
         
         #store observations for sender (sending off to server for training)
-        self.sender_buffer = deque(maxlen=20)
+        self.sender_buffer = deque(maxlen=100)
 
     def get_action(self, obs_dict):
         """ Gets action from self.oracle returns action_dict for gym"""
         ret_dict = self.oracle.fix(obs_dict)
-        return ret_dict
+        act = {"angle":ret_dict["steer"]["angle"], "speed":1.0}
+        return act
 
     def run_policy(self):
         """ Uses self.oracle to run the policy onboard"""
@@ -56,13 +57,14 @@ class Copy_Oracle(object):
     def send_batches(self):
         """Handles sending batches of experiences sampled from the replay buffer to the Server for training """
         while True:
+            print(len(self.sender_buffer))
             if len(self.sender_buffer) > 21:
                 obs_array = []
                 for i in range(20):
                     #FYI:popping from opposite side of deque is thread-safe
                     obs_array.append(self.sender_buffer.popleft())
                 self.serv_sender.send_obs(obs_array, self.env.serialize_obs(), self.server_callback)
-            time.sleep(10)
+            time.sleep(2)
 
 def main():
     co = Copy_Oracle()
