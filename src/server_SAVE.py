@@ -37,6 +37,7 @@ class SAVE_server(object):
         self.vis = Metric_Visualizer()
         self.serv = ExperienceServer(self.ob_callback, deserialize_obs(), 4)
         self.exp_path = self.get_exp_path()
+
         m.patch()
     
     def get_exp_path(self):
@@ -48,9 +49,7 @@ class SAVE_server(object):
 
     def ob_callback(self, obs_array):
         pkl_name = self.onl.save_obsarray_to_pickle(obs_array, os.path.join(self.exp_path, 'data'))
-
         self.vis.vid_from_pklpath(os.path.join(self.exp_path, 'data', pkl_name), 0, 0, show_steer=True, units='rad', live=True)
-
         return [b'Yeet']
     
     def start_serv(self):
