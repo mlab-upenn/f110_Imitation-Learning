@@ -3,6 +3,7 @@
 __*
 src/common*
 main/image_front000000.jpg
+!src/common
 main/*
 !__init__.py
 *.pyc
