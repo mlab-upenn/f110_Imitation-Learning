@@ -64,7 +64,7 @@ class Copy_Oracle(object):
                     #FYI:popping from opposite side of deque is thread-safe
                     obs_array.append(self.sender_buffer.popleft())
                 self.serv_sender.send_obs(obs_array, self.env.serialize_obs(), self.server_callback)
-            time.sleep(2)
+            time.sleep(10)
 
 def main():
     co = Copy_Oracle()

@@ -75,9 +75,9 @@ class SSIL_ob(object):
         f.close()
 
     def update_nn(self):
+        self.model.to(device)
         if os.path.exists(modelpath):
             self.model.load_state_dict(torch.load(os.path.join(modelpath, 'model')))
-        self.model.to(device)
         self.model.eval()
         print("LOADED MODEL")
         print("DEVICE:{device}".format(device=device))
