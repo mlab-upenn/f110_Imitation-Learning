@@ -15,12 +15,12 @@ session = {
         "lr":1e-3,
         "loss_func":nn.functional.mse_loss,
         "optimizer":torch.optim.Adam,
-        "num_epochs":10,
-        "batch_size":20,
+        "num_epochs":500,
+        "batch_size":62,
         "sess_id": 0,
         "vsplit":0.0,
         "dataset":SteerDataset_ONLINE,
-	    "root":'/home/dhruvkar/datasets/avfone/',
+	    "root":'/home/mlab-train/datasets/avfone/',
         "transforms":[toDeg()]
     },
     "online":

@@ -1,6 +1,7 @@
 .ipynb_*
 .*
 __*
+steps.py
 src/common*
 main/image_front000000.jpg
 !src/common
