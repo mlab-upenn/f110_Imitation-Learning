@@ -9,10 +9,11 @@ from f110_gym.distributed.exp_sender import ExperienceSender
 #Common Imports
 from common.f110_repbuf import f110_ReplayBuffer
 from common.models import NVIDIA_ConvNet
+from common.steps import session
 from oracles.FGM import FGM
 
 #Misc
-import rospy, cv2, random, threading, torch, os, time
+import rospy, cv2, random, threading, torch, os, time, math
 from collections import deque
 import numpy as np
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
@@ -46,6 +47,8 @@ class SSIL_ob(object):
         """ Gets action from self.model & returns action_dict for gym"""
         out_dict = self.model(input_dict)
         angle_pred = out_dict["angle"].item()
+        if (session["train"]).get("units", 'rad') == 'deg':
+            angle_pred = angle_pred * math.pi/180.0
         vel = 1.0
         return {"angle":angle_pred, "speed":0.0}
 
