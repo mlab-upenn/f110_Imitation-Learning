@@ -1,5 +1,6 @@
 from common.models import *
 from common.datasets import *
+from common.augs import *
 from functools import partial
 import torch
 import torch.optim
@@ -10,16 +11,18 @@ session = {
     "train":
     {
         "model":NVIDIA_ConvNet,
-        "modelname":'nvidia_model',
+        "modelname":'deg_nvidia_model',
         "lr":1e-3,
         "loss_func":nn.functional.mse_loss,
         "optimizer":torch.optim.Adam,
-        "num_epochs":5,
+        "num_epochs":10,
         "batch_size":5,
         "sess_id": 0,
         "vsplit":0.0,
         "dataset":SteerDataset_ONLINE,
-	    "root":'/home/dhruvkar/datasets/avfone/'
+	    "root":'/home/dhruvkar/datasets/avfone/',
+        "transforms":[toDeg()],
+        "units":'deg'
     },
     "online":
     {

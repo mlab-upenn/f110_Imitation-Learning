@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, ConcatDataset
 from torch.utils.data.sampler import SubsetRandomSampler
+from torchvision import transforms, utils
 
 #nnet & logging imports
 from nnet.Online import Online
@@ -147,15 +148,25 @@ class Trainer(object):
         print("----{now} seconds----".format(now=time.time()-t0, op=op, epoch=epoch))
         return total_epoch_loss
     
+    def get_transforms(self):
+        tflist = self.config["transforms"]
+        if len(tflist) > 0:
+            tf = transforms.Compose(tflist)
+        else:
+            tf = None
+        return tf
+
     def get_dataset(self, noinit_dataset, pkl_list, relative=True):
         dsetlist = []
+        transforms = self.get_transforms()
         for pkl in pkl_list:
             if relative:
                 pklpath = os.path.join(self.exp_path, 'data', pkl)
             else:
                 pklpath = pkl
-            dsetlist.append(noinit_dataset(pklpath))
+            dsetlist.append(noinit_dataset(pklpath, transforms=transforms))
         dataset = ConcatDataset(dsetlist)
+        print("DSET SIZE:", len(dataset))
         return dataset
 
     def get_dataloader(self, dataset, bs):
