@@ -30,6 +30,6 @@ class f110_ReplayBuffer(object):
         if self.count <= self.bs:
             raise Exception('Not Enough Elements to Sample batch')
         else:
-	    ob, ac, re, do = zip(*random.sample(self.buffer, self.bs))
-	    obs_batch, action_batch, reward_batch, done_batch  = map(lambda x: list(x), [ob, ac, re, do])
-	    return obs_batch, action_batch, reward_batch, done_batch
+            ob, ac, re, do = zip(*random.sample(self.buffer, self.bs))
+            obs_batch, action_batch, reward_batch, done_batch  = map(lambda x: list(x), [ob, ac, re, do])
+            return obs_batch, action_batch, reward_batch, done_batch

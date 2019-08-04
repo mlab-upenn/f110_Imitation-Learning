@@ -36,8 +36,8 @@ class PreprocessImg(f110ObservationWrapper):
     def observation(self, obs):
         """ For now, Crop any 'img' observations, in future, add input funclist array to preprocess"""
         new_obs = obs
-	src_img = obs["img"]
-	new_obs["img"] = src_img[100:200, :, :]
+        src_img = obs["img"]
+        new_obs["img"] = src_img[100:200, :, :]
         return new_obs
 
     def serialize_obs(self):
