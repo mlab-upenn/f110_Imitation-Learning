@@ -1,10 +1,3 @@
-
-def mirror(obs_dict):
-    """
-    Expects cv_img input
-    """
-    return obs_dict
-
 def toDeg():
     import math
     def call(obs_dict):

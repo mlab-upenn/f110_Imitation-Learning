@@ -21,12 +21,14 @@ except ImportError:
 
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
 
+__author__ = "Dhruv Karthik <dhruvkar@seas.upenn.edu>"
+
 class Trainer(object):
     """
     Uses "session" (in steps.py) to perform training
     """
-    def __init__(self):
-        self.config = session.get("train")
+    def __init__(self, sess_type="train"):
+        self.config = session.get(sess_type)
         self.exp_path = self.get_exp_path()
         self.modelpath = self.get_model_path()
         self.modelname = self.get_model_name()
@@ -104,7 +106,15 @@ class Trainer(object):
 
         self.save_metadata(base_epoch + epoch+1)
         self.train_vis.log_training(self.config, self.train_id, best_train_loss, best_valid_loss)
+        traintable = self.train_vis.get_train_table(self.config, self.train_id, best_train_loss, best_valid_loss)
+        self.save_traintable(traintable)
         self.train_writer.close()
+    
+    def save_traintable(self, traintable):
+        savepath = os.path.join(self.exp_path, "session_table.md")
+        f = open(savepath, "wt")
+        f.write(traintable)
+        f.close()
     
     def save_metadata(self, epoch, modeltype='train'):
         metadata = {"base_epoch":epoch}

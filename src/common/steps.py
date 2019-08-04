@@ -15,6 +15,18 @@ session = {
         "lr":1e-3,
         "loss_func":nn.functional.mse_loss,
         "optimizer":torch.optim.Adam,
+        "num_epochs":500,
+        "batch_size":10,
+        "sess_id": 0,
+        "vsplit":0.0,
+        "dataset":SteerDataset_ONLINE, "root":'/home/dhruvkar/datasets/avfone/', "transforms":[toDeg()], "units":'deg' },
+    "online":
+    {
+        "model":NVIDIA_ConvNet,
+        "modelname":'deg_nvidia_model',
+        "lr":1e-3,
+        "loss_func":nn.functional.mse_loss,
+        "optimizer":torch.optim.Adam,
         "num_epochs":10,
         "batch_size":5,
         "sess_id": 0,
@@ -23,11 +35,5 @@ session = {
 	    "root":'/home/dhruvkar/datasets/avfone/',
         "transforms":[toDeg()],
         "units":'deg'
-    },
-    "online":
-    {
-        "sess_id": 0,
-	    "models_dir":'/home/nvidia/datasets/avfone/models/'
-        ,"funclist":[]
     }
 }
