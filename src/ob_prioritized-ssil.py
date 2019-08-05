@@ -12,7 +12,7 @@ from ob_ssil import SSIL_ob
 
 
 #Misc Imports
-import rospy, cv2, random, threading, torch, os, time, math
+import rospy, cv2, random, threading, torch, os, time, math, copy
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
 modelpath = '/home/nvidia/datasets/avfone/models/'
 
@@ -25,6 +25,17 @@ class PrioritizedSSIL_ob(SSIL_ob):
     def __init__(self):
         SSIL_ob.__init__(self)
         self.repbuf = f110_PrioritizedReplayBuffer()
+    
+    def get_repbuf_entry(self, obs_dict, action, next_obs_dict, reward, done, info):
+        """ Returns an entry for the replay buffer with specific modifications reqd. by this algorithm"""
+        old_steer = obs_dict["steer"]["angle"]
+        new_obs_dict = self.oracle.fix(obs_dict)
+
+        #L1 Norm of steering angle to indicate priority
+        new_steer = new_obs_dict["steer"]["angle"]
+        l1norm = math.fabs(new_steer - old_steer)
+        entry = obs_dict, action, reward, done, l1norm
+        return entry
 
     def run_policy(self):
         """ Uses self.model to run the policy onboard & adds experiences to the prioritized replay buffer """
@@ -35,8 +46,8 @@ class PrioritizedSSIL_ob(SSIL_ob):
             next_obs_dict, reward, done, info = env.step(action)
             if info.get("record"):
                 self.record = True
-                ret_dict = self.oracle.fix(obs_dict)
-                self.repbuf.add(ret_dict, action, reward, done)
+                entry = self.get_repbuf_entry(obs_dict, action, next_obs_dict, reward, done, info)
+                self.repbuf.add(entry)
             else:
                 self.record = False
 
