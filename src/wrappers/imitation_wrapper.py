@@ -28,7 +28,6 @@ class SkipEnv(f110Wrapper):
 
 class PreprocessImg(f110ObservationWrapper):
     import cv2
-
     def __init__(self, env):
         f110ObservationWrapper.__init__(self, env)
         self.observation_space = self.env.observation_space

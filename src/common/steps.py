@@ -19,7 +19,9 @@ session = {
         "batch_size":10,
         "sess_id": 0,
         "vsplit":0.0,
-        "dataset":SteerDataset_ONLINE, "root":'/home/dhruvkar/datasets/avfone/', "transforms":[toDeg()], "units":'deg' },
+        "dataset":SteerDataset_ONLINE, 
+        "root":'/home/dhruvkar/datasets/avfone/', "transforms":[toDeg()], "units":'deg' 
+    },
     "online":
     {
         "model":NVIDIA_ConvNet,
