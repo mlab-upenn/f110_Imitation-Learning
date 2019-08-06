@@ -32,7 +32,7 @@ class Copy_Oracle(object):
     def get_action(self, obs_dict):
         """ Gets action from self.oracle returns action_dict for gym"""
         ret_dict = self.oracle.fix(obs_dict)
-        act = {"angle":ret_dict["steer"]["angle"], "speed":1.0}
+        act = {"angle":ret_dict["steer"]["angle"], "speed":0.7}
         return act
 
     def run_policy(self):
