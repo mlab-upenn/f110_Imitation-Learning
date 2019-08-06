@@ -1,6 +1,9 @@
 import os, torch, cv2, pickle
 import numpy as np
-from nnet.Data_Utils import Data_Utils
+try:
+    from nnet.Data_Utils import Data_Utils
+except:
+    print("WARNING: CANNOT USE NNET LIBRARY")
 from torch.utils.data import Dataset
 from torchvision import transforms, utils
 import pandas as pd
