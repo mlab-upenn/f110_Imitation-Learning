@@ -27,6 +27,7 @@ class SSIL_ob(object):
     """
     def __init__(self):
         self.model  = NVIDIA_ConvNet().to(device)
+        self.update_nn()
         self.model.eval()
         self.oracle = FGM()
         self.serv_sender = ExperienceSender()
