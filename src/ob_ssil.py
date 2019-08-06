@@ -33,6 +33,7 @@ class SSIL_ob(object):
         self.serv_sender = ExperienceSender()
         self.repbuf = f110_ReplayBuffer()
         self.record = False
+        self.send = False
         self.env = make_imitation_env()
 
     def gymobs_to_inputdict(self, obs_dict):
@@ -66,7 +67,11 @@ class SSIL_ob(object):
                 self.repbuf.add(ret_dict, action, reward, done)
             else:
                 self.record = False
-
+            
+            if info.get("buttons")[0]:
+                self.send = True
+            else:
+                self.send = False
             obs_dict = next_obs_dict
             if done:
                 obs_dict = env.reset()
@@ -103,8 +108,8 @@ class SSIL_ob(object):
             except:
                 print("Cant send batches")
                 pass
-            print("\n IS SENDING", self.record)
-            if itsg and self.record:
+            print("\n IS SENDING", self.send)
+            if itsg and self.send:
                 self.serv_sender.send_obs(obs_array, self.env.serialize_obs(), self.server_callback)
             time.sleep(10)
 
