@@ -44,3 +44,11 @@ class NVIDIA_ConvNet(nn.Module):
         out = self.conv(ts_img)
         out_dict = {"img":out}
         return out_dict
+
+class KAHN_net(nn.Module):
+    """
+    Follows architecture similar to Kahn et al. in https://arxiv.org/pdf/1709.10489.pdf
+    """
+    def __init__(self, args_dict={"fc_shape":10560}):
+        super(KAHN_net, self).__init__()
+        pass
