@@ -46,7 +46,7 @@ class SSIL_server(object):
     def __init__(self):
         self.onl = Online()
         self.vis = Metric_Visualizer()
-        self.trainer = Trainer()
+        self.trainer = Trainer(sess_type="online")
         self.serv = ExperienceServer(self.ob_callback, deserialize_obs(), 4)
         self.exp_path = self.trainer.get_exp_path()
         self.modelpath = self.trainer.get_model_path()
