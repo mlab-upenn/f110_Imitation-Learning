@@ -39,7 +39,6 @@ class SSIL_ob(object):
         """ Utility to convert gym observation to an input dictionary into the neural network"""
         input_dict = {}
         cv_img = obs_dict["img"]
-        print(cv_img.shape)
         ts_img = torch.from_numpy(cv_img).permute(2, 0, 1).float()
         ts_img = ts_img[None]
         input_dict["img"] = ts_img.to(device)
@@ -52,7 +51,7 @@ class SSIL_ob(object):
         if (session["train"]).get("units", 'rad') == 'deg':
             angle_pred = angle_pred * math.pi/180.0
         vel = 1.0
-        return {"angle":angle_pred, "speed":0.0}
+        return {"angle":angle_pred, "speed":vel}
 
     def run_policy(self):
         """ Uses self.model to run the policy onboard & adds experiences to the replay buffer """

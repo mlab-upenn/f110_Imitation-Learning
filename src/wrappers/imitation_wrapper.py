@@ -93,6 +93,9 @@ class FrameStack(f110Wrapper):
         obs_dict["img"] = final_img
         return obs_dict, reward, done, info
 
+    def serialize_obs(self):
+        return self.env.serialize_obs()
+
 class LazyFrames(object):
     def __init__(self, frames):
         """ Ensures that common frames between observations are only stored once"""

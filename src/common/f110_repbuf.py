@@ -39,7 +39,7 @@ class f110_PrioritizedReplayBuffer(object):
     """
     Prioritized Replay Buff implementation. Stores experiences from the F110 & returns sample batches
     """
-    def __init__(self, maxsize=500000, batch_size=20):
+    def __init__(self, maxsize=500, batch_size=20):
         super(f110_PrioritizedReplayBuffer, self).__init__()
         self.maxsize, self.bs = maxsize, batch_size
         self.buffer = deque(maxlen=maxsize)
