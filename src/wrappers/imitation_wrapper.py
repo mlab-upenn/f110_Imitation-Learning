@@ -1,5 +1,7 @@
 from f110_gym.f110_core import f110Env, f110ActionWrapper, f110ObservationWrapper, f110Wrapper
-
+from collections import deque
+import numpy as np
+import cv2
 
 __author__ = "Dhruv Karthik <dhruvkar@seas.upenn.edu>"
 
@@ -28,7 +30,6 @@ class SkipEnv(f110Wrapper):
         return self.env.serialize_obs()
 
 class PreprocessImg(f110ObservationWrapper):
-    import cv2
     def __init__(self, env):
         f110ObservationWrapper.__init__(self, env)
         self.observation_space = self.env.observation_space
@@ -37,7 +38,10 @@ class PreprocessImg(f110ObservationWrapper):
         """ For now, Crop any 'img' observations, in future, add input funclist array to preprocess"""
         new_obs = obs
         src_img = obs["img"]
-        new_obs["img"] = src_img[100:200, :, :]
+        scale = 0.7
+        src_img = cv2.resize(src_img, None, fx=scale, fy=scale)
+        new_obs["img"] = src_img[80:, 12:-12, ...]
+        print(src_img.shape)
         return new_obs
 
     def serialize_obs(self):
@@ -60,8 +64,6 @@ class GrayScale(f110ObservationWrapper):
         return self.env.serialize_obs()
 
 class FrameStack(f110Wrapper):
-    import cv2
-    from collections import deque
     def __init__(self, env, k):
         """Stack k last frames. Returns memory efficient lazy array"""
         f110Wrapper.__init__(self, env)
@@ -74,7 +76,7 @@ class FrameStack(f110Wrapper):
         src_img = obs_dict["img"]
         frame = src_img.copy()
         for _ in range(self.k):
-            src_img = np.dstack(src_img, frame)
+            src_img = np.dstack((src_img, frame))
             self.frames.append(frame)
         obs_dict["img"] = src_img
         return obs_dict
@@ -87,8 +89,8 @@ class FrameStack(f110Wrapper):
         framelist = list(self.frames)
         final_img = framelist[0]
         framelist = framelist[1:]
-        for i in range(self.k):
-            final_img = np.dstack(final_img, framelist[i])
+        for i in range(self.k-1):
+            final_img = np.dstack((final_img, framelist[i]))
         obs_dict["img"] = final_img
         return obs_dict, reward, done, info
 

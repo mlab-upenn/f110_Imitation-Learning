@@ -34,7 +34,8 @@ class PrioritizedSSIL_ob(SSIL_ob):
         #L1 Norm of steering angle to indicate priority
         new_steer = new_obs_dict["steer"]["angle"]
         l1norm = math.fabs(new_steer - old_steer)
-        entry = obs_dict, action, reward, done, l1norm
+        entry = (obs_dict, action, reward, done, l1norm)
+        print("PRIORITY:", l1norm)
         return entry
 
     def run_policy(self):
@@ -47,10 +48,25 @@ class PrioritizedSSIL_ob(SSIL_ob):
             if info.get("record"):
                 self.record = True
                 entry = self.get_repbuf_entry(obs_dict, action, next_obs_dict, reward, done, info)
-                self.repbuf.add(entry)
+                self.repbuf.add(*entry)
             else:
                 self.record = False
 
             obs_dict = next_obs_dict
             if done:
                 obs_dict = env.reset() 
+
+def main():
+    ssil = PrioritizedSSIL_ob()
+    server_thread = threading.Thread(target=ssil.send_batches)
+    server_thread.daemon = True
+    server_thread.start() #run recording on another thread
+    ssil.run_policy() #run policy on the main thread
+    server_thread.join()
+
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        rospy.signal_shutdown('Done')
+        pass
