@@ -214,6 +214,7 @@ class Trainer(object):
 
         #check for existing model to load
         if os.path.exists(os.path.join(self.modelpath, modeltype + '_' + self.modelname)):
+            print("FOUND EXISTING MODEL")
             model.load_state_dict(torch.load(os.path.join(self.modelpath, modeltype + '_' + self.modelname)))
 
         dataset = self.config.get("dataset")
