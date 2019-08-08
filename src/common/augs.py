@@ -5,13 +5,14 @@ def flipNonZero():
 
         #flip steering angle
         steer = obs_dict["steer"].copy()
-        angle_flip = steer["angle"] * -1
-        steer["angle"] = angle_flip
-        new_dict["steer"] = steer
+        if steer["angle"] != 0:
+            angle_flip = steer["angle"] * -1
+            steer["angle"] = angle_flip
+            new_dict["steer"] = steer
 
-        #flip image 
-        img = new_dict["img"].copy()
-        new_dict["img"] = cv2.flip(img, 1)
+            #flip image 
+            img = new_dict["img"].copy()
+            new_dict["img"] = cv2.flip(img, 1)
         return new_dict
     return call
 
