@@ -55,7 +55,7 @@ class SSIL_server(object):
 
     def ob_callback(self, obs_array):
         pkl_name = self.onl.save_obsarray_to_pickle(obs_array, os.path.join(self.exp_path, 'data'))
-
+        
         self.vis.vid_from_pklpath(os.path.join(self.exp_path, 'data', pkl_name), 0, 0, show_steer=True, units='rad', live=True)
 
         self.trainer.train_model([pkl_name])
