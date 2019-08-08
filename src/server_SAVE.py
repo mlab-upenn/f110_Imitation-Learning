@@ -42,7 +42,7 @@ class SAVE_server(object):
         m.patch()
     
     def get_exp_path(self):
-        exp_path = os.path.join("/home/dhruvkar/datasets/avfone", "runs", "0", "exp")
+        exp_path = os.path.join("/home/dhruvkar/datasets/avfone", "runs", "3", "exp")
         if not os.path.exists(exp_path):
             os.makedirs(exp_path)
         print("EXPERIENCE PATH:", exp_path)
