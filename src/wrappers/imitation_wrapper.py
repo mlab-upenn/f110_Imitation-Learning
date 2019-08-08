@@ -57,7 +57,6 @@ class GrayScale(f110ObservationWrapper):
         new_obs = obs
         src_img = obs["img"]
         new_obs["img"] = cv2.cvtColor(src_img, cv2.COLOR_BGR2GRAY)
-	print("GRAYSCALSHAPE", new_obs["img"].shape)
         return new_obs
 
     def serialize_obs(self):
