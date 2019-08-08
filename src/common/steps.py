@@ -17,10 +17,11 @@ session = {
         "optimizer":torch.optim.Adam,
         "num_epochs":500,
         "batch_size":10,
-        "sess_id": 0,
+        "sess_id": 1,
         "vsplit":0.0,
         "dataset":SteerDataset_ONLINE, 
-        "root":'/home/dhruvkar/datasets/avfone/', "transforms":[toDeg()], "units":'deg' 
+        "root":'/home/dhruvkar/datasets/avfone/', "transforms":[toDeg()], 
+        "units":'deg' 
     },
     "online":
     {
@@ -31,7 +32,7 @@ session = {
         "optimizer":torch.optim.Adam,
         "num_epochs":10,
         "batch_size":5,
-        "sess_id": 0,
+        "sess_id": 1,
         "vsplit":0.0,
         "dataset":SteerDataset_ONLINE,
 	    "root":'/home/dhruvkar/datasets/avfone/',
