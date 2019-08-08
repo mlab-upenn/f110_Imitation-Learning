@@ -23,7 +23,7 @@ class Copy_Oracle(object):
     def __init__(self):
         self.serv_sender = ExperienceSender()
         self.record = False
-        self.env = make_imitation_env(skip=2)
+        self.env = make_imitation_env(skip=3)
         self.oracle = FGM()
         
         #store observations for sender (sending off to server for training)

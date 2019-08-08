@@ -41,7 +41,6 @@ class PreprocessImg(f110ObservationWrapper):
         scale = 0.7
         src_img = cv2.resize(src_img, None, fx=scale, fy=scale)
         new_obs["img"] = src_img[80:, 12:-12, ...]
-        print(src_img.shape)
         return new_obs
 
     def serialize_obs(self):
@@ -58,6 +57,7 @@ class GrayScale(f110ObservationWrapper):
         new_obs = obs
         src_img = obs["img"]
         new_obs["img"] = cv2.cvtColor(src_img, cv2.COLOR_BGR2GRAY)
+	print("GRAYSCALSHAPE", new_obs["img"].shape)
         return new_obs
 
     def serialize_obs(self):
@@ -75,7 +75,7 @@ class FrameStack(f110Wrapper):
         obs_dict = self.env.reset()
         src_img = obs_dict["img"]
         frame = src_img.copy()
-        for _ in range(self.k):
+        for i in range(self.k-1):
             src_img = np.dstack((src_img, frame))
             self.frames.append(frame)
         obs_dict["img"] = src_img
@@ -128,7 +128,7 @@ class LazyFrames(object):
 def make_imitation_env(skip=10):
     env = f110Env()
     env = PreprocessImg(env)
-    env = SkipEnv(env, skip=skip)
+    env = SkipEnv(env, skip=3)
     env = GrayScale(env)
     env = FrameStack(env, 3)
     return env

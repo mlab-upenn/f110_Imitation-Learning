@@ -10,7 +10,7 @@ __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
 
 
 def main():
-    env = make_imitation_env(skip=4)
+    env = make_imitation_env(skip=2)
     #env = f110Env()
     obs = env.reset()
     count = 0

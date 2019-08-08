@@ -10,8 +10,7 @@ from f110_gym.distributed.exp_sender import ExperienceSender
 from common.f110_repbuf import f110_ReplayBuffer
 from common.models import NVIDIA_ConvNet
 from common.steps import session
-from oracles.FGM import FGM
-
+from oracles.FGM import FGM 
 #Misc
 import rospy, cv2, random, threading, torch, os, time, math
 from collections import deque
@@ -40,6 +39,7 @@ class SSIL_ob(object):
         """ Utility to convert gym observation to an input dictionary into the neural network"""
         input_dict = {}
         cv_img = obs_dict["img"]
+        print(cv_img.shape)
         ts_img = torch.from_numpy(cv_img).permute(2, 0, 1).float()
         ts_img = ts_img[None]
         input_dict["img"] = ts_img.to(device)
@@ -56,7 +56,7 @@ class SSIL_ob(object):
 
     def run_policy(self):
         """ Uses self.model to run the policy onboard & adds experiences to the replay buffer """
-        env = make_imitation_env()
+        env = make_imitation_env(skip=3)
         obs_dict = env.reset()
         while True:
             action = self.get_action(self.gymobs_to_inputdict(obs_dict))
