@@ -10,7 +10,6 @@ from f110_gym.distributed.exp_sender import ExperienceSender
 from common.f110_repbuf import f110_PrioritizedReplayBuffer
 from ob_ssil import SSIL_ob
 
-
 #Misc Imports
 import rospy, cv2, random, threading, torch, os, time, math, copy
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
@@ -35,7 +34,7 @@ class PrioritizedSSIL_ob(SSIL_ob):
         new_steer = new_obs_dict["steer"]["angle"]
         l1norm = math.fabs(new_steer - old_steer)
         entry = (obs_dict, action, reward, done, l1norm)
-        print("PRIORITY:", l1norm)
+        print("||| PRIORITY:", l1norm)
         return entry
 
     def run_policy(self):
@@ -52,6 +51,10 @@ class PrioritizedSSIL_ob(SSIL_ob):
             else:
                 self.record = False
 
+	    if info.get("buttons")[0] == 1:
+               self.send = True
+            else:
+               self.send = False
             obs_dict = next_obs_dict
             if done:
                 obs_dict = env.reset() 

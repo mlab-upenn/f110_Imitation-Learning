@@ -41,6 +41,7 @@ class PreprocessImg(f110ObservationWrapper):
         scale = 0.7
         src_img = cv2.resize(src_img, None, fx=scale, fy=scale)
         new_obs["img"] = src_img[80:, 12:-12, ...]
+        #new_obs["img"] = src_img
         return new_obs
 
     def serialize_obs(self):
