@@ -7,7 +7,7 @@ class NVIDIA_ConvNet(nn.Module):
     """
     Similar architecture to ConvNet used by Nvidia in Bojarski et al. (https://arxiv.org/pdf/1604.07316.pdf) with modified Fully Connected layers size 
     """
-    def __init__(self, args_dict={"fc_shape":10560}):
+    def __init__(self, args_dict={"fc_shape":4608}):
         super(NVIDIA_ConvNet, self).__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(3,24,5,stride=2), nn.ELU(),
