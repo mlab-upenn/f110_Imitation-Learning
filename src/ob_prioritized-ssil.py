@@ -32,9 +32,12 @@ class PrioritizedSSIL_ob(SSIL_ob):
 
         #L1 Norm of steering angle to indicate priority
         new_steer = new_obs_dict["steer"]["angle"]
+        new_steer = new_steer * 180.0/math.pi
+        old_steer = old_steer * 180.0/math.pi
         l1norm = math.fabs(new_steer - old_steer)
-        entry = (obs_dict, action, reward, done, l1norm)
-        print("||| PRIORITY:", l1norm)
+        l2norm = math.sqrt((new_steer-old_steer)**2 )
+        entry = (obs_dict, action, reward, done, l2norm)
+        print("PRIORITY:", l1norm)
         return entry
 
     def run_policy(self):

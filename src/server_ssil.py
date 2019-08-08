@@ -1,9 +1,13 @@
 from __future__ import print_function
 from f110_gym.distributed.exp_server import ExperienceServer
 import cv2, random, threading, msgpack, os, time
+
+#common imports
 from common.datasets import SteerDataset_ONLINE
 from common.models import NVIDIA_ConvNet
 from common.Trainer import Trainer
+from common.utils import transform_obsarray
+from common.augs import flipNonZero
 #torch imports
 import torch
 import torch.nn as nn
@@ -54,8 +58,8 @@ class SSIL_server(object):
         m.patch()
 
     def ob_callback(self, obs_array):
+        obs_array = transform_obsarray(obs_array, flipNonZero())
         pkl_name = self.onl.save_obsarray_to_pickle(obs_array, os.path.join(self.exp_path, 'data'))
-
         self.vis.vid_from_pklpath(os.path.join(self.exp_path, 'data', pkl_name), 0, 0, show_steer=True, units='rad', live=True)
 
         self.trainer.train_model([pkl_name])
