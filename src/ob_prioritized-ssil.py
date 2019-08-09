@@ -35,9 +35,9 @@ class PrioritizedSSIL_ob(SSIL_ob):
         new_steer = new_steer * 180.0/math.pi
         old_steer = old_steer * 180.0/math.pi
         l1norm = math.fabs(new_steer - old_steer)
-        l2norm = math.sqrt((new_steer-old_steer)**2 )
+        l2norm = (new_steer-old_steer)**2
         entry = (obs_dict, action, reward, done, l2norm)
-        print("PRIORITY:", l1norm)
+        print("PRIORITY:", l2norm)
         return entry
 
     def run_policy(self):

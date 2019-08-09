@@ -50,7 +50,7 @@ class SSIL_ob(object):
         angle_pred = out_dict["angle"].item()
         if (session["train"]).get("units", 'rad') == 'deg':
             angle_pred = angle_pred * math.pi/180.0
-        vel = 1.0
+        vel = 0.7
         return {"angle":angle_pred, "speed":vel}
 
     def run_policy(self):

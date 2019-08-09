@@ -39,11 +39,11 @@ class f110_PrioritizedReplayBuffer(object):
     """
     Prioritized Replay Buff implementation. Stores experiences from the F110 & returns sample batches
     """
-    def __init__(self, maxsize=500, batch_size=64):
+    def __init__(self, maxsize=500, batch_size=644):
         super(f110_PrioritizedReplayBuffer, self).__init__()
         self.maxsize, self.bs = maxsize, batch_size
         self.buffer = deque(maxlen=maxsize)
-        self.priorities = []
+        self.priorities = deque(maxlen=maxsize)
         self.count = 0 #keep track of elements
     
     def add(self, obs_dict, action, reward, done, priority):
@@ -75,6 +75,6 @@ class f110_PrioritizedReplayBuffer(object):
         if self.count <= self.bs:
             raise Exception('Not Enough Elements to Sample batch')
         else:
-            idxs = np.random.choice(len(self.buffer), self.bs, p=self.getprobs())
+            idxs = np.random.choice(len(self.buffer), self.bs, p=self.getprobs(),replace=True)
             obs_batch, action_batch, reward_batch, done_batch = self.batch_from_idxs(idxs)
             return obs_batch, action_batch, reward_batch, done_batch
