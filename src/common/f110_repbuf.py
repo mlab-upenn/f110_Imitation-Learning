@@ -10,7 +10,7 @@ class f110_ReplayBuffer(object):
     """
     Generic Replay Buff implementation. Stores experiences from the F110 & returns sample batches
     """
-    def __init__(self, maxsize=500000, batch_size=60):
+    def __init__(self, maxsize=500, batch_size=64):
         super(f110_ReplayBuffer, self).__init__()
         self.maxsize, self.bs = maxsize, batch_size
         self.buffer = deque(maxlen=maxsize)
@@ -39,9 +39,10 @@ class f110_PrioritizedReplayBuffer(object):
     """
     Prioritized Replay Buff implementation. Stores experiences from the F110 & returns sample batches
     """
-    def __init__(self, maxsize=500, batch_size=644):
+    def __init__(self, maxsize=500, batch_size=64, sample_once=False):
         super(f110_PrioritizedReplayBuffer, self).__init__()
         self.maxsize, self.bs = maxsize, batch_size
+        self.sample_once = sample_once
         self.buffer = deque(maxlen=maxsize)
         self.priorities = deque(maxlen=maxsize)
         self.count = 0 #keep track of elements
@@ -53,6 +54,15 @@ class f110_PrioritizedReplayBuffer(object):
         self.count = min(self.maxsize, self.count+1)
         self.priorities.append(priority)
         print('||| BUFSIZE:', self.count)
+
+    def increase_lastn_priorities(self, n, factor=10):
+        """Increases priority of the last n training examples
+        """
+        last_n = []
+        for i in range(n):
+            last_n.append(factor * self.priorities.pop())
+        for j in reversed(last_n):
+            self.priorities.append(j)
 
     def getprobs(self):
         unorm_probs = np.array(self.priorities)

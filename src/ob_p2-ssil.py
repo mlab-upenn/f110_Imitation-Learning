@@ -17,9 +17,9 @@ modelpath = '/home/nvidia/datasets/avfone/models/'
 
 __author__ = 'Dhruv karthik <dhruvkar@seas.upenn.edu>'
 
-class PrioritizedSSIL_ob(SSIL_ob):
+class P2_ssil(SSIL_ob):
     """
-    Similar to SSIL_ob but allows replay buffer prioritization
+    Repbuf prioritization that hyper prioritizes
     """
     def __init__(self):
         SSIL_ob.__init__(self)
@@ -61,9 +61,9 @@ class PrioritizedSSIL_ob(SSIL_ob):
             obs_dict = next_obs_dict
             if done:
                 obs_dict = env.reset() 
-
+                self.repbuf.increase_lastn_priorities(50)
 def main():
-    ssil = PrioritizedSSIL_ob()
+    ssil = P2_ssil()
     server_thread = threading.Thread(target=ssil.send_batches)
     server_thread.daemon = True
     server_thread.start() #run recording on another thread
