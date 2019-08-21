@@ -2,11 +2,11 @@
 from __future__ import print_function
 
 #f110_gym imports
-from wrappers.imitation_wrapper import make_imitation_env
 from f110_gym.f110_core import f110Env
 from f110_gym.distributed.exp_sender import ExperienceSender
 
-#Common Imports
+#Common & wrapper Imports
+from wrappers.imitation_wrapper import make_imitation_env
 from oracles.FGM import FGM
 
 #Misc
