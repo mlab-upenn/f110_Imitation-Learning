@@ -30,18 +30,21 @@ class SIM_Copy_Oracle(object):
         return act
 
     def run_policy(self):
-        """ Uses self.oracle to run the policy onboard"""
-        env = make_imitation_env(skip=2)
-        obs_dict = env.reset()
-        self.sender_buffer.append(obs_dict)
-        while True:
-            action = self.get_action(obs_dict)
-            nobs_dict, reward, done, info = env.step(action)
-            if info.get("record"):
-                self.sender_buffer.append(nobs_dict)
-            obs_dict = nobs_dict
-            if done:
-                obs_dict = env.reset()
+        """Uses self.oracle to run the policy onboard"""
+        car_controls = airsim.CarControls()
+
+    # def run_policy(self): #     """ Uses self.oracle to run the policy onboard"""
+    #     env = make_imitation_env(skip=2)
+    #     obs_dict = env.reset()
+    #     self.sender_buffer.append(obs_dict)
+    #     while True:
+    #         action = self.get_action(obs_dict)
+    #         nobs_dict, reward, done, info = env.step(action)
+    #         if info.get("record"):
+    #             self.sender_buffer.append(nobs_dict)
+    #         obs_dict = nobs_dict
+    #         if done:
+    #             obs_dict = env.reset()
 
 def main():
     co = SIM_Copy_Oracle()
