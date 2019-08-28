@@ -32,7 +32,7 @@ class SIM_Copy_Oracle(object):
     def run_policy(self):
         """Uses self.oracle to run the policy onboard"""
         car_controls = airsim.CarControls()
-
+        
     # def run_policy(self): #     """ Uses self.oracle to run the policy onboard"""
     #     env = make_imitation_env(skip=2)
     #     obs_dict = env.reset()
