@@ -20,7 +20,7 @@ def main():
         cv_img = obs["img"]
         cv2.imshow('latestimg', cv_img)
         cv2.waitKey(2)
-	count+=1
+	    count+=1
         if done:
             print("ISDONE")
             obs = env.reset() 

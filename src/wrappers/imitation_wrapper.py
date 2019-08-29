@@ -136,5 +136,3 @@ def make_imitation_env(skip=10):
     env = GrayScale(env)
     env = FrameStack(env, 3)
     return env
-
-
