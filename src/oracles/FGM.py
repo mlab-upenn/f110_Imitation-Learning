@@ -7,8 +7,9 @@ class FGM(object):
     """
     Follow the Gap Method that approximates the best steering angle given a local lidar scan
     """
-    def __init__(self):
-        pass
+    def __init__(self, angle_min, angle_increment):
+        self.angle_min = angle_min
+        self.angle_increment = angle_increment
 
     def refine_laserscan(self, ranges):
         ranges = np.array(ranges)
@@ -60,6 +61,47 @@ class FGM(object):
             return int(y)
         else:
             return int(edge_i)
+
+    def act(self, ranges):
+        """
+        Returns an steering angle given a lidar ranges array
+        """
+        return self.do_FGM(ranges)
+
+    def do_FGM(self, ranges):
+        angle_min = self.angle_min
+        angle_incr = self.angle_increment
+        #clean up & publish LIDAR SCANS so they're a bit more consistent
+        # refined_ranges = self.refine_laserscan(ranges)
+        refined_ranges = ranges
+
+        #closest point to LIDAR in refined_ranges
+        min_range = np.nanmin(refined_ranges)
+        min_idx = np.nanargmin(refined_ranges)
+
+        #Create Free Space 'Fake LaserScan'
+        free_space_ranges = np.empty_like(refined_ranges)
+        free_space_ranges[:] = min_range
+        free_space_ranges[refined_ranges < min_range + 0.2] = 0
+
+        #Find the max length gap
+        start_i , end_i, max_i = self.find_max_gap(free_space_ranges)
+
+        free_space_ranges[0:start_i] = np.nan
+        free_space_ranges[end_i + 1 :] = np.nan
+
+        #Find safest point and convert polar coordinates to x, y. 
+        safest_i = self.find_safest_point(start_i, end_i, refined_ranges)
+        safest_theta = angle_min + safest_i * angle_incr
+        centerdist = min(3.0, refined_ranges[safest_i])
+        angle = safest_theta
+
+        if (angle > 0.34):
+            angle = 0.34
+        if (angle < -0.34):
+            angle = -0.34
+
+        return 1.0 * angle
 
     def fix(self, obs_dict):
         """
