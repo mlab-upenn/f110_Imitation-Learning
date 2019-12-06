@@ -24,8 +24,7 @@ def main():
         #plot lidar
         lidar = obs["lidar"]
         lidar = lidar[..., 0:2]
-        env.vis_lidarpc(lidar)
-        # pdb.set_trace()
+        env.render_lidar2D(lidar)
 
         if cv2.waitKey(3) & 0xFF == ord('q'):
             break
