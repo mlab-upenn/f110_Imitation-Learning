@@ -3,6 +3,7 @@ from __future__ import print_function
 import airsim
 import cv2, sys, os
 from f110_gym.sim_f110_core import SIM_f110Env
+from common.utils import cart_to_polar
 import pdb
 import numpy as np
 
@@ -14,7 +15,7 @@ def main():
     obs = env.reset()
     count = 0
     while True:
-        random_action = {"angle":0.0, "speed":0.7}
+        random_action = {"angle":0.0, "speed":0.0}
         obs, reward, done, info = env.step(random_action)
         
         #display cv_img
@@ -25,6 +26,7 @@ def main():
         lidar = obs["lidar"]
         lidar = lidar[..., 0:2]
         env.render_lidar2D(lidar)
+        cart_to_polar(lidar)
 
         if cv2.waitKey(3) & 0xFF == ord('q'):
             break
