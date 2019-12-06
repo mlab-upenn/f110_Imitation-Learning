@@ -1,58 +1,42 @@
+#!/usr/bin/env python
 from __future__ import print_function
-
-#Common & Wrapper Imports
-from wrappers.imitation_wrapper import sim_make_imitation_env
-from oracles.FGM import FGM
-
 import airsim
-
-#Misc
-import cv2, random, threading, os, time
-from collections import deque
+import cv2, sys, os
+from f110_gym.sim_f110_core import SIM_f110Env
+from common.utils import cart_to_polar, vis_roslidar, polar_to_rosformat
+from oracles.FGM import FGM
+import pdb
 import numpy as np
 
-__author__ = 'Dhruv karthik <dhruvkar@seas.upenn.edu>'
-
-class SIM_Copy_Oracle(object):
-    """
-    Copies & executes expert policy on AirSim f110
-    """
-    def __init__(self):
-        self.oracle = FGM()
-        self.client = airsim.CarClient()
-        self.client.confirmConnection()
-        self.client.enableApiControl(True)
-
-    def get_action(self, obs_dict):
-        """ Gets action from self.oracle returns action_dict for gym"""
-        ret_dict = self.oracle.fix(obs_dict)
-        act = {"angle":ret_dict["steer"]["angle"], "speed":0.7}
-        return act
-
-    def run_policy(self):
-        """Uses self.oracle to run the policy onboard"""
-        car_controls = airsim.CarControls()
-        
-    # def run_policy(self): #     """ Uses self.oracle to run the policy onboard"""
-    #     env = make_imitation_env(skip=2)
-    #     obs_dict = env.reset()
-    #     self.sender_buffer.append(obs_dict)
-    #     while True:
-    #         action = self.get_action(obs_dict)
-    #         nobs_dict, reward, done, info = env.step(action)
-    #         if info.get("record"):
-    #             self.sender_buffer.append(nobs_dict)
-    #         obs_dict = nobs_dict
-    #         if done:
-    #             obs_dict = env.reset()
+__author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
 
 def main():
-    co = SIM_Copy_Oracle()
-    co.run_policy() #run policy on the main thread
+    env = SIM_f110Env()
+    angle_min, angle_incr = env.sensor_info.get("angle_min"), env.sensor_info.get("angle_incr")
+    fgm = FGM(angle_min, angle_incr)
+    obs = env.reset()
+    count = 0
+    while True:
+        #display cv_img
+        cv_img = obs["img"][0]
+        cv2.imshow('latestimg', cv_img)
+
+        #display lidar
+        lidar = obs["lidar"]
+        lidar = lidar[..., 0:2]
+        env.render_lidar2D(lidar)
+        ranges, theta = cart_to_polar(lidar)
+        ranges = polar_to_rosformat(angle_min, -1.0 * angle_min, angle_incr, theta, ranges)
+
+        action = {"angle":fgm.act(ranges), "speed":0.6}
+        print(action)
+        obs, reward, done, info = env.step(action)
+
+        if cv2.waitKey(3) & 0xFF == ord('q'):
+            break
+        if done:
+            print("ISDONE")
+            obs = env.reset()  
 
 if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        rospy.signal_shutdown('Done')
-        pass
+    main()
