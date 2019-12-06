@@ -14,19 +14,22 @@ def main():
     obs = env.reset()
     count = 0
     while True:
-        random_action = {"angle":0.0, "speed":1.0}
+        random_action = {"angle":0.0, "speed":0.7}
         obs, reward, done, info = env.step(random_action)
         
         #display cv_img
         cv_img = obs["img"][0]
         cv2.imshow('latestimg', cv_img)
 
-        #print lidar
+        #plot lidar
         lidar = obs["lidar"]
-        pdb.set_trace()
+        lidar = lidar[..., 0:2]
+        env.vis_lidarpc(lidar)
+        # pdb.set_trace()
 
         if cv2.waitKey(3) & 0xFF == ord('q'):
             break
+
         if done:
             print("ISDONE")
             obs = env.reset()  
