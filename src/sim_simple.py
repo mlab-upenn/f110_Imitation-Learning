@@ -11,7 +11,7 @@ __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
 
 def main():
     env = SIM_f110Env()
-    # angle_min, angle_incr = env.sensor_info.get("angle_min"), env.sensor_info.get("angle_incr")
+    angle_min, angle_incr = env.sensor_info.get("angle_min"), env.sensor_info.get("angle_incr")
     obs = env.reset()
     count = 0
     while True:

@@ -22,16 +22,22 @@ def polar_to_rosformat(angle_min, angle_max, angle_increment, theta, ranges):
     out_ranges = []
     out_len = (angle_max - angle_min) // angle_increment
     tol = 1e-3
+    out_ranges = []
+    last_idx = -1
+
+    #Fast WAY
     for i in range(int(out_len)):
         curr_theta = angle_min + i * angle_increment
-        diff = np.abs(theta - curr_theta)
-        min_idx = np.argmin(diff)
-        min_diff = diff[min_idx]
-        if(min_diff <= tol):
+        min_idx = last_idx + 1
+        min_diff = abs(theta[min(len(theta)-1, min_idx)] - curr_theta)
+        if(min_idx < len(theta) and min_diff <= tol):
             out_ranges.append(ranges[min_idx])
+            last_idx += 1
         else:
             out_ranges.append(np.nan)
-    return ranges
+    
+    # print(f"outlen:{out_len}, fraction of nans:{num_nans/out_len}, range mean:{np.nanmean(np.array(out_ranges))}")
+    return out_ranges
 
 def lidar_estimate_angleincr(ranges, theta):
     """
@@ -71,10 +77,14 @@ def lidar_polar_to_cart(ranges, angle_min, angle_increment):
     x_ranges = []
     y_ranges = []
     for i, r in enumerate(ranges):
-        theta = angle_min + i * angle_increment
-        x, y = polar_to_cart(theta + math.pi/2, r*100.0)
-        x_ranges.append(x)
-        y_ranges.append(y)
+        if r == np.nan:
+            x_ranges.append(1000000)
+            y_ranges.append(1000000)
+        else:
+            theta = angle_min + i * angle_increment
+            x, y = polar_to_cart(theta + math.pi/2, r*100.0)
+            x_ranges.append(x)
+            y_ranges.append(y)
     return x_ranges, y_ranges
 
 def vis_roslidar(ranges, angle_min, angle_increment):
@@ -95,7 +105,7 @@ def vis_roslidar(ranges, angle_min, angle_increment):
     """
     #convert lidar data to x,y coordinates
     x_ranges, y_ranges = lidar_polar_to_cart(ranges, angle_min, angle_increment)
-    lidar_frame = np.ones((500, 500, 3)) * 75
+    lidar_frame = np.zeros((500, 500, 3)) * 75
     cx = 250
     cy = 450
     rangecheck = lambda x, y: abs(x) < 1000. and abs(y) < 1000.
