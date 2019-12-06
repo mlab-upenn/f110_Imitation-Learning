@@ -1,5 +1,6 @@
 from __future__ import print_function
 import numpy as np
+import cv2
 import math
 
 def transform_obsarray(obs_array, func):
@@ -9,6 +10,43 @@ def transform_obsarray(obs_array, func):
         if new_dict.get("flag", True):
             ret_array.append(new_dict)
     return ret_array
+
+def polar_to_rosformat(angle_min, angle_max, angle_increment, theta, ranges):
+    """
+    Convert ranges array into ROS ranges format
+    """
+    sorted_idxs = np.argsort(theta)
+    ranges = ranges[sorted_idxs]
+    theta = theta[sorted_idxs]
+
+    out_ranges = []
+    out_len = (angle_max - angle_min) // angle_increment
+    tol = 1e-3
+    for i in range(int(out_len)):
+        curr_theta = angle_min + i * angle_increment
+        diff = np.abs(theta - curr_theta)
+        min_idx = np.argmin(diff)
+        min_diff = diff[min_idx]
+        if(min_diff <= tol):
+            out_ranges.append(ranges[min_idx])
+        else:
+            out_ranges.append(np.nan)
+    return ranges
+
+def lidar_estimate_angleincr(ranges, theta):
+    """
+    Estimates the angle_incr given ranges & theta
+    """
+    sorted_idxs = np.argsort(theta)
+    ranges = ranges[sorted_idxs]
+    theta = theta[sorted_idxs]
+
+    #To estimate angle_increment find difference between all angles & mean
+    theta_plusone = theta
+    theta = np.roll(theta, 1)
+    diff = theta_plusone - theta
+    diff = diff[1:]
+    return np.mean(diff)
 
 def cart_to_polar(xy):
     """
@@ -22,8 +60,8 @@ def polar_to_cart(theta, r):
     """
     Assumes theta in radians & returns x,y
     """
-    x = r*math.cos(theta)
-    y = r*math.sin(theta)
+    x = r*np.cos(theta)
+    y = r*np.sin(theta)
     return x,y
 
 def lidar_polar_to_cart(ranges, angle_min, angle_increment):
@@ -38,3 +76,33 @@ def lidar_polar_to_cart(ranges, angle_min, angle_increment):
         x_ranges.append(x)
         y_ranges.append(y)
     return x_ranges, y_ranges
+
+def vis_roslidar(ranges, angle_min, angle_increment):
+    """
+    lidar_dict has the following format:
+    {
+        'ranges': [float array],
+        'angle_min':float,
+        'angle_increment':float
+    }
+    steer_dict has the following format:
+    {
+        'steering_angle_velocity':float,
+        'speed':float,
+        'angle':float
+    }
+    return lidar frame
+    """
+    #convert lidar data to x,y coordinates
+    x_ranges, y_ranges = lidar_polar_to_cart(ranges, angle_min, angle_increment)
+    lidar_frame = np.ones((500, 500, 3)) * 75
+    cx = 250
+    cy = 450
+    rangecheck = lambda x, y: abs(x) < 1000. and abs(y) < 1000.
+    for x, y in zip(x_ranges, y_ranges):
+        if (rangecheck(x, y)):
+            scaled_x = int(cx + x)
+            scaled_y = int(cy - y)
+            cv2.circle(lidar_frame, (scaled_x, scaled_y), 1, (255, 255, 255), -1)
+    cv2.imshow("Reformated", lidar_frame)
+    cv2.waitKey(1)
