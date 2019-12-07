@@ -1,6 +1,7 @@
 .ipynb_*
 .*
 __*
+*.pkl
 steps.py
 src/common*
 main/image_front000000.jpg
