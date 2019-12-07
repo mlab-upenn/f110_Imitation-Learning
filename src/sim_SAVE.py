@@ -10,7 +10,7 @@ import numpy as np
 __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
 
 """
-The following file generates training data for an Imitation Learning Algorithm.
+The following file generates training data for an Imitation Learning Algorithm in Simulation.
 It uses the FGM (Follow Gap Method) as an Oracle Policy
 """
 RENDER = False
@@ -42,6 +42,7 @@ def main():
         lidar = obs["lidar"]
         lidar = lidar[..., 0:2]
         if RENDER:
+            print(cv_img.shape)
             cv2.imshow('FrontCamera', cv_img)
             env.render_lidar2D(lidar)
 
