@@ -12,10 +12,7 @@ __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
 
 def main():
     env = SIM_f110Env()
-    angle_min, angle_incr = env.sensor_info.get("angle_min"), env.sensor_info.get("angle_incr")
-    fgm = FGM(angle_min, angle_incr)
     obs = env.reset()
-    count = 0
     while True:
         #display cv_img
         cv_img = obs["img"][0]
@@ -25,10 +22,8 @@ def main():
         lidar = obs["lidar"]
         lidar = lidar[..., 0:2]
         env.render_lidar2D(lidar)
-        ranges, theta = cart_to_polar(lidar)
-        ranges = polar_to_rosformat(angle_min, -1.0 * angle_min, angle_incr, theta, ranges)
 
-        action = {"angle":fgm.act(ranges), "speed":0.6}
+        action = {"angle":0.0, "speed":0.6}
         print(action)
         obs, reward, done, info = env.step(action)
 
