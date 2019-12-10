@@ -174,7 +174,6 @@ def main():
     net = NVIDIA_ConvNet().cuda()
     net.load_state_dict(torch.load('train_sim_net'))
     net.cpu()
-    num_saves = len(os.listdir(FOLDERPATH))
 
     #2: Get Model, Optimizer, Loss Function & Num Epochs
     optim = torch.optim.Adam(net.parameters())
