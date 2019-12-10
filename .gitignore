@@ -10,3 +10,4 @@ main/*
 !__init__.py
 *.pyc
 sim_net
+logs/*
