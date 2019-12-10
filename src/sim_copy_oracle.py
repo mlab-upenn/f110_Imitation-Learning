@@ -15,7 +15,6 @@ def main():
     angle_min, angle_incr = env.sensor_info.get("angle_min"), env.sensor_info.get("angle_incr")
     fgm = FGM(angle_min, angle_incr)
     obs = env.reset()
-    count = 0
     while True:
         #display cv_img
         cv_img = obs["img"][0]
@@ -27,9 +26,11 @@ def main():
         env.render_lidar2D(lidar)
         ranges, theta = cart_to_polar(lidar)
         ranges = polar_to_rosformat(angle_min, -1.0 * angle_min, angle_incr, theta, ranges)
+        print(len(ranges))
+        vis_roslidar(ranges, angle_min, angle_incr)
 
-        action = {"angle":fgm.act(ranges), "speed":0.6}
-        print(action)
+        action = {"angle":fgm.act(ranges), "speed":0.1}
+        # print(action)
         obs, reward, done, info = env.step(action)
 
         if cv2.waitKey(3) & 0xFF == ord('q'):

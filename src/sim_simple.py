@@ -23,7 +23,7 @@ def main():
         lidar = lidar[..., 0:2]
         env.render_lidar2D(lidar)
 
-        action = {"angle":0.1, "speed":0.6}
+        action = {"angle":0.00, "speed":0.0}
         print(action)
         obs, reward, done, info = env.step(action)
 

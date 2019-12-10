@@ -12,6 +12,11 @@ class FGM(object):
         self.angle_increment = angle_increment
 
     def refine_laserscan(self, ranges):
+        if(len(ranges) < 180):
+            diff = 180 - len(ranges)
+            last_elt = ranges[-1]
+            for i in range(diff):
+                ranges.append(last_elt)
         ranges = np.array(ranges)
         ranges[np.isinf(ranges)] = np.nan
         means = np.nanmean(ranges.reshape(-1, 4), axis = 1)
@@ -32,19 +37,15 @@ class FGM(object):
 	#If start_i and end_i and both greater than ranges_length/2, then they're on the leftside, so the closest point would be end_i (safest would be start_i) and vice-versa
         halflen = len(refined_ranges) //2
         if (start_i >= halflen and end_i >= halflen):
-            #print('hit_start_i')
             edge_i =  end_i
         elif (start_i <= halflen and end_i <= halflen):
-            #print('hit_start_i')
             edge_i =  start_i
         elif (math.fabs(start_i - halflen) >= math.fabs(end_i - halflen)):
-            #print('compared')
             edge_i =  end_i
         else:
-            #print("yeeted")
             edge_i =  start_i
 
-        #cente
+        #center
         static_avoid = True
         if(static_avoid):
             centerlen = start_i + abs(start_i - end_i) // 2
@@ -72,8 +73,8 @@ class FGM(object):
         angle_min = self.angle_min
         angle_incr = self.angle_increment
         #clean up & publish LIDAR SCANS so they're a bit more consistent
-        # refined_ranges = self.refine_laserscan(ranges)
-        refined_ranges = ranges
+        refined_ranges = self.refine_laserscan(ranges)
+        # refined_ranges = ranges
 
         #closest point to LIDAR in refined_ranges
         min_range = np.nanmin(refined_ranges)

@@ -21,7 +21,7 @@ def polar_to_rosformat(angle_min, angle_max, angle_increment, theta, ranges):
 
     out_ranges = []
     out_len = (angle_max - angle_min) // angle_increment
-    tol = 1e-3
+    tol = .0174533
     out_ranges = []
     last_idx = -1
 
@@ -30,12 +30,12 @@ def polar_to_rosformat(angle_min, angle_max, angle_increment, theta, ranges):
         curr_theta = angle_min + i * angle_increment
         min_idx = last_idx + 1
         min_diff = abs(theta[min(len(theta)-1, min_idx)] - curr_theta)
+        # print(min_idx, min_diff, min_diff <= tol)
         if(min_idx < len(theta) and min_diff <= tol):
             out_ranges.append(ranges[min_idx])
             last_idx += 1
         else:
             out_ranges.append(np.nan)
-    
     # print(f"outlen:{out_len}, fraction of nans:{num_nans/out_len}, range mean:{np.nanmean(np.array(out_ranges))}")
     return out_ranges
 
