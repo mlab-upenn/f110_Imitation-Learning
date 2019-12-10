@@ -13,25 +13,25 @@ __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
 def main():
     env = SIM_f110Env()
     obs = env.reset()
-    while True:
-        #display cv_img
-        cv_img = obs["img"][0]
-        cv2.imshow('latestimg', cv_img)
+    for i in range(10):
+        done = False
 
-        #display lidar
-        lidar = obs["lidar"]
-        lidar = lidar[..., 0:2]
-        env.render_lidar2D(lidar)
+        obs = env.reset()  
+        while not done:
+            #display cv_img
+            cv_img = obs["img"][0]
+            cv2.imshow('latestimg', cv_img)
 
-        action = {"angle":0.00, "speed":0.0}
-        print(action)
-        obs, reward, done, info = env.step(action)
+            #display lidar
+            lidar = obs["lidar"]
+            lidar = lidar[..., 0:2]
+            env.render_lidar2D(lidar)
 
-        if cv2.waitKey(3) & 0xFF == ord('q'):
-            break
-        if done:
-            print("ISDONE")
-            obs = env.reset()  
+            action = {"angle":0., "speed":0.3}
+            obs, reward, done, info = env.step(action)
 
+            if cv2.waitKey(3) & 0xFF == ord('q'):
+                break
+        print("DONE - RESETTING")
 if __name__ == '__main__':
     main()

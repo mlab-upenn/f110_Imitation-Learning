@@ -1,6 +1,7 @@
 from common.datasets import SteerDataset
 from common.models import NVIDIA_ConvNet
 import os, pickle, random, time
+import matplotlib.pyplot as plt
 
 #torch imports
 import numpy as np
@@ -94,9 +95,11 @@ d = dset[0]
 
 # 2: Get Model, Optimizer, Loss Function & Num Epochs
 net = NVIDIA_ConvNet().to(device)
-optim = torch.optim.Adam(net.parameters())
+optim = torch.optim.Adam(net.parameters(), lr=1e-6)
 loss_func = torch.nn.MSELoss()
 num_epochs = 200
+
+train_losses = []
 
 # 3: TRAIN: Main Training Loop over epochs
 metadata = load_train_metadata()
@@ -114,3 +117,6 @@ for epoch in range(num_epochs):
         best_train_loss = train_epoch_loss
         torch.save(net.state_dict(), "sim_net")
     train_writer.add_scalar("Loss", train_epoch_loss, base_epoch+epoch)
+    train_losses.append(train_epoch_loss)
+    if epoch % 4 == 0:
+        pickle.dump(train_losses, open("train_losses.pkl", "wb"))
