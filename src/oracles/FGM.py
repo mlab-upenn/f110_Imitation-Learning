@@ -125,6 +125,7 @@ class FGM(object):
         return self.do_FGM(ranges)
 
     def do_FGM(self, ranges):
+        # ranges = ranges[::-1]
         angle_min = self.angle_min
         angle_incr = self.angle_increment
         #clean up & publish LIDAR SCANS so they're a bit more consistent
@@ -138,7 +139,7 @@ class FGM(object):
         #Create Free Space 'Fake LaserScan'
         free_space_ranges = np.empty_like(refined_ranges)
         free_space_ranges[:] = min_range
-        free_space_ranges[refined_ranges < min_range + 0.2] = 0
+        free_space_ranges[refined_ranges < min_range + 0.7] = 0
 
         #Find the max length gap
         start_i , end_i, max_i = self.find_max_gap(free_space_ranges)

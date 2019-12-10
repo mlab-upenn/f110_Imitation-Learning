@@ -38,7 +38,7 @@ def polar_to_rosformat(angle_min, angle_max, angle_increment, theta, ranges):
         else:
             out_ranges.append(np.nan)
             num_nans +=1
-    print(f"outlen:{out_len}, fraction of nans:{num_nans/out_len}, range mean:{np.nanmean(np.array(out_ranges))}")
+    print(f"outlen:{out_len}, fraction of nans:{num_nans/out_len}, range mean:{np.nanmean(np.array(out_ranges))}, range max: {np.nanmax(np.array(out_ranges))}")
     return out_ranges
 
 def lidar_estimate_angleincr(ranges, theta):

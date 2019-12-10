@@ -28,8 +28,9 @@ def main():
         ranges = polar_to_rosformat(angle_min, -1.0 * angle_min, angle_incr, theta, ranges)
         vis_roslidar(ranges, angle_min, angle_incr)
 
-        # action = {"angle":fgm.act(ranges), "speed":0.02}
-        action = {"angle":0.0, "speed":0.02}
+        fgm.act(ranges)
+        action = {"angle":fgm.act(ranges), "speed":0.3}
+        # action = {"angle":0.0, "speed":0.0}
         # print(action)
         obs, reward, done, info = env.step(action)
 
