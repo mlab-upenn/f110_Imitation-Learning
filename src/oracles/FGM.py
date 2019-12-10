@@ -3,6 +3,61 @@ import numpy as np
 
 __author__ = "Dhruv Karthik <dhruvkar@seas.upenn.edu>"
 
+def polar_to_cart(theta, r):
+    """
+    Assumes theta in radians & returns x,y
+    """
+    x = r*np.cos(theta)
+    y = r*np.sin(theta)
+    return x,y
+
+def lidar_polar_to_cart(ranges, angle_min, angle_increment):
+    """
+    Convert a lidar_dict to cartesian & return x_ranges & y_ranges
+    """
+    x_ranges = []
+    y_ranges = []
+    for i, r in enumerate(ranges):
+        if r == np.nan:
+            x_ranges.append(1000000)
+            y_ranges.append(1000000)
+        else:
+            theta = angle_min + i * angle_increment
+            x, y = polar_to_cart(theta + math.pi/2, r*100.0)
+            x_ranges.append(x)
+            y_ranges.append(y)
+    return x_ranges, y_ranges
+
+def vis_roslidar(ranges, angle_min, angle_increment):
+    """
+    lidar_dict has the following format:
+    {
+        'ranges': [float array],
+        'angle_min':float,
+        'angle_increment':float
+    }
+    steer_dict has the following format:
+    {
+        'steering_angle_velocity':float,
+        'speed':float,
+        'angle':float
+    }
+    return lidar frame
+    """
+    #convert lidar data to x,y coordinates
+    x_ranges, y_ranges = lidar_polar_to_cart(ranges, angle_min, angle_increment)
+    lidar_frame = np.zeros((500, 500, 3)) * 75
+    cx = 250
+    cy = 450
+    rangecheck = lambda x, y: abs(x) < 1000. and abs(y) < 1000.
+    for x, y in zip(x_ranges, y_ranges):
+        if (rangecheck(x, y)):
+            scaled_x = int(cx + x)
+            scaled_y = int(cy - y)
+            cv2.circle(lidar_frame, (scaled_x, scaled_y), 1, (255, 255, 255), -1)
+    cv2.imshow("FGM", lidar_frame)
+    cv2.waitKey(1)
+
 class FGM(object):
     """
     Follow the Gap Method that approximates the best steering angle given a local lidar scan
@@ -90,6 +145,9 @@ class FGM(object):
 
         free_space_ranges[0:start_i] = np.nan
         free_space_ranges[end_i + 1 :] = np.nan
+
+        vis_roslidar(free_space_ranges, angle_min, angle_incr)
+        # vis_roslidar(refined_ranges, angle_min, angle_incr)
 
         #Find safest point and convert polar coordinates to x, y. 
         safest_i = self.find_safest_point(start_i, end_i, refined_ranges)

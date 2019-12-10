@@ -26,10 +26,10 @@ def main():
         env.render_lidar2D(lidar)
         ranges, theta = cart_to_polar(lidar)
         ranges = polar_to_rosformat(angle_min, -1.0 * angle_min, angle_incr, theta, ranges)
-        print(len(ranges))
         vis_roslidar(ranges, angle_min, angle_incr)
 
-        action = {"angle":fgm.act(ranges), "speed":0.1}
+        # action = {"angle":fgm.act(ranges), "speed":0.02}
+        action = {"angle":0.0, "speed":0.02}
         # print(action)
         obs, reward, done, info = env.step(action)
 
