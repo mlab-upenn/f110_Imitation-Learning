@@ -36,7 +36,7 @@ def main():
 
     #Load Net
     net = NVIDIA_ConvNet().cuda()
-    net.load_state_dict(torch.load('train_simnet'))
+    net.load_state_dict(torch.load('sim_net'))
     net = net.cpu()
     while True:
         cv_img = obs["img"][0]

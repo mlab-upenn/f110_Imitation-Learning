@@ -41,7 +41,7 @@ def save_train_metadata(epoch):
     pickle.dump(metadata, open(mp, "wb"))
 
 def get_dataloader(dataset, bs):
-    vsplit = 0.2 #Ideally have this as an argument
+    vsplit = 0.1 #Ideally have this as an argument
 
     if vsplit == 0.0:
         train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=bs, shuffle=True)
@@ -96,7 +96,7 @@ d = dset[0]
 net = NVIDIA_ConvNet().to(device)
 optim = torch.optim.Adam(net.parameters())
 loss_func = torch.nn.MSELoss()
-num_epochs = 50
+num_epochs = 200
 
 # 3: TRAIN: Main Training Loop over epochs
 metadata = load_train_metadata()
