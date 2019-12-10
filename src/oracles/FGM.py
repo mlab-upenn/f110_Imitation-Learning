@@ -139,7 +139,7 @@ class FGM(object):
         #Create Free Space 'Fake LaserScan'
         free_space_ranges = np.empty_like(refined_ranges)
         free_space_ranges[:] = min_range
-        free_space_ranges[refined_ranges < min_range + 0.7] = 0
+        free_space_ranges[refined_ranges < min_range + 0.9] = 0
 
         #Find the max length gap
         start_i , end_i, max_i = self.find_max_gap(free_space_ranges)
@@ -196,10 +196,10 @@ class FGM(object):
         centerdist = min(3.0, refined_ranges[safest_i])
         angle = safest_theta
 
-        if (angle > 0.34):
-            angle = 0.34
-        if (angle < -0.34):
-            angle = -0.34
+        if (angle > 0.54):
+            angle = 0.54
+        if (angle < -0.54):
+            angle = -0.54
 
         obs_dict["steer"]["angle"] = -1.0 * angle
         return obs_dict

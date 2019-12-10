@@ -51,7 +51,7 @@ def main():
         ranges = polar_to_rosformat(angle_min, -1.0 * angle_min, angle_incr, theta, ranges)
 
         #b) Use FGM to get action, save it, and step the environment
-        action = {"angle":fgm.act(ranges), "speed":0.6}
+        action = {"angle":fgm.act(ranges), "speed":0.3}
         save_data(obs, action)
         obs, _, done, _ = env.step(action)
 
