@@ -29,6 +29,9 @@ __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
 RENDER = False
 FOLDERPATH = './sim_train'
 num_saves = 0
+episodes_so_far = 0
+global_returns = []
+global_loss = []
 
 def seed_env():
     seed = 6582
@@ -50,6 +53,7 @@ def save_data(obs, action):
 
 
 def generate_oracle_data(net):
+    global episodes_so_far
     print(f"GENERATING ORACLE DATA")
     env = SIM_f110Env()
     angle_min, angle_incr = env.sensor_info.get("angle_min"), env.sensor_info.get("angle_incr")
@@ -59,6 +63,7 @@ def generate_oracle_data(net):
     num_episodes = 3
     for i in range(num_episodes):
         done = False
+        sum_rewards = 0
         while not done:
             cv_img = obs["img"][0]
             lidar = obs["lidar"]
@@ -84,11 +89,17 @@ def generate_oracle_data(net):
             action = {"angle":fgm.act(ranges), "speed":0.3} 
             save_data(obs, action)
             obs = next_obs
-
+            sum_rewards += 1
             if cv2.waitKey(3) & 0xFF == ord('q'):
                 break
             if done:
                 obs = env.reset()  
+
+        episodes_so_far += 1
+        train_writer.add_scalar("Num Timesteps before Crashing", sum_rewards, i + episodes_so_far) 
+        global_returns.append(sum_rewards)
+        with open("global_returns.pkl", 'wb') as f:
+            pickle.dump(global_returns, f)
 
 def save_train_metadata(epoch):
     mp = "train_metadata"
@@ -130,7 +141,8 @@ def loss_pass(net, loss_func, loader, epoch, optim, op='train'):
     total_epoch_loss = 0
     for i, input_dict in enumerate(loader):
         ts_imgbatch, ts_anglebatch = input_dict.get("img"), input_dict.get("angle")
-        ts_imgbatch, ts_anglebatch = ts_imgbatch.to(device), ts_anglebatch.to(device)
+        # ts_imgbatch, ts_anglebatch = ts_imgbatch.to(device), ts_anglebatch.to(device)
+        ts_imgbatch, ts_anglebatch = ts_imgbatch.to('cuda'), ts_anglebatch.to('cuda')
 
         #Classic Training Loop
         optim.zero_grad()
@@ -152,6 +164,7 @@ def loss_pass(net, loss_func, loader, epoch, optim, op='train'):
 def TRAIN(net, optim, loss_func, num_epochs):
     dset = SteerDataset(FOLDERPATH)
     train_dataloader, _ = get_dataloader(dset, 32)
+    best_train_loss = float('inf')
 
     # Main Training Loop over epochs
     metadata = load_train_metadata()
@@ -166,6 +179,9 @@ def TRAIN(net, optim, loss_func, num_epochs):
             best_train_loss = train_epoch_loss
             torch.save(net.state_dict(), "train_sim_net")
         train_writer.add_scalar("Loss", train_epoch_loss, base_epoch+epoch)
+        global_loss.append(train_epoch_loss)
+        with open("global_loss.pkl", 'wb') as f:
+            pickle.dump(global_loss, f)
     save_train_metadata(epoch)
 
 def main():
@@ -178,13 +194,15 @@ def main():
     #2: Get Model, Optimizer, Loss Function & Num Epochs
     optim = torch.optim.Adam(net.parameters())
     loss_func = torch.nn.MSELoss()
-    num_epochs = 10
+    num_epochs = 4
 
     idx = 0
     while True:
         if idx % 2 == 0: #Generate Data with currently trained network
+            net.cpu()
             generate_oracle_data(net)
         else: #TRAIN for about 50 epochs
+            net.cuda()
             TRAIN(net, optim, loss_func, num_epochs)
         idx+=1
 
