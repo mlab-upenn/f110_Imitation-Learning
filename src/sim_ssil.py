@@ -22,12 +22,12 @@ from torchvision import transforms, utils
 from tensorboardX import SummaryWriter
 train_writer = SummaryWriter(logdir="../logs")
 
-device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
+# device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
+device = torch.device('cpu')
 __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
 
 RENDER = False
 FOLDERPATH = './sim_train'
-seed_env()
 num_saves = 0
 
 def seed_env():
@@ -40,13 +40,13 @@ def seed_env():
 
 def save_data(obs, action):
     global num_saves
+    num_saves = len(os.listdir(FOLDERPATH))
     if(num_saves == 0 and not os.path.exists(FOLDERPATH)):
         os.mkdir(FOLDERPATH)
     pkl_dict = {"obs":obs, "action":action}
     filename = f"{FOLDERPATH}/sim_{num_saves}.pkl"
     with open(filename, 'wb') as f:
         pickle.dump(pkl_dict, f)
-    num_saves+=1
 
 
 def generate_oracle_data(net):
@@ -56,8 +56,9 @@ def generate_oracle_data(net):
     fgm = FGM(angle_min, angle_incr)
 
     obs = env.reset()
-    done = False
-    for i in range(50):
+    num_episodes = 3
+    for i in range(num_episodes):
+        done = False
         while not done:
             cv_img = obs["img"][0]
             lidar = obs["lidar"]
@@ -68,7 +69,7 @@ def generate_oracle_data(net):
                 env.render_lidar2D(lidar)
 
             # Pass through Net
-            ts_img = torch.from_numpy(cv_img).permute(2, 0, 1).float()
+            ts_img = torch.from_numpy(cv_img).permute(2, 0, 1).float().to(device)
             ts_angle = net(ts_img[None])
 
             # Take Action WITH Neural Network
@@ -101,11 +102,6 @@ def load_train_metadata():
     else:
         metadata = {"base_epoch": 0}
     return metadata
-
-def save_train_metadata(epoch):
-    mp = "train_metadata"
-    metadata = {"base_epoch": epoch}
-    pickle.dump(metadata, open(mp, "wb"))
 
 def get_dataloader(dataset, bs):
     vsplit = 0.1 #Ideally have this as an argument
@@ -173,15 +169,17 @@ def TRAIN(net, optim, loss_func, num_epochs):
     save_train_metadata(epoch)
 
 def main():
+    seed_env()
     #1: Load Warmup Net
     net = NVIDIA_ConvNet().cuda()
     net.load_state_dict(torch.load('train_sim_net'))
+    net.cpu()
     num_saves = len(os.listdir(FOLDERPATH))
 
     #2: Get Model, Optimizer, Loss Function & Num Epochs
     optim = torch.optim.Adam(net.parameters())
     loss_func = torch.nn.MSELoss()
-    num_epochs = 50
+    num_epochs = 10
 
     idx = 0
     while True:

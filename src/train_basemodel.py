@@ -115,7 +115,7 @@ for epoch in range(num_epochs):
     print("TRAIN LOSS:{}".format(train_epoch_loss))
     if best_train_loss > train_epoch_loss:
         best_train_loss = train_epoch_loss
-        torch.save(net.state_dict(), "sim_net")
+        torch.save(net.state_dict(), "train_sim_net")
     train_writer.add_scalar("Loss", train_epoch_loss, base_epoch+epoch)
     train_losses.append(train_epoch_loss)
     if epoch % 4 == 0:
