@@ -19,6 +19,8 @@ from torchvision import transforms, utils
 
 __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
 
+device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
+
 
 def seed_env():
     seed = 6582

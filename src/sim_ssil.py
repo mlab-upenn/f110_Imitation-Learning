@@ -22,9 +22,8 @@ from torchvision import transforms, utils
 from tensorboardX import SummaryWriter
 train_writer = SummaryWriter(logdir="../logs")
 
+device = torch.device('cuda' if torch.cuda.is_available else 'cpu') 
 __author__ = 'dhruv karthik <dhruvkar@seas.upenn.edu>'
-
-
 
 RENDER = False
 FOLDERPATH = './sim_train'
@@ -90,8 +89,13 @@ def generate_oracle_data(net):
             if done:
                 obs = env.reset()  
 
+def save_train_metadata(epoch):
+    mp = "train_metadata"
+    metadata = {"base_epoch": epoch}
+    pickle.dump(metadata, open(mp, "wb"))
+
 def load_train_metadata():
-    mp = os.path.join(FOLDERPATH, "train_metadata")
+    mp = "train_metadata"
     if os.path.exists(mp):
         metadata = pickle.load(open(mp, "rb"))
     else:
@@ -99,7 +103,7 @@ def load_train_metadata():
     return metadata
 
 def save_train_metadata(epoch):
-    mp = os.path.join(FOLDERPATH, "train_metadata")
+    mp = "train_metadata"
     metadata = {"base_epoch": epoch}
     pickle.dump(metadata, open(mp, "wb"))
 
@@ -151,13 +155,12 @@ def loss_pass(net, loss_func, loader, epoch, optim, op='train'):
 
 def TRAIN(net, optim, loss_func, num_epochs):
     dset = SteerDataset(FOLDERPATH)
-    train_dataloader, valid_dataloader = get_dataloader(dset, 32)
+    train_dataloader, _ = get_dataloader(dset, 32)
 
     # Main Training Loop over epochs
     metadata = load_train_metadata()
     base_epoch = metadata["base_epoch"]
     print(f"STARTING FROM EPOCH: {base_epoch}")
-    checkpoint = 0
     for epoch in range(num_epochs):
         print(f"Starting Epoch:{epoch}")
         train_epoch_loss = loss_pass(net, loss_func, train_dataloader, epoch, optim, op='train')
@@ -167,12 +170,13 @@ def TRAIN(net, optim, loss_func, num_epochs):
             best_train_loss = train_epoch_loss
             torch.save(net.state_dict(), "train_sim_net")
         train_writer.add_scalar("Loss", train_epoch_loss, base_epoch+epoch)
-
+    save_train_metadata(epoch)
 
 def main():
     #1: Load Warmup Net
     net = NVIDIA_ConvNet().cuda()
     net.load_state_dict(torch.load('train_sim_net'))
+    num_saves = len(os.listdir(FOLDERPATH))
 
     #2: Get Model, Optimizer, Loss Function & Num Epochs
     optim = torch.optim.Adam(net.parameters())
